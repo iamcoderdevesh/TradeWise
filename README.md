@@ -1,1 +1,3 @@
-# TradeWise
+# tradewise
+
+A new Flutter project.

@@ -1,0 +1,324 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tradewise/assets/svg.dart';
+import 'package:tradewise/widgets/widgets.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          headerSection(),
+          Expanded(
+            child: Stack(
+              children: [
+                curveAreaSection(context, 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      heroSection(),
+                      labelViewMoreSection(label: "Featured"),
+                      cardSection(),
+                      labelViewMoreSection(label: "Trending in market"),
+                      trendingSection(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget headerSection() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
+      child: SizedBox(
+        height: 100,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  '👋 Hello Ram,',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                Text(
+                  'Invest today and get maximum returns in future!',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w300,
+                  ),
+                )
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget heroSection() {
+    return SizedBox(
+      height: 100,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF287BFF),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.2),
+              blurRadius: 12,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Texts
+            const Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Account',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '\$2,34,650.00',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  style: const ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(Colors.white),
+                  ),
+                  onPressed: () {},
+                  child: const Text(
+                    "Add Funds",
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600, color: Colors.black),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget labelViewMoreSection({required String label}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextButton(
+            onPressed: () {},
+            child: Text(
+              "See All",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget cardSection() {
+    return SizedBox(
+      height: 150,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          cardItems(
+              'BTC', btcIcon, const Color(0xE4E8FDFF), '\$100000.42', "+1.72%"),
+          const SizedBox(width: 15),
+          cardItems(
+              'ETH', ethIcon, const Color(0xFFFDF4F5), '\$40000.65', "+2.06%"),
+          const SizedBox(width: 15),
+          cardItems(
+              'USDT', usdtIcon, const Color(0xFFFFF7F1), '\$1.07', "+0.24%")
+        ],
+      ),
+    );
+  }
+
+  Widget cardItems(
+      String type, String icon, Color bgColor, String price, String gains) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20, top: 5),
+      child: Container(
+        width: 125,
+        height: 150,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+              color: Colors.black.withOpacity(.05),
+              style: BorderStyle.solid,
+              strokeAlign: BorderSide.strokeAlignInside),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.05),
+              blurRadius: 10,
+            )
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Center(
+                    child: SizedBox(
+                      width: 26,
+                      height: 26,
+                      child: SvgPicture.string(icon),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  type,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Text(
+                price,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Row(
+                children: [
+                  Text(
+                    gains,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xE215CC8A),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.arrow_drop_up,
+                    size: 26,
+                    color: Color(0xE215CC8A),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget trendingSection() {
+    return Expanded(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            trendingItems(
+                context, 'Bitcoin', 'BTC', '\$100000.20', '+1.72%', btcIcon),
+            const SizedBox(
+              height: 10,
+            ),
+            trendingItems(
+                context, 'Ethereum', 'ETH', '\$26535.56', '+0.88%', ethIcon),
+            const SizedBox(
+              height: 10,
+            ),
+            trendingItems(
+                context, 'Dogecoin', 'DOGE', '\$0.56', '+2.55%', dogeIcon),
+            const SizedBox(
+              height: 10,
+            ),
+            trendingItems(context, 'XRP', 'XRP', '\$1.56', '+3.42%', xrpIcon),
+            const SizedBox(
+              height: 10,
+            ),
+            trendingItems(
+                context, 'Solana', 'SOL', '\$2464.20', '+1.43%', solIcon),
+            const SizedBox(
+              height: 10,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
