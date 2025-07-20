@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tradewise/theme/theme.dart';
 
 class TradeWiseProvider extends ChangeNotifier {
-  late ThemeData themeData;
+  late ThemeData themeData = darkTheme;
 
   String theme = 'sys';
 

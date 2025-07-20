@@ -1,11 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tradewise/models/auth.dart';
 import 'package:tradewise/screens/signup.dart';
 import 'package:tradewise/widgets/bottomNavBar.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
+
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +56,7 @@ class SignInScreen extends StatelessWidget {
                   ),
                   // const SizedBox(height: 16),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                  const SignInForm(),
+                  signInForm(context),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -66,22 +88,13 @@ class SignInScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-const authOutlineInputBorder = OutlineInputBorder(
-  borderSide: BorderSide(color: Color(0xFF757575)),
-  borderRadius: BorderRadius.all(Radius.circular(100)),
-);
-
-class SignInForm extends StatelessWidget {
-  const SignInForm({super.key});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget signInForm(BuildContext context) {
     return Form(
       child: Column(
         children: [
           textFormField(
+            controller: emailController,
             context: context,
             hintText: "Enter your email",
             labelText: "Email",
@@ -89,14 +102,9 @@ class SignInForm extends StatelessWidget {
             suffix: SvgPicture.string(
               mailIcon,
             ),
-            onSaved: (email) {
-              return email;
-            },
-            onChanged: (email) {
-              return email;
-            },
           ),
           textFormField(
+            controller: passwordController,
             context: context,
             hintText: "Enter your password",
             labelText: "Password",
@@ -105,25 +113,39 @@ class SignInForm extends StatelessWidget {
             suffix: SvgPicture.string(
               lockIcon,
             ),
-            onSaved: (password) {
-              return password;
-            },
-            onChanged: (password) {
-              return password;
-            },
           ),
           const SizedBox(height: 8),
           elevatedButton(
             buttonLabel: "Continue",
-            onPressed: () {
-              Future.delayed(const Duration(milliseconds: 200), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const BottomNavScreen(),
-                  ),
-                );
-              });
+            onPressed: () async {
+              String email = emailController.text.trim();
+              String password = passwordController.text.trim();
+
+              if (email.isEmpty || password.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Please fill all the fields.")));
+              } else {
+                final response = await AuthenticationModel()
+                    .handleSignIn(email: email, password: password);
+
+                bool status = response["status"] as bool;
+                String message = response["message"] as String;
+
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(message)));
+
+                if (status) {
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BottomNavScreen(),
+                      ),
+                    );
+                  });
+                }
+              }
             },
           ),
         ],

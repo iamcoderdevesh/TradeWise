@@ -86,50 +86,36 @@ class AccountForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      child: Column(
-        children: [
-          textFormField(
-            context: context,
-            hintText: "Enter your account name",
-            labelText: "Account name",
-            keyboardType: TextInputType.name,
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.singleLineFormatter
-            ],
-            onSaved: (accountName) {
-              return accountName;
-            },
-            onChanged: (accountName) {
-              return accountName;
-            },
-          ),
-          textFormField(
-            context: context,
-            hintText: "2,34,650.00",
-            labelText: "Enter amount",
-            keyboardType: TextInputType.number,
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.digitsOnly
-            ],
-            onSaved: (amount) {
-              return amount;
-            },
-            onChanged: (amount) {
-              return amount;
-            },
-          ),
-          const SizedBox(height: 25),
-          labelAreaSection(
-              title: "Select segment", bottomPadding: 5, context: context),
-          const RadioListTileExample(),
-          const SizedBox(height: 8),
-          elevatedButton(
-            buttonLabel: "Continue",
-            onPressed: () {},
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        textFormField(
+          context: context,
+          hintText: "Enter your account name",
+          labelText: "Account name",
+          keyboardType: TextInputType.name,
+          inputFormatters: <TextInputFormatter>[
+            FilteringTextInputFormatter.singleLineFormatter
+          ],
+        ),
+        textFormField(
+          context: context,
+          hintText: "2,34,650.00",
+          labelText: "Enter amount",
+          keyboardType: TextInputType.number,
+          inputFormatters: <TextInputFormatter>[
+            FilteringTextInputFormatter.digitsOnly
+          ],
+        ),
+        const SizedBox(height: 25),
+        labelAreaSection(
+            title: "Select segment", bottomPadding: 5, context: context),
+        const RadioListTileExample(),
+        const SizedBox(height: 8),
+        elevatedButton(
+          buttonLabel: "Continue",
+          onPressed: () {},
+        ),
+      ],
     );
   }
 }

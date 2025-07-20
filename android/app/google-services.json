@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1022188132513",
+    "project_id": "tradewise-73483",
+    "storage_bucket": "tradewise-73483.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022188132513:android:2a7c5b5baaf1aa21e5f8e0",
+        "android_client_info": {
+          "package_name": "com.example.tradewise"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2lCFW2Qoeh5GSBP8Rax-94oAMRyMzE1Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

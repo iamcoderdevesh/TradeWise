@@ -1,11 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tradewise/models/auth.dart';
 import 'package:tradewise/screens/signin.dart';
-import 'package:tradewise/widgets/bottomNavBar.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
+
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+
+  final TextEditingController nameController= TextEditingController();
+  final TextEditingController emailController= TextEditingController();
+  final TextEditingController passwordController= TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +58,7 @@ class SignUpScreen extends StatelessWidget {
                   ),
                   // const SizedBox(height: 16),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                  const SignUpForm(),
+                  signupForm(context),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -66,76 +90,76 @@ class SignUpScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class SignUpForm extends StatelessWidget {
-  const SignUpForm({super.key});
+  Widget signupForm(BuildContext context) {
+    return Column(
+      children: [
+        textFormField(
+          context: context,
+          controller: nameController,
+          hintText: "Enter your full name",
+          labelText: "Full Name",
+          keyboardType: TextInputType.emailAddress,
+        ),
+        textFormField(
+          context: context,
+          controller: emailController,
+          hintText: "Enter your email",
+          labelText: "Email",
+          keyboardType: TextInputType.emailAddress,
+          suffix: SvgPicture.string(
+            mailIcon,
+          ),
+        ),
+        textFormField(
+          context: context,
+          controller: passwordController,
+          hintText: "Enter your password",
+          labelText: "Password",
+          keyboardType: TextInputType.visiblePassword,
+          obscureText: true,
+          suffix: SvgPicture.string(
+            lockIcon,
+          ),
+        ),
+        const SizedBox(height: 8),
+        elevatedButton(
+          buttonLabel: "Continue",
+          onPressed: () async {
+            // Handle navigation to Sign Up
+            String name = nameController.text.trim();
+            String email = emailController.text.trim();
+            String password = passwordController.text.trim();
 
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      child: Column(
-        children: [
-          textFormField(
-            context: context,
-            hintText: "Enter your full name",
-            labelText: "Full Name",
-            keyboardType: TextInputType.emailAddress,
-            onSaved: (email) {
-              return email;
-            },
-            onChanged: (email) {
-              return email;
-            },
-          ),
-          textFormField(
-            context: context,
-            hintText: "Enter your email",
-            labelText: "Email",
-            keyboardType: TextInputType.emailAddress,
-            suffix: SvgPicture.string(
-              mailIcon,
-            ),
-            onSaved: (email) {
-              return email;
-            },
-            onChanged: (email) {
-              return email;
-            },
-          ),
-          textFormField(
-            context: context,
-            hintText: "Enter your password",
-            labelText: "Password",
-            keyboardType: TextInputType.visiblePassword,
-            obscureText: true,
-            suffix: SvgPicture.string(
-              lockIcon,
-            ),
-            onSaved: (password) {
-              return password;
-            },
-            onChanged: (password) {
-              return password;
-            },
-          ),
-          const SizedBox(height: 8),
-          elevatedButton(
-            buttonLabel: "Continue",
-            onPressed: () {
-              // Handle navigation to Sign Up
-              Future.delayed(const Duration(milliseconds: 200), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SignInScreen(),
-                  ),
-                );
-              });
-            },
-          ),
-        ],
-      ),
+            if (name.isEmpty || email.isEmpty || password.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please fill all the fields.")));
+            } 
+            else {
+              final response = await AuthenticationModel()
+                  .handleSignup(name: name, email: email, password: password);
+
+              bool status = response["status"] as bool;
+              String message = response["message"] as String;
+
+              // ignore: use_build_context_synchronously
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(message)));
+
+              if (status) {
+                Future.delayed(const Duration(milliseconds: 200), () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SignInScreen(),
+                    ),
+                  );
+                });
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 }

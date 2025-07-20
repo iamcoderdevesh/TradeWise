@@ -1,13 +1,17 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/screens/signin.dart';
 import 'package:tradewise/state/state.dart';
 
-void main() {
+Future<void> main() async {
+
   SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
 
   runApp(
     ChangeNotifierProvider(
@@ -22,13 +26,13 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var brightness = MediaQuery.of(context).platformBrightness;
-    bool isDarkMode = brightness == Brightness.dark;
-    late TradeWiseProvider state =
-        Provider.of<TradeWiseProvider>(context, listen: false);
-    if (state.theme == 'sys') {
-      state.toggleTheme(mode: isDarkMode ? 'dark' : 'light', isSys: 'sys');
-    }
+    // var brightness = MediaQuery.of(context).platformBrightness;
+    // bool isDarkMode = brightness == Brightness.dark;
+    // late TradeWiseProvider state =
+    //     Provider.of<TradeWiseProvider>(context, listen: false);
+    // if (state.theme == 'sys') {
+    //   state.toggleTheme(mode: isDarkMode ? 'dark' : 'light', isSys: 'sys');
+    // }
 
     return Consumer<TradeWiseProvider>(
       builder: (context, theme, child) {

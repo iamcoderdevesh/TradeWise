@@ -170,8 +170,7 @@ Widget textFormField({
   required String hintText,
   required String labelText,
   required TextInputType keyboardType,
-  required Function onSaved(data),
-  required Function onChanged(data),
+  TextEditingController? controller,
   List<TextInputFormatter>? inputFormatters,
   Widget? suffix,
   bool obscureText = false
@@ -179,10 +178,9 @@ Widget textFormField({
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 14),
     child: TextFormField(
+      controller: controller,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      onSaved: onSaved,
-      onChanged: onChanged,
       textInputAction: TextInputAction.next,
       obscureText: obscureText,
       decoration: InputDecoration(
