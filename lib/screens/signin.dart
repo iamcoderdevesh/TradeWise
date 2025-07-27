@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:tradewise/models/auth.dart';
+import 'package:provider/provider.dart';
+import 'package:tradewise/services/controllers/authController.dart';
 import 'package:tradewise/screens/signup.dart';
+import 'package:tradewise/state/authState.dart';
 import 'package:tradewise/widgets/bottomNavBar.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
@@ -90,6 +92,8 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget signInForm(BuildContext context) {
+    late AuthState state = Provider.of<AuthState>(context, listen: false);
+
     return Form(
       child: Column(
         children: [
@@ -125,7 +129,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("Please fill all the fields.")));
               } else {
-                final response = await AuthenticationModel()
+                final response = await AuthenticationController()
                     .handleSignIn(email: email, password: password);
 
                 bool status = response["status"] as bool;
@@ -136,6 +140,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     .showSnackBar(SnackBar(content: Text(message)));
 
                 if (status) {
+                  setState(() {
+                    state.updateAuthStatus(authStatus: status);
+                  });
+
                   Future.delayed(const Duration(milliseconds: 200), () {
                     Navigator.push(
                       context,

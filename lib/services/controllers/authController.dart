@@ -1,18 +1,28 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
-class AuthenticationModel {
-  AuthenticationModel();
+class AuthenticationController {
+  AuthenticationController();
 
   Future<Map<String, dynamic>> handleSignup({
-    required String name,
+    required String fullName,
     required String email,
     required String password,
   }) async {
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      final user = userCredential.user;
+
+      if (user != null && fullName.isNotEmpty) {
+        await user.updateDisplayName(fullName);
+        await user.reload();
+      }
+
+      return {"status": true, "message": "Signup Successful."};
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         return {
@@ -29,7 +39,7 @@ class AuthenticationModel {
       return {"status": false, "message": e.toString()};
     }
 
-    return {"status": true, "message": "Signup Successfull."};
+    return {"status": false, "message": "Unknown error occurred."};
   }
 
   Future<Map<String, dynamic>> handleSignIn({
@@ -37,7 +47,7 @@ class AuthenticationModel {
     required String password,
   }) async {
     try {
-      final credential = await FirebaseAuth.instance
+      await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {

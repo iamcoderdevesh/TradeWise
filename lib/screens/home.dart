@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'package:tradewise/assets/svg.dart';
+import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/authState.dart';
 import 'package:tradewise/widgets/widgets.dart';
+import 'package:tradewise/helpers/helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,13 +16,22 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    late AuthState authState = Provider.of<AuthState>(context, listen: false);
+    late AccountState accountState =
+        Provider.of<AccountState>(context, listen: true);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          headerSection(),
+          headerSection(profileName: authState.user?.displayName),
           Expanded(
             child: Stack(
               children: [
@@ -27,7 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      heroSection(),
+                      heroSection(
+                          accountBalance: Helper().formatNumber(
+                              value: accountState.totalBalance)),
                       labelViewMoreSection(label: "Featured"),
                       cardSection(),
                       labelViewMoreSection(label: "Trending in market"),
@@ -43,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget headerSection() {
+  Widget headerSection({required String? profileName}) {
     return Padding(
       padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
       child: SizedBox(
@@ -55,9 +70,9 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  '👋 Hello Ram,',
-                  style: TextStyle(
+                Text(
+                  '👋 Hello $profileName,',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -81,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget heroSection() {
+  Widget heroSection({required String accountBalance}) {
     return SizedBox(
       height: 100,
       child: Container(
@@ -100,14 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           children: [
             // Texts
-            const Expanded(
+            Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 5),
+                padding: const EdgeInsets.symmetric(vertical: 5),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       'Account',
                       style: TextStyle(
                         color: Colors.white,
@@ -116,8 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      '\$2,34,650.00',
-                      style: TextStyle(
+                      accountBalance,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
@@ -186,13 +201,13 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const BouncingScrollPhysics(),
         children: [
           cardItems(
-              'BTC', btcIcon, const Color(0xE4E8FDFF), '\$100000.42', "+1.72%"),
+              'BTC', btcIcon, const Color(0xE4E8FDFF), '100000.42', "+1.72%"),
           const SizedBox(width: 15),
           cardItems(
-              'ETH', ethIcon, const Color(0xFFFDF4F5), '\$40000.65', "+2.06%"),
+              'ETH', ethIcon, const Color(0xFFFDF4F5), '40000.65', "+2.06%"),
           const SizedBox(width: 15),
           cardItems(
-              'USDT', usdtIcon, const Color(0xFFFFF7F1), '\$1.07', "+0.24%")
+              'USDT', usdtIcon, const Color(0xFFFFF7F1), '1.07', "+0.24%")
         ],
       ),
     );
@@ -293,26 +308,26 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             trendingItems(
-                context, 'Bitcoin', 'BTC', '\$100000.20', '+1.72%', btcIcon),
+                context, 'Bitcoin', 'BTC', '100000.20', '+1.72%', btcIcon),
             const SizedBox(
               height: 10,
             ),
             trendingItems(
-                context, 'Ethereum', 'ETH', '\$26535.56', '+0.88%', ethIcon),
+                context, 'Ethereum', 'ETH', '26535.56', '+0.88%', ethIcon),
             const SizedBox(
               height: 10,
             ),
             trendingItems(
-                context, 'Dogecoin', 'DOGE', '\$0.56', '+2.55%', dogeIcon),
+                context, 'Dogecoin', 'DOGE', '0.56', '+2.55%', dogeIcon),
             const SizedBox(
               height: 10,
             ),
-            trendingItems(context, 'XRP', 'XRP', '\$1.56', '+3.42%', xrpIcon),
+            trendingItems(context, 'XRP', 'XRP', '1.56', '+3.42%', xrpIcon),
             const SizedBox(
               height: 10,
             ),
             trendingItems(
-                context, 'Solana', 'SOL', '\$2464.20', '+1.43%', solIcon),
+                context, 'Solana', 'SOL', '2464.20', '+1.43%', solIcon),
             const SizedBox(
               height: 10,
             ),

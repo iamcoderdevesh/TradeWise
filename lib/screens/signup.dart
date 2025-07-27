@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:tradewise/models/auth.dart';
+import 'package:tradewise/services/controllers/authController.dart';
 import 'package:tradewise/screens/signin.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
@@ -136,8 +136,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SnackBar(content: Text("Please fill all the fields.")));
             } 
             else {
-              final response = await AuthenticationModel()
-                  .handleSignup(name: name, email: email, password: password);
+              final response = await AuthenticationController()
+                  .handleSignup(fullName: name, email: email, password: password);
 
               bool status = response["status"] as bool;
               String message = response["message"] as String;

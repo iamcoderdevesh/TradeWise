@@ -1,9 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/screens/profile.dart';
+import 'package:tradewise/services/controllers/accountController.dart';
+import 'package:tradewise/services/models/accountModel.dart';
+import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
+
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+String? _selectedSegment = 'Stocks';
+
+class _AccountScreenState extends State<AccountScreen> {
+  late bool isLoading = false;
+  late AccountState state = Provider.of<AccountState>(context, listen: false);
+
+  final TextEditingController accountNameController = TextEditingController();
+  final TextEditingController amountController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    accountNameController.dispose();
+    amountController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,8 +58,10 @@ class AccountScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 labelAreaSection(
-                    title: "Balance", subTitle: "\$0", context: context),
-                const AccountForm(),
+                    title: "Balance",
+                    subTitle: Helper().formatNumber(value: state.totalBalance),
+                    context: context),
+                accountForm(context),
               ],
             ),
           ),
@@ -35,60 +69,12 @@ class AccountScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-Widget labelAreaSection({
-  required String title,
-  required BuildContext context,
-  String subTitle = "",
-  double bottomPadding = 20,
-}) {
-  return Padding(
-    padding: EdgeInsets.only(bottom: bottomPadding),
-    child: Column(
-      children: [
-        Row(
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.tertiary,
-              ),
-            ),
-            const SizedBox(
-              width: 5,
-            ),
-            Text(
-              subTitle,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Divider(
-          thickness: 0.5,
-          color: Theme.of(context).colorScheme.tertiary,
-        ),
-      ],
-    ),
-  );
-}
-
-const authOutlineInputBorder = OutlineInputBorder(
-  borderSide: BorderSide(color: Color(0xFF757575)),
-  borderRadius: BorderRadius.all(Radius.circular(10)),
-);
-
-class AccountForm extends StatelessWidget {
-  const AccountForm({super.key});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget accountForm(BuildContext context) {
     return Column(
       children: [
         textFormField(
+          controller: accountNameController,
           context: context,
           hintText: "Enter your account name",
           labelText: "Account name",
@@ -98,9 +84,10 @@ class AccountForm extends StatelessWidget {
           ],
         ),
         textFormField(
+          controller: amountController,
           context: context,
           hintText: "2,34,650.00",
-          labelText: "Enter amount",
+          labelText: "Initial Balance",
           keyboardType: TextInputType.number,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.digitsOnly
@@ -112,15 +99,95 @@ class AccountForm extends StatelessWidget {
         const RadioListTileExample(),
         const SizedBox(height: 8),
         elevatedButton(
+          isLoading: isLoading,
           buttonLabel: "Continue",
-          onPressed: () {},
+          onPressed: () {
+            handleAccount(context: context);
+          },
         ),
       ],
     );
   }
-}
 
-enum SingingCharacter { stocks, crypto }
+  Widget labelAreaSection({
+    required String title,
+    required BuildContext context,
+    String subTitle = "",
+    double bottomPadding = 20,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
+              ),
+              const SizedBox(
+                width: 5,
+              ),
+              Text(
+                subTitle,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Divider(
+            thickness: 0.5,
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> handleAccount({required BuildContext context}) async {
+    String accountName = accountNameController.text.trim();
+    String initialBalance = amountController.text.trim();
+
+    if (accountName.isEmpty || initialBalance.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please fill all the fields.")));
+    } else {
+      setState(() {
+        isLoading = true;
+      });
+
+      final accountController = AccountController();
+      final response = await accountController.createAccount(
+        context: context,
+        accountName: accountName,
+        accountType: _selectedSegment as String,
+        initialBalance: initialBalance,
+      );
+
+      bool status = response["status"] as bool;
+
+      if (status) {
+
+        String userId = response["userId"] as String;
+        // ignore: use_build_context_synchronously
+        await accountController.setAccountNameAndBalance(
+            context: context, userId: userId);
+
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Account created successfully.")));
+
+        Future.delayed(const Duration(milliseconds: 200), () {
+          Navigator.pop(context);
+        });
+      }
+    }
+  }
+}
 
 class RadioListTileExample extends StatefulWidget {
   const RadioListTileExample({super.key});
@@ -130,33 +197,31 @@ class RadioListTileExample extends StatefulWidget {
 }
 
 class _RadioListTileExampleState extends State<RadioListTileExample> {
-  SingingCharacter? _character = SingingCharacter.stocks;
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        RadioListTile<SingingCharacter>(
+        RadioListTile<String?>(
           title: const Text('Stocks'),
-          value: SingingCharacter.stocks,
-          groupValue: _character,
+          value: 'Stocks',
+          groupValue: _selectedSegment,
           controlAffinity: ListTileControlAffinity.trailing,
           activeColor: Theme.of(context).colorScheme.primaryContainer,
-          onChanged: (SingingCharacter? value) {
+          onChanged: (String? value) {
             setState(() {
-              _character = value;
+              _selectedSegment = value;
             });
           },
         ),
-        RadioListTile<SingingCharacter>(
+        RadioListTile<String?>(
           controlAffinity: ListTileControlAffinity.trailing,
           title: const Text('Crypto'),
-          value: SingingCharacter.crypto,
-          groupValue: _character,
+          value: 'Crypto',
+          groupValue: _selectedSegment,
           activeColor: Theme.of(context).colorScheme.primaryContainer,
-          onChanged: (SingingCharacter? value) {
+          onChanged: (String? value) {
             setState(() {
-              _character = value;
+              _selectedSegment = value;
             });
           },
         ),

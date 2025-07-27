@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/screens/signin.dart';
-import 'package:tradewise/state/state.dart';
+import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/appState.dart';
+import 'package:tradewise/state/authState.dart';
+import 'package:tradewise/state/tradeState.dart';
+import 'package:tradewise/theme/theme.dart';
+import 'package:tradewise/widgets/bottomNavBar.dart';
 
 Future<void> main() async {
-
   SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,8 +18,13 @@ Future<void> main() async {
   await Firebase.initializeApp();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => TradeWiseProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AppState>(create: (_) => AppState()),
+        ChangeNotifierProvider<AuthState>(create: (_) => AuthState()),
+        ChangeNotifierProvider<AccountState>(create: (_) => AccountState()),
+        ChangeNotifierProvider<TradeState>(create: (_) => TradeState()),
+      ],
       child: const MainApp(),
     ),
   );
@@ -26,22 +35,14 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // var brightness = MediaQuery.of(context).platformBrightness;
-    // bool isDarkMode = brightness == Brightness.dark;
-    // late TradeWiseProvider state =
-    //     Provider.of<TradeWiseProvider>(context, listen: false);
-    // if (state.theme == 'sys') {
-    //   state.toggleTheme(mode: isDarkMode ? 'dark' : 'light', isSys: 'sys');
-    // }
+    late AuthState authState = Provider.of<AuthState>(context, listen: false);
+    bool authStatus = authState.checkAuthStatus();
 
-    return Consumer<TradeWiseProvider>(
-      builder: (context, theme, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: theme.themeData,
-          home: const SignInScreen(),
-        );
-      },
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      home: authStatus ? const BottomNavScreen() : const SignInScreen(),
     );
   }
 }

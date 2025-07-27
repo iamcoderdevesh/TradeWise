@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'package:tradewise/screens/home.dart';
 import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/screens/profile.dart';
 import 'package:tradewise/screens/watchlist.dart';
+import 'package:tradewise/services/controllers/accountController.dart';
+import 'package:tradewise/state/authState.dart';
 
 const Color inActiveIconColor = Color(0xFFB6B6B6);
 
@@ -16,6 +19,13 @@ class BottomNavScreen extends StatefulWidget {
 
 class _BottomNavScreenState extends State<BottomNavScreen> {
   int currentSelectedIndex = 0;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    setUpAccount(context);
+  }
 
   void updateCurrentIndex(int index) {
     setState(() {
@@ -32,8 +42,12 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: pages[currentSelectedIndex],
+    return  Scaffold(
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : pages[currentSelectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         onTap: updateCurrentIndex,
         currentIndex: currentSelectedIndex,
@@ -125,6 +139,18 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> setUpAccount(BuildContext context) async {
+    late AuthState state = Provider.of<AuthState>(context, listen: false);
+    final accountController = AccountController();
+    String userId = state.userId as String;
+
+    await accountController.setAccountNameAndBalance(context: context, userId: userId);
+
+    setState(() {
+      isLoading = false; // Setup is complete
+    });
   }
 }
 

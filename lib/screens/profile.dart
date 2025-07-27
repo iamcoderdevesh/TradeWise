@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/screens/accounts.dart';
-import 'package:tradewise/state/state.dart';
+import 'package:tradewise/screens/signin.dart';
+import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/appState.dart';
+import 'package:tradewise/state/authState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -19,13 +23,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    late AuthState state = Provider.of<AuthState>(context, listen: false);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           headerSection("Profile"),
-          profileSection(context),
+          profileSection(
+              context: context,
+              profileName: state.user?.displayName,
+              email: state.user?.email),
           Expanded(
             child: Stack(
               children: [
@@ -33,7 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Column(
                   // mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const AccountMenu(),
+                    accountMenu(context),
                     const SizedBox(height: 15),
                     ProfileMenu(
                       text: "Account Settings",
@@ -69,7 +78,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              state.singOut();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text("Signout Successfully.")));
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignInScreen(),
+                                ),
+                              );
+                            },
                             child: const Text(
                               "Logout",
                               style: TextStyle(
@@ -91,10 +111,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget profileSection(BuildContext context) {
-    late TradeWiseProvider state =
-        Provider.of<TradeWiseProvider>(context, listen: false);
-    String themeMode = Provider.of<TradeWiseProvider>(context).theme;
+  Widget accountMenu(BuildContext context) {
+    late AccountState accountState =
+        Provider.of<AccountState>(context, listen: true);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: TextButton(
+        style: TextButton.styleFrom(
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          padding: const EdgeInsets.all(20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          elevation: 2,
+        ),
+        onPressed: () {},
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Account Balance",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    Helper().formatNumber(value: accountState.totalBalance),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.tertiary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Color(0xFF757575),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget profileSection({
+    required BuildContext context,
+    required String? profileName,
+    required String? email,
+  }) {
+    late AppState state = Provider.of<AppState>(context, listen: false);
+    String themeMode = Provider.of<AppState>(context).theme;
 
     return Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 10, left: 20, right: 20),
@@ -109,16 +183,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Ram Sharma",
-                    style: TextStyle(
+                  Text(
+                    profileName!,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    "ramsharma@gmail.com",
+                    email!,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.tertiary,
                     ),
@@ -141,7 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
 }
 
 class ProfilePic extends StatelessWidget {
@@ -231,61 +304,6 @@ class ProfileMenu extends StatelessWidget {
             Divider(
               thickness: 0.5,
               color: Theme.of(context).colorScheme.tertiary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class AccountMenu extends StatelessWidget {
-  const AccountMenu({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: TextButton(
-        style: TextButton.styleFrom(
-          foregroundColor: Theme.of(context).colorScheme.onSurface,
-          padding: const EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          elevation: 2,
-        ),
-        onPressed: () {},
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Account Balance",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "\$2,34,650.00",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.tertiary,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Color(0xFF757575),
             ),
           ],
         ),
