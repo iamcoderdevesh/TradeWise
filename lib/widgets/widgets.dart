@@ -221,6 +221,7 @@ Widget elevatedButton({
     style: ElevatedButton.styleFrom(
       elevation: 0,
       backgroundColor: bgColor,
+      disabledBackgroundColor: bgColor,
       foregroundColor: Colors.white,
       minimumSize: const Size(double.infinity, 48),
       shape: const RoundedRectangleBorder(

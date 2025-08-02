@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tradewise/services/models/TradeModel.dart';
+import 'package:tradewise/services/models/TradeModel.dart' hide TradeModel;
+import 'package:tradewise/services/models/tradeModel.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/authState.dart';
+import 'package:tradewise/state/tradeState.dart';
 
 class TradeController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -15,6 +17,7 @@ class TradeController {
     required String tradeName,
     required String assetName,
     required String marketSegment,
+    required String status,
     required String quantity,
     required String margin,
     required String ltp,
@@ -38,6 +41,7 @@ class TradeController {
         marketSegment: marketSegment,
         assetName: assetName,
         tradeName: tradeName,
+        status: status,
         quantity: quantity,
         ltp: ltp,
         entryPrice: entryPrice,
@@ -60,5 +64,16 @@ class TradeController {
     }
 
     return {"status": false};
+  }
+
+  void getActiveTrades({required BuildContext context}) async {
+
+    QuerySnapshot snapshot = await _db.collection(_collection).where('status', isEqualTo: 'OPEN').get();
+    final trades = snapshot.docs
+          .map((doc) => TradeModel.fromFirestore(doc.data() as Map<String, dynamic>))
+          .toList();
+
+    late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
+    tradeState.setActiveTrades(trades.cast<TradeModel>());
   }
 }

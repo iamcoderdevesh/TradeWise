@@ -70,7 +70,8 @@ class OrderController {
           marketSegment: marketSegment,
           quantity: orderQuantity,
           totalFees: totalFees,
-          tradeName: orderName,
+          tradeName: orderName, 
+          status: orderStatus,
         );
 
         bool status = response["status"] as bool;

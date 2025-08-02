@@ -15,6 +15,7 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  late bool isLoading = false;
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -120,6 +121,7 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
           const SizedBox(height: 8),
           elevatedButton(
+            isLoading: isLoading,
             buttonLabel: "Continue",
             onPressed: () async {
               String email = emailController.text.trim();
@@ -129,6 +131,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("Please fill all the fields.")));
               } else {
+                setState(() {
+                  isLoading = true;
+                });
                 final response = await AuthenticationController()
                     .handleSignIn(email: email, password: password);
 
@@ -139,6 +144,9 @@ class _SignInScreenState extends State<SignInScreen> {
                 ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(message)));
 
+                setState(() {
+                  isLoading = false;
+                });
                 if (status) {
                   setState(() {
                     state.updateAuthStatus(authStatus: status);

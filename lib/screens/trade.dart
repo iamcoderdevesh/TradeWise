@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/services/controllers/orderController.dart';
+import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
@@ -14,11 +17,16 @@ class TradeScreen extends StatefulWidget {
 
 class _TradeScreenState extends State<TradeScreen>
     with SingleTickerProviderStateMixin {
+  late Helper helper = Helper();
   late TabController _tabController;
 
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
   bool isLoading = false;
+  late String currentPrice = '0.00';
+  late String availableMargin = '0.00';
+  late String tradeMargin = '0.00';
+  late String fees = '0.00';
 
   @override
   void initState() {
@@ -28,10 +36,13 @@ class _TradeScreenState extends State<TradeScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     late TradeState tradeState =
         Provider.of<TradeState>(context, listen: false);
+    late AccountState accountState =
+        Provider.of<AccountState>(context, listen: false);
+    availableMargin = accountState.totalBalance;
 
-    // Recreate TabController with new index (if needed)
     _tabController = TabController(
       length: 2,
       vsync: this,
@@ -53,6 +64,7 @@ class _TradeScreenState extends State<TradeScreen>
   Widget build(BuildContext context) {
     late TradeState tradeState =
         Provider.of<TradeState>(context, listen: false);
+    currentPrice = tradeState.price;
     amountController.text = tradeState.price;
 
     return Scaffold(
@@ -217,7 +229,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 10,
           ),
           Text(
-            "\$200.50",
+            "\$$tradeMargin",
             style: TextStyle(color: currentColor),
           ),
           const SizedBox(
@@ -230,7 +242,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 5,
           ),
           Text(
-            "\$0.40",
+            "\$$fees",
             style: TextStyle(color: currentColor),
           ),
           const SizedBox(
@@ -243,7 +255,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 5,
           ),
           Text(
-            "\$900.50",
+            "\$$availableMargin",
             style: TextStyle(color: currentColor),
           ),
         ],
@@ -296,6 +308,7 @@ class _TradeScreenState extends State<TradeScreen>
                     padding: const EdgeInsets.symmetric(
                         vertical: 10, horizontal: 20),
                     child: elevatedButton(
+                      isLoading: isLoading,
                       bgColor: color,
                       buttonLabel: type,
                       onPressed: () {
@@ -325,11 +338,15 @@ class _TradeScreenState extends State<TradeScreen>
               children: [
                 Expanded(
                   child: inputText(
-                      label: "Quantity",
-                      hintText: "0",
-                      context: context,
-                      color: currentColor,
-                      controller: quantityController),
+                    label: "Quantity",
+                    hintText: "0",
+                    context: context,
+                    color: currentColor,
+                    controller: quantityController,
+                    onChanged: (text) => {
+                      handleCalculation(price: currentPrice, quantity: text)
+                    },
+                  ),
                 ),
                 const SizedBox(
                   width: 10,
@@ -363,11 +380,12 @@ class _TradeScreenState extends State<TradeScreen>
               children: [
                 Expanded(
                   child: inputText(
-                      label: "Market",
-                      hintText: "0.00",
-                      context: context,
-                      color: currentColor,
-                      controller: amountController),
+                    label: "Market",
+                    hintText: "0.00",
+                    context: context,
+                    color: currentColor,
+                    controller: amountController,
+                  ),
                 ),
                 const SizedBox(
                   width: 10,
@@ -400,12 +418,14 @@ class _TradeScreenState extends State<TradeScreen>
     );
   }
 
-  Widget inputText(
-      {required BuildContext context,
-      required String label,
-      required String hintText,
-      required Color color,
-      required TextEditingController controller}) {
+  Widget inputText({
+    required BuildContext context,
+    required String label,
+    required String hintText,
+    required Color color,
+    required TextEditingController controller,
+    void Function(String)? onChanged,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,
@@ -413,7 +433,7 @@ class _TradeScreenState extends State<TradeScreen>
         FilteringTextInputFormatter.digitsOnly
       ], //
       onSaved: (password) {},
-      onChanged: (password) {},
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hintText,
         labelText: label,
@@ -445,6 +465,18 @@ class _TradeScreenState extends State<TradeScreen>
     );
   }
 
+  void handleCalculation({
+    required String price,
+    required String quantity,
+  }) {
+    setState(() {
+      tradeMargin =
+          helper.calculateTradeMargin(quantity: quantity, price: price);
+      fees = helper.calculateFees(
+          segment: 'crypto', orderType: 'market', margin: tradeMargin);
+    });
+  }
+
   Future<void> handleTradeSubmit({required String action}) async {
     late TradeState tradeState =
         Provider.of<TradeState>(context, listen: false);
@@ -472,16 +504,29 @@ class _TradeScreenState extends State<TradeScreen>
         marketSegment: 'Spot',
         orderStatus: 'OPEN',
         orderType: 'MARKET',
-        totalFees: '0.00',
+        totalFees: fees,
         margin: '0',
       );
 
       bool status = response["status"] as bool;
 
+      setState(() {
+        isLoading = false;
+      });
+
       if (status) {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Order Placed successfully.")));
+
+        Future.delayed(const Duration(milliseconds: 200), () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const PortfolioScreen(),
+            ),
+          );
+        });
       }
     }
   }

@@ -12,10 +12,10 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-
-  final TextEditingController nameController= TextEditingController();
-  final TextEditingController emailController= TextEditingController();
-  final TextEditingController passwordController= TextEditingController();
+  late bool isLoading = false;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   @override
   void initState() {
@@ -134,10 +134,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
             if (name.isEmpty || email.isEmpty || password.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Please fill all the fields.")));
-            } 
-            else {
-              final response = await AuthenticationController()
-                  .handleSignup(fullName: name, email: email, password: password);
+            } else {
+              setState(() {
+                isLoading = true;
+              });
+              final response = await AuthenticationController().handleSignup(
+                  fullName: name, email: email, password: password);
 
               bool status = response["status"] as bool;
               String message = response["message"] as String;
@@ -145,7 +147,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               // ignore: use_build_context_synchronously
               ScaffoldMessenger.of(context)
                   .showSnackBar(SnackBar(content: Text(message)));
-
+              setState(() {
+                isLoading = false;
+              });
               if (status) {
                 Future.delayed(const Duration(milliseconds: 200), () {
                   Navigator.push(
