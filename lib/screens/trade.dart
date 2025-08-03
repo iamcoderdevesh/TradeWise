@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/screens/portfolio.dart';
+import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/tradeState.dart';
@@ -17,13 +20,20 @@ class TradeScreen extends StatefulWidget {
 
 class _TradeScreenState extends State<TradeScreen>
     with SingleTickerProviderStateMixin {
-  late Helper helper = Helper();
-  late TabController _tabController;
+  late Timer _timer;
 
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
+
+  late Helper helper = Helper();
+  late TabController _tabController;
+
+  late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
+  final ApiService _apiService = ApiService();
+
   bool isLoading = false;
   late String currentPrice = '0.00';
+  late String perChange = '0.00';
   late String availableMargin = '0.00';
   late String tradeMargin = '0.00';
   late String fees = '0.00';
@@ -31,6 +41,18 @@ class _TradeScreenState extends State<TradeScreen>
   @override
   void initState() {
     super.initState();
+    fetchTickerData();
+    _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
+      fetchTickerData();
+    });
+  }
+
+  @override
+  void dispose() {
+    // Cancel the timer when the widget is disposed
+    _timer.cancel();
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -55,18 +77,7 @@ class _TradeScreenState extends State<TradeScreen>
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    _tabController.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    late TradeState tradeState =
-        Provider.of<TradeState>(context, listen: false);
-    currentPrice = tradeState.price;
-    amountController.text = tradeState.price;
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
@@ -123,13 +134,7 @@ class _TradeScreenState extends State<TradeScreen>
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  priceBox(
-                    context: context,
-                    perChange: tradeState.perChange,
-                    price: tradeState.price,
-                  )
-                ],
+                children: [priceBox(context: context)],
               ),
             ),
           ),
@@ -158,11 +163,7 @@ class _TradeScreenState extends State<TradeScreen>
     );
   }
 
-  Widget priceBox({
-    required BuildContext context,
-    required String price,
-    required String perChange,
-  }) {
+  Widget priceBox({required BuildContext context}) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -189,15 +190,19 @@ class _TradeScreenState extends State<TradeScreen>
             width: 10,
           ),
           Text(
-            price,
-            style: const TextStyle(color: Colors.green),
+            currentPrice,
+            style: TextStyle(
+              color: getPnlColor(value: perChange),
+            ),
           ),
           const SizedBox(
             width: 10,
           ),
           Text(
             perChange,
-            style: const TextStyle(color: Colors.green),
+            style: TextStyle(
+              color: getPnlColor(value: perChange),
+            ),
           ),
         ],
       ),
@@ -478,9 +483,6 @@ class _TradeScreenState extends State<TradeScreen>
   }
 
   Future<void> handleTradeSubmit({required String action}) async {
-    late TradeState tradeState =
-        Provider.of<TradeState>(context, listen: false);
-
     String quantity = quantityController.text.trim();
     String amount = amountController.text.trim();
 
@@ -496,10 +498,10 @@ class _TradeScreenState extends State<TradeScreen>
       final response = await accountController.createOrder(
         context: context,
         assetName: tradeState.assetName,
-        ltp: tradeState.price,
+        ltp: currentPrice,
         orderAction: action,
         orderName: tradeState.assetName + tradeState.action,
-        orderPrice: tradeState.price,
+        orderPrice: currentPrice,
         orderQuantity: quantity,
         marketSegment: 'Spot',
         orderStatus: 'OPEN',
@@ -528,6 +530,24 @@ class _TradeScreenState extends State<TradeScreen>
           );
         });
       }
+    }
+  }
+
+  Future<void> fetchTickerData() async {
+    try {
+      String quantity = quantityController.text.trim();
+      final data = await _apiService.getTickerPrice(tradeState.assetName);
+
+      setState(() {
+        currentPrice = data['assetPrice'];
+        perChange = data['assetPriceChange'];
+        amountController.text = currentPrice;
+        if (quantity.isNotEmpty) {
+          handleCalculation(price: currentPrice, quantity: quantity);
+        }
+      });
+    } catch (e) {
+      print('Error fetching ticker data: $e');
     }
   }
 }

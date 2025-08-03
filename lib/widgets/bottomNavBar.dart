@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tradewise/screens/home.dart';
 import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/screens/profile.dart';
-import 'package:tradewise/screens/watchlist.dart';
+import 'package:tradewise/screens/market.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
 import 'package:tradewise/state/authState.dart';
 
@@ -35,7 +35,7 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
 
   final pages = [
     const HomeScreen(),
-    const WatchlistScreen(),
+    const MarketScreen(),
     const PortfolioScreen(),
     const ProfileScreen(),
   ];
@@ -96,7 +96,7 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
                 BlendMode.srcIn,
               ),
             ),
-            label: "Watchlist",
+            label: "Market",
           ),
           BottomNavigationBarItem(
             icon: SvgPicture.string(

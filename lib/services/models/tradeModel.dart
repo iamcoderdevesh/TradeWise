@@ -59,7 +59,7 @@ class TradeModel {
       tradeId: json["tradeId"],
       assetName: json["assetName"],
       quantity: json["quantity"],
-      ltp: json["ltp"],
+      entryPrice: json["entryPrice"],
     );
   }
 

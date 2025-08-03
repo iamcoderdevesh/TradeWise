@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/screens/trade.dart';
 import 'package:tradewise/state/tradeState.dart';
+import 'package:tradewise/widgets/widgets.dart';
 
 Future buySellBottomModal({
   required BuildContext context,
@@ -9,6 +11,10 @@ Future buySellBottomModal({
   required String price,
   required String perChange,
 }) {
+
+  late String percentChange =
+      Helper().formatNumber(value: perChange, formatNumber: 2);
+
   return showModalBottomSheet(
     context: context,
     backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(1),
@@ -59,11 +65,11 @@ Future buySellBottomModal({
                       ),
                       const SizedBox(width: 7),
                       Text(
-                        perChange,
-                        style: const TextStyle(
+                        '$percentChange%',
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xE215CC8A),
+                          color: getPnlColor(value: percentChange),
                         ),
                       ),
                     ],
@@ -87,8 +93,6 @@ Future buySellBottomModal({
                               action: 'BUY',
                               context: context,
                               assetName: assetName,
-                              perChange: perChange,
-                              price: price,
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -111,9 +115,7 @@ Future buySellBottomModal({
                             handleBuySellClick(
                               action: 'SELL',
                               context: context,
-                              assetName: assetName,
-                              perChange: perChange,
-                              price: price,
+                              assetName: assetName
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -184,14 +186,13 @@ void handleBuySellClick({
   required BuildContext context,
   required String action,
   required String assetName,
-  required String price,
-  required String perChange,
 }) {
   late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
   tradeState.setTradeData(
-      action: action, assetName: assetName, perChange: perChange, price: price);
+      action: action, assetName: assetName);
 
   Future.delayed(const Duration(milliseconds: 200), () {
+    Navigator.pop(context);
     Navigator.push(
       context,
       MaterialPageRoute(

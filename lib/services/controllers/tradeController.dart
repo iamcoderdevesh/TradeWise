@@ -73,6 +73,7 @@ class TradeController {
           .map((doc) => TradeModel.fromFirestore(doc.data() as Map<String, dynamic>))
           .toList();
 
+    // ignore: use_build_context_synchronously
     late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
     tradeState.setActiveTrades(trades.cast<TradeModel>());
   }

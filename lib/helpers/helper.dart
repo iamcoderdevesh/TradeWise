@@ -4,8 +4,8 @@ class Helper {
   String getFirstLetter({required String value}) =>
       value.toString().substring(0, 1);
 
-  String formatNumber({required String value}) =>
-      double.parse(value).toStringAsFixed(2);
+  String formatNumber({required String value, int formatNumber = 2}) =>
+      double.parse(value).toStringAsFixed(formatNumber);
 
   String calculateTradeMargin({
     required String quantity,

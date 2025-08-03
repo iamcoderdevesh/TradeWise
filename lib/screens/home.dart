@@ -6,6 +6,7 @@ import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/authState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/services/api/api.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,8 +16,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final List<String> trackedSymbols = [
+    'BTCUSDT',
+    'ETHUSDT',
+    'TRXUSDT',
+    'XRPUSDT',
+  ];
+  late Future<List<Map<String, dynamic>>> _cryptoData;
+
   @override
   void initState() {
+    _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
     super.initState();
   }
 
@@ -40,13 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      heroSection(
-                          accountBalance: Helper().formatNumber(
-                              value: accountState.totalBalance)),
+                      heroSection(accountBalance: accountState.totalBalance),
                       labelViewMoreSection(label: "Featured"),
                       cardSection(),
                       labelViewMoreSection(label: "Trending in market"),
-                      trendingSection(),
+                      trendingSection(context),
                     ],
                   ),
                 ),
@@ -97,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget heroSection({required String accountBalance}) {
+    late String balance = Helper().formatNumber(value: accountBalance);
     return SizedBox(
       height: 100,
       child: Container(
@@ -131,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      accountBalance,
+                      balance,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -206,8 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
           cardItems(
               'ETH', ethIcon, const Color(0xFFFDF4F5), '40000.65', "+2.06%"),
           const SizedBox(width: 15),
-          cardItems(
-              'USDT', usdtIcon, const Color(0xFFFFF7F1), '1.07', "+0.24%")
+          cardItems('USDT', usdtIcon, const Color(0xFFFFF7F1), '1.07', "+0.24%")
         ],
       ),
     );
@@ -301,38 +309,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget trendingSection() {
+  Widget trendingSection(context) {
     return Expanded(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            trendingItems(
-                context, 'Bitcoin', 'BTC', '100000.20', '+1.72%', btcIcon),
-            const SizedBox(
-              height: 10,
-            ),
-            trendingItems(
-                context, 'Ethereum', 'ETH', '26535.56', '+0.88%', ethIcon),
-            const SizedBox(
-              height: 10,
-            ),
-            trendingItems(
-                context, 'Dogecoin', 'DOGE', '0.56', '+2.55%', dogeIcon),
-            const SizedBox(
-              height: 10,
-            ),
-            trendingItems(context, 'XRP', 'XRP', '1.56', '+3.42%', xrpIcon),
-            const SizedBox(
-              height: 10,
-            ),
-            trendingItems(
-                context, 'Solana', 'SOL', '2464.20', '+1.43%', solIcon),
-            const SizedBox(
-              height: 10,
-            ),
-          ],
-        ),
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _cryptoData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: circularLoader());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          final data = snapshot.data!;
+
+          return ListView.builder(
+            padding: EdgeInsets.zero,
+            physics: const BouncingScrollPhysics(),
+            itemCount: data.length,
+            itemBuilder: (context, index) {
+              final crypto = data[index];
+              return tickerItems(
+                context: context,
+                perChange: crypto['priceChangePercent'],
+                currentPrice: crypto['lastPrice'],
+                assetName: crypto['symbol'],
+                shortName: crypto['symbol'],
+              );
+            },
+          );
+        },
       ),
     );
   }

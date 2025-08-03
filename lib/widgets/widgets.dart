@@ -1,15 +1,18 @@
-// ignore_for_file: use_function_type_syntax_for_parameters
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:tradewise/screens/trade.dart';
+import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/widgets/buySellBottomModal.dart';
 
 const authOutlineInputBorder = OutlineInputBorder(
   borderSide: BorderSide(color: Color(0xFF757575)),
   borderRadius: BorderRadius.all(Radius.circular(100)),
 );
+
+Widget circularLoader() {
+  return const CircularProgressIndicator(
+    color: Color(0xFF287BFF),
+  );
+}
 
 Widget headerSection(String title) {
   return Padding(
@@ -51,10 +54,20 @@ Widget curveAreaSection(BuildContext context, double topPadding) {
   );
 }
 
-Widget trendingItems(BuildContext context, String assetName, String shortName,
-    String price, String perChange, String icon) {
+Widget tickerItems(
+    {required BuildContext context,
+    required String assetName,
+    required String shortName,
+    required String currentPrice,
+    required String perChange}) {
+
+  late String price =
+      Helper().formatNumber(value: currentPrice, formatNumber: 4);
+  late String percentChange =
+      Helper().formatNumber(value: perChange, formatNumber: 2);
+
   return Container(
-    // padding: const EdgeInsets.only(left: 15, top: 15, bottom: 15, right: 15),
+    margin: const EdgeInsets.symmetric(vertical: 5),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(8),
       border: Border.all(color: Theme.of(context).colorScheme.onTertiary),
@@ -67,7 +80,7 @@ Widget trendingItems(BuildContext context, String assetName, String shortName,
         buySellBottomModal(
           context: context,
           assetName: assetName,
-          perChange: perChange,
+          perChange: percentChange,
           price: price,
         );
       },
@@ -75,11 +88,32 @@ Widget trendingItems(BuildContext context, String assetName, String shortName,
         padding: const EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 5),
         child: Row(
           children: [
-            Center(
-              child: SizedBox(
-                width: 32,
-                height: 32,
-                child: SvgPicture.string(icon),
+            Container(
+              padding: const EdgeInsets.only(right: 6.0),
+              child: Center(
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade700,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            shortName.substring(0, 1),
+                            style: const TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(
@@ -119,11 +153,11 @@ Widget trendingItems(BuildContext context, String assetName, String shortName,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  perChange,
-                  style: const TextStyle(
+                  '$percentChange%',
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xE215CC8A),
+                    color: getPnlColor(value: percentChange),
                   ),
                 ),
               ],
@@ -240,3 +274,13 @@ Widget elevatedButton({
         : Text(buttonLabel),
   );
 }
+
+Color getPnlColor({required String value}) {
+  final double number = double.tryParse(value) ?? 0.0;
+  return (number > 0)
+      ? const Color(0xE215CC8A)
+      : (number < 0)
+          ? Colors.red
+          : Colors.grey.shade500;
+}
+

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/tradeController.dart';
-import 'package:tradewise/services/models/TradeModel.dart';
 import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
@@ -13,19 +16,33 @@ class PositionsScreen extends StatefulWidget {
 }
 
 class _PositionsScreenState extends State<PositionsScreen> {
+  late Timer _timer;
+  late Future<List<Map<String, dynamic>>> tradeList;
+
+  final Helper helper = Helper();
+  final ApiService _apiService = ApiService();
+  final tradeController = TradeController();
 
   late TradeState tradeState = Provider.of<TradeState>(context, listen: true);
-  final tradeController = TradeController();
+  late double totalPnL = 0.00;
 
   @override
   void initState() {
     tradeController.getActiveTrades(context: context);
+    tradeList = handleTradePostion();
+    updateTradePostion();
     super.initState();
   }
 
   @override
-  Widget build(BuildContext context) {
+  void dispose() {
+    // Cancel the timer when the widget is disposed
+    _timer.cancel();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       children: [
         curveAreaSection(context, 40),
@@ -67,12 +84,12 @@ class _PositionsScreenState extends State<PositionsScreen> {
                   ),
                 ),
                 const SizedBox(height: 5),
-                const Center(
+                Center(
                   child: Text(
-                    "+0.00",
+                    '+${helper.formatNumber(value: totalPnL.toString(), formatNumber: 2)}',
                     style: TextStyle(
                       fontSize: 20,
-                      color: Colors.green,
+                      color: getPnlColor(value: totalPnL.toString()),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -81,17 +98,29 @@ class _PositionsScreenState extends State<PositionsScreen> {
             ),
           ),
           tradeState.isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: circularLoader())
               : Expanded(
-                  child: ListView.builder(
-                    itemCount: tradeState.activeTrades.length,
-                    itemBuilder: (context, index) {
-                      return postionItems(
-                        shortName: tradeState.activeTrades[index].assetName ?? '',
-                        price: tradeState.activeTrades[index].ltp ?? '',
-                        pnl: '+0.00',
-                        qty: tradeState.activeTrades[index].quantity ?? '',
-                        context: context,
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: tradeList,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Center(child: circularLoader());
+                      }
+
+                      final data = snapshot.data!;
+                      return ListView.builder(
+                        itemCount: data.length,
+                        itemBuilder: (context, index) {
+                          final tradeData = data[index];
+
+                          return postionItems(
+                            shortName: tradeData['assetName'] ?? 'null',
+                            price: tradeData['ltp'] ?? 'null',
+                            pnl: tradeData['pnl'] ?? 'null',
+                            qty: tradeData['quantity'] ?? 'null',
+                            context: context,
+                          );
+                        },
                       );
                     },
                   ),
@@ -180,10 +209,10 @@ class _PositionsScreenState extends State<PositionsScreen> {
             children: [
               Text(
                 pnl,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.green,
+                  color: getPnlColor(value: pnl),
                 ),
               ),
               const SizedBox(height: 10),
@@ -211,5 +240,52 @@ class _PositionsScreenState extends State<PositionsScreen> {
         ],
       ),
     );
+  }
+
+  void updateTradePostion() {
+    _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
+      setState(() {
+        tradeList = handleTradePostion();
+      });
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> handleTradePostion() async {
+    double totalPnl = 0.00;
+    List<Map<String, dynamic>> result = [];
+    bool isLoading = tradeState.isLoading;
+
+    if (isLoading) return result;
+
+    final activeTradeList = tradeState.activeTrades;
+
+    for (final pos in activeTradeList) {
+      final currentTickerData =
+          await _apiService.getTickerPrice(pos.assetName ?? '');
+      final currentPrice = currentTickerData['assetPrice'];
+      final pnl = calculatePnL(
+          double.parse(currentPrice ?? '0.00'),
+          double.parse(pos.entryPrice ?? '0.00'),
+          double.parse(pos.quantity ?? '0.00'));
+
+      totalPnl += pnl;
+
+      result.add({
+        'assetName': pos.assetName,
+        'ltp': currentPrice,
+        'quantity': pos.quantity,
+        'pnl': helper.formatNumber(value: pnl.toString(), formatNumber: 2)
+      });
+    }
+    
+    setState(() {
+      totalPnL = totalPnl;
+    });
+
+    return result;
+  }
+
+  double calculatePnL(double currentPrice, double buyPrice, double quantity) {
+    return (currentPrice - buyPrice) * quantity;
   }
 }
