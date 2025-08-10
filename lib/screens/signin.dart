@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/screens/home.dart';
 import 'package:tradewise/services/controllers/authController.dart';
 import 'package:tradewise/screens/signup.dart';
 import 'package:tradewise/state/authState.dart';
-import 'package:tradewise/widgets/bottomNavBar.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -156,7 +156,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const BottomNavScreen(),
+                        builder: (context) => const HomeScreen(),
                       ),
                     );
                   });

@@ -6,7 +6,7 @@ class OrderModel {
   String? tradeId;
   String accountId;
   String userId;
-  String orderName;
+  String assetName;
   String orderPrice;
   String orderAction;
   String orderType;
@@ -24,7 +24,7 @@ class OrderModel {
     required this.tradeId,
     required this.accountId,
     required this.userId,
-    required this.orderName,
+    required this.assetName,
     required this.orderPrice,
     required this.orderAction,
     required this.orderType,
@@ -43,7 +43,7 @@ class OrderModel {
         tradeId: json["tradeId"],
         accountId: json["accountId"],
         userId: json["userId"],
-        orderName: json["orderName"],
+        assetName: json["assetName"],
         orderPrice: json["orderPrice"],
         orderAction: json["orderAction"],
         orderType: json["orderType"],
@@ -62,7 +62,7 @@ class OrderModel {
         "tradeId": tradeId,
         "accountId": accountId,
         "userId": userId,
-        "orderName": orderName,
+        "assetName": assetName,
         "orderPrice": orderPrice,
         "orderAction": orderAction,
         "orderType": orderType,

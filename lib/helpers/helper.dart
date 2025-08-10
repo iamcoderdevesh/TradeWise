@@ -1,11 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
 class Helper {
   Helper();
 
   String getFirstLetter({required String value}) =>
       value.toString().substring(0, 1);
 
-  String formatNumber({required String value, int formatNumber = 2}) =>
-      double.parse(value).toStringAsFixed(formatNumber);
+  String formatNumber(
+          {required String value,
+          int formatNumber = 2,
+          bool plusSign = false}) =>
+      plusSign
+          ? (double.parse(value) > 0
+              ? '+${double.parse(value).toStringAsFixed(formatNumber)}'
+              : double.parse(value).toStringAsFixed(formatNumber))
+          : double.parse(value).toStringAsFixed(formatNumber);
 
   String calculateTradeMargin({
     required String quantity,
@@ -36,5 +46,31 @@ class Helper {
     }
 
     return fees.toStringAsFixed(2).toString();
+  }
+
+  double calculatePnL({
+    required String? action,
+    required String? currentPrice,
+    required String? buyPrice,
+    required String? quantity,
+  }) {
+    double _currentPrice = double.parse(currentPrice ?? '0.00');
+    double _buyPrice = double.parse(buyPrice ?? '0.00');
+    double _quantity = double.parse(quantity ?? '0.00');
+
+    late double pnl = action == 'SELL' ? (_buyPrice - _currentPrice) * _quantity : (_currentPrice  - _buyPrice) * _quantity;
+    return pnl;
+  }
+
+  String convertTimestampToTime(Timestamp timestamp) {
+    try {
+      // Convert Firebase Timestamp to DateTime
+      DateTime dateTime = timestamp.toDate();
+
+      // Format the DateTime to "hh:mm a" format (12-hour format with AM/PM)
+      return DateFormat("hh:mm a").format(dateTime);
+    } catch (e) {
+      return "Invalid timestamp";
+    }
   }
 }

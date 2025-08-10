@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tradewise/helpers/helper.dart';
-import 'package:tradewise/widgets/buySellBottomModal.dart';
+import 'package:tradewise/widgets/bottomModal.dart';
+import 'package:swipeable_button_view/swipeable_button_view.dart';
 
 const authOutlineInputBorder = OutlineInputBorder(
   borderSide: BorderSide(color: Color(0xFF757575)),
@@ -16,7 +17,7 @@ Widget circularLoader() {
 
 Widget headerSection(String title) {
   return Padding(
-    padding: const EdgeInsets.only(top: 40, bottom: 10, left: 20, right: 20),
+    padding: const EdgeInsets.only(top: 20, bottom: 10, left: 20, right: 20),
     child: Column(
       children: [
         Text(
@@ -60,11 +61,10 @@ Widget tickerItems(
     required String shortName,
     required String currentPrice,
     required String perChange}) {
-
   late String price =
       Helper().formatNumber(value: currentPrice, formatNumber: 4);
   late String percentChange =
-      Helper().formatNumber(value: perChange, formatNumber: 2);
+      Helper().formatNumber(value: perChange, formatNumber: 2, plusSign: true);
 
   return Container(
     margin: const EdgeInsets.symmetric(vertical: 5),
@@ -77,7 +77,7 @@ Widget tickerItems(
         foregroundColor: Theme.of(context).colorScheme.onSurface,
       ),
       onPressed: () {
-        buySellBottomModal(
+        bottomModal(
           context: context,
           assetName: assetName,
           perChange: percentChange,
@@ -275,6 +275,41 @@ Widget elevatedButton({
   );
 }
 
+Widget swipeButton({
+  required bool isFinished,
+  required String message,
+  required String buttonText,
+  required Function() onWaitingProcess,
+  required void Function() onFinish,
+}) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20),
+          child: SwipeableButtonView(
+            buttonText: buttonText,
+            buttonWidget: Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.blue.shade600,
+            ),
+            activeColor: Colors.blue.shade600,
+            isFinished: isFinished,
+            onWaitingProcess: onWaitingProcess,
+            onFinish: onFinish,
+          ),
+        ),
+        if (isFinished)
+          Text(
+            message,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+      ],
+    ),
+  );
+}
+
 Color getPnlColor({required String value}) {
   final double number = double.tryParse(value) ?? 0.0;
   return (number > 0)
@@ -283,4 +318,3 @@ Color getPnlColor({required String value}) {
           ? Colors.red
           : Colors.grey.shade500;
 }
-

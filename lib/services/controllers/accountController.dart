@@ -48,7 +48,7 @@ class AccountController {
   }
 
   // Read Account by ID
-  Future<void> setAccountNameAndBalance(
+  Future<void> setAccountBalance(
       {required BuildContext context, required String userId}) async {
     try {
       late AccountState state =

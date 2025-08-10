@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 class OrderScreen extends StatefulWidget {
@@ -9,6 +11,17 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
+  late Future<List<Map<String, dynamic>>> orderList;
+
+  final Helper helper = Helper();
+  final orderController = OrderController();
+
+  @override
+  void initState() {
+    orderList = orderController.getOrders(context: context);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return orderSection(context);
@@ -24,53 +37,40 @@ class _OrderScreenState extends State<OrderScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               searchBox(context),
-              const SizedBox(height: 20),
-              ordersItems(
-                'BTCUSDT.P',
-                'SELL',
-                '05:40 PM',
-                "60",
-                "CLOSED",
-                "95,000.25",
-                Icons.arrow_downward_rounded,
-                Colors.red,
-                context,
-              ),
-              const SizedBox(height: 10),
-              ordersItems(
-                'BTCUSDT.P',
-                'BUY',
-                '05:35 PM',
-                "60",
-                "OPEN",
-                "95,000.25",
-                Icons.arrow_upward_rounded,
-                Colors.green,
-                context,
-              ),
-              const SizedBox(height: 10),
-              ordersItems(
-                'BTCUSDT.P',
-                'SELL',
-                '05:40 PM',
-                "60",
-                "CLOSED",
-                "95,000.25",
-                Icons.arrow_downward_rounded,
-                Colors.red,
-                context,
-              ),
-              const SizedBox(height: 10),
-              ordersItems(
-                'BTCUSDT.P',
-                'BUY',
-                '05:35 PM',
-                "60",
-                "OPEN",
-                "95,000.25",
-                Icons.arrow_upward_rounded,
-                Colors.green,
-                context,
+              Flexible(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: orderList,
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(child: circularLoader());
+                    }
+
+                    final data = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        final orders = data[index];
+
+                        return ordersItems(
+                          context: context,
+                          shortName: orders['assetName'],
+                          price: orders['orderPrice'],
+                          quantity: orders['orderQuantity'],
+                          status: orders['orderStatus'],
+                          type: orders['orderType'],
+                          action: orders['orderAction'],
+                          datetime: helper.convertTimestampToTime(orders['createdOn']),
+                          icon: orders['orderAction'] == 'SELL'
+                              ? Icons.arrow_downward_rounded
+                              : Icons.arrow_upward_rounded,
+                          selectedColor: orders['orderAction'] == 'SELL'
+                              ? Colors.red
+                              : Colors.green,
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -79,18 +79,20 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-  Widget ordersItems(
-    String shortName,
-    String type,
-    String datetime,
-    String quantity,
-    String status,
-    String price,
-    IconData icon,
-    Color selectedColor,
-    BuildContext context,
-  ) {
+  Widget ordersItems({
+    required String shortName,
+    required String action,
+    required String type,
+    required String datetime,
+    required String quantity,
+    required String status,
+    required String price,
+    required IconData icon,
+    required Color selectedColor,
+    required BuildContext context,
+  }) {
     return Container(
+      margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.only(left: 10, top: 10, bottom: 10, right: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
@@ -116,7 +118,7 @@ class _OrderScreenState extends State<OrderScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "$shortName $type",
+                  "$shortName $action",
                   style: TextStyle(
                     fontSize: 14,
                     color: selectedColor,
@@ -124,20 +126,32 @@ class _OrderScreenState extends State<OrderScreen> {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  "$datetime  LIMIT",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      datetime,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      type,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
-            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [

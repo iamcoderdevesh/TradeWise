@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
+// ignore: must_be_immutable
 class WatchlistScreen extends StatefulWidget {
-  const WatchlistScreen({super.key});
+  late bool isFuture = false;
+  WatchlistScreen({super.key, this.isFuture = false});
 
   @override
   State<WatchlistScreen> createState() => _WatchlistScreenState();
@@ -23,7 +25,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
   @override
   void initState() {
-    _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
+    _cryptoData = ApiService.fetchCryptoData(trackedSymbols, isFuture: widget.isFuture);
     super.initState();
   }
 
@@ -48,7 +50,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
   Widget tickerListSections(context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+      padding: const EdgeInsets.only(top: 70, left: 20, right: 20),
       child: FutureBuilder<List<Map<String, dynamic>>>(
         future: _cryptoData,
         builder: (context, snapshot) {

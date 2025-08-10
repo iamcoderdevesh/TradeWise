@@ -2,25 +2,19 @@ import 'package:tradewise/services/models/tradeModel.dart';
 import 'package:tradewise/state/appState.dart';
 
 class TradeState extends AppState {
-
   List<TradeModel> activeTrades = [];
-  bool isLoading = true;
-
-  late String action;
-  late String assetName;
-
-  void setTradeData({
-    required String action,
-    required String assetName,
-  }) {
-    this.action = action;
-    this.assetName = assetName;
-    notifyListeners();
-  }
+  bool _isLoading = true;
 
   void setActiveTrades(List<TradeModel> trades) {
     activeTrades = trades;
-    isLoading = false;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  bool get isLoading => _isLoading;
+
+  set setLoading(bool isLoading) {
+    _isLoading = isLoading;
     notifyListeners();
   }
 }

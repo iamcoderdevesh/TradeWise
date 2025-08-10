@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/tradeController.dart';
-import 'package:tradewise/state/tradeState.dart';
+import 'package:tradewise/widgets/bottomModal.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 class PositionsScreen extends StatefulWidget {
@@ -17,19 +16,24 @@ class PositionsScreen extends StatefulWidget {
 
 class _PositionsScreenState extends State<PositionsScreen> {
   late Timer _timer;
+
+  late Future<List<Map<String, dynamic>>> openedTradeList;
+  late Future<List<Map<String, dynamic>>> closeTradeList;
+
   late Future<List<Map<String, dynamic>>> tradeList;
 
   final Helper helper = Helper();
   final ApiService _apiService = ApiService();
   final tradeController = TradeController();
 
-  late TradeState tradeState = Provider.of<TradeState>(context, listen: true);
-  late double totalPnL = 0.00;
+  late double _totalPnL = 0.00;
+  late double _closedPnL = 0.00;
 
   @override
   void initState() {
-    tradeController.getActiveTrades(context: context);
-    tradeList = handleTradePostion();
+    closeTradeList = handleTradePostion(status: 'CLOSED');
+    openedTradeList = handleTradePostion(status: 'OPEN');
+    tradeList = getCombineTrades();
     updateTradePostion();
     super.initState();
   }
@@ -55,189 +59,229 @@ class _PositionsScreenState extends State<PositionsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondary,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Text(
-                    "Total P&L",
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Center(
-                  child: Text(
-                    '+${helper.formatNumber(value: totalPnL.toString(), formatNumber: 2)}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: getPnlColor(value: totalPnL.toString()),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          tradeState.isLoading
-              ? Center(child: circularLoader())
-              : Expanded(
-                  child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: tradeList,
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return Center(child: circularLoader());
-                      }
-
-                      final data = snapshot.data!;
-                      return ListView.builder(
-                        itemCount: data.length,
-                        itemBuilder: (context, index) {
-                          final tradeData = data[index];
-
-                          return postionItems(
-                            shortName: tradeData['assetName'] ?? 'null',
-                            price: tradeData['ltp'] ?? 'null',
-                            pnl: tradeData['pnl'] ?? 'null',
-                            qty: tradeData['quantity'] ?? 'null',
-                            context: context,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
+          totalPnlBox(context),
+          const SizedBox(height: 10),
+          postionList(),
         ],
       ),
     );
   }
 
+  Widget totalPnlBox(context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              "Total P&L",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey.shade500,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Center(
+            child: Text(
+              helper.formatNumber(
+                  value: _totalPnL.toString(), formatNumber: 2, plusSign: true),
+              style: TextStyle(
+                fontSize: 20,
+                color: getPnlColor(value: _totalPnL.toString()),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget postionList() {
+    return Flexible(
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: tradeList,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: circularLoader());
+          }
+
+          final data = snapshot.data!;
+          return ListView.builder(
+            itemCount: data.length,
+            itemBuilder: (context, index) {
+              final tradeData = data[index];
+
+              return postionItems(
+                shortName: tradeData['assetName'] ?? '',
+                price: tradeData['ltp'] ?? '',
+                pnl: tradeData['pnl'] ?? '',
+                qty: tradeData['quantity'] ?? '',
+                entryPrice: tradeData['entryPrice'] ?? '',
+                tradeId: tradeData['tradeId'] ?? '',
+                status: tradeData['status'] ?? '',
+                action: tradeData['action'] ?? '',
+                context: context,
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget postionItems({
+    required BuildContext context,
     required String shortName,
     required String price,
+    required String status,
     required String pnl,
     required String qty,
-    required BuildContext context,
+    required String action,
+    required String entryPrice,
+    required String tradeId,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.only(left: 10, top: 10, bottom: 10, right: 10),
+      margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Theme.of(context).colorScheme.onTertiary),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.only(right: 6.0),
-            child: Center(
-              child: Stack(
-                children: [
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade700,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          shortName.substring(0, 1),
-                          style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500),
+      child: Opacity(
+        opacity: status == 'CLOSED' ? 0.6 : 1.0,
+        child: TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+          ),
+          onPressed: () {
+            status == 'CLOSED'
+                ? null
+                : bottomModal(
+                    context: context,
+                    assetName: shortName,
+                    perChange: '0.00',
+                    price: price,
+                    quantity: qty,
+                    entryPrice: entryPrice,
+                    tradeId: tradeId,
+                    isExit: true,
+                    action: action,
+                  );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(right: 6.0),
+                  child: Center(
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade700,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                shortName.substring(0, 1),
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(shortName, style: const TextStyle(fontSize: 13)),
-                const SizedBox(height: 5),
-                Row(
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(shortName, style: const TextStyle(fontSize: 13)),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Text(
+                            "Qty: ",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
+                          ),
+                          Text(
+                            qty,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Qty: ",
+                      pnl,
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Theme.of(context).colorScheme.tertiary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: getPnlColor(value: pnl),
                       ),
                     ),
-                    Text(
-                      qty,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(
+                          "LTP ",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
+                        ),
+                        Text(
+                          price,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                pnl,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: getPnlColor(value: pnl),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Text(
-                    "LTP ",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.tertiary,
-                    ),
-                  ),
-                  Text(
-                    price,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -245,47 +289,67 @@ class _PositionsScreenState extends State<PositionsScreen> {
   void updateTradePostion() {
     _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
       setState(() {
-        tradeList = handleTradePostion();
+        openedTradeList = handleTradePostion(isTimerCall: true, status: 'OPEN');
+        tradeList = getCombineTrades();
       });
     });
   }
 
-  Future<List<Map<String, dynamic>>> handleTradePostion() async {
+  Future<List<Map<String, dynamic>>> handleTradePostion({
+    required String status,
+    bool isTimerCall = false,
+  }) async {
     double totalPnl = 0.00;
     List<Map<String, dynamic>> result = [];
-    bool isLoading = tradeState.isLoading;
 
-    if (isLoading) return result;
-
-    final activeTradeList = tradeState.activeTrades;
+    final activeTradeList =
+        await tradeController.getTrades(context: context, status: status);
+    if (activeTradeList.isEmpty && isTimerCall && status == 'OPEN') {
+      _timer.cancel();
+      return result;
+    }
 
     for (final pos in activeTradeList) {
-      final currentTickerData =
-          await _apiService.getTickerPrice(pos.assetName ?? '');
-      final currentPrice = currentTickerData['assetPrice'];
-      final pnl = calculatePnL(
-          double.parse(currentPrice ?? '0.00'),
-          double.parse(pos.entryPrice ?? '0.00'),
-          double.parse(pos.quantity ?? '0.00'));
+      final currentTickerData = status == 'CLOSED'
+          ? null
+          : await _apiService.getTickerPrice(pos.assetName ?? '');
+
+      final currentPrice = status == 'CLOSED' ? pos.entryPrice : currentTickerData?['assetPrice'];
+      final pnl = status == 'CLOSED' ? double.parse(pos.netPnl ?? '0.00') : helper.calculatePnL(
+        action: pos.action,
+        currentPrice: currentPrice,
+        buyPrice: pos.entryPrice,
+        quantity: pos.quantity,
+      );
 
       totalPnl += pnl;
 
       result.add({
+        'tradeId': pos.tradeId,
         'assetName': pos.assetName,
         'ltp': currentPrice,
         'quantity': pos.quantity,
-        'pnl': helper.formatNumber(value: pnl.toString(), formatNumber: 2)
+        'entryPrice': pos.entryPrice,
+        'action': pos.action,
+        'status': status,
+        'pnl': helper.formatNumber(
+            value: pnl.toString(), formatNumber: 2, plusSign: true)
       });
     }
-    
+
     setState(() {
-      totalPnL = totalPnl;
+      _totalPnL = totalPnl + _closedPnL;
     });
+
+    if (status == 'CLOSED') {
+      _closedPnL = totalPnl;
+    }
 
     return result;
   }
 
-  double calculatePnL(double currentPrice, double buyPrice, double quantity) {
-    return (currentPrice - buyPrice) * quantity;
+  Future<List<Map<String, dynamic>>> getCombineTrades() async {
+    final results = await Future.wait([openedTradeList, closeTradeList]);
+    return [...results[0], ...results[1]];
   }
 }

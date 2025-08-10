@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/screens/home.dart';
 import 'package:tradewise/screens/profile.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
 import 'package:tradewise/services/models/accountModel.dart';
 import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -171,10 +173,9 @@ class _AccountScreenState extends State<AccountScreen> {
       bool status = response["status"] as bool;
 
       if (status) {
-
         String userId = response["userId"] as String;
         // ignore: use_build_context_synchronously
-        await accountController.setAccountNameAndBalance(
+        await accountController.setAccountBalance(
             context: context, userId: userId);
 
         // ignore: use_build_context_synchronously
@@ -182,7 +183,15 @@ class _AccountScreenState extends State<AccountScreen> {
             const SnackBar(content: Text("Account created successfully.")));
 
         Future.delayed(const Duration(milliseconds: 200), () {
-          Navigator.pop(context);
+          final appState = Provider.of<AppState>(context, listen: false);
+          appState.setPageIndex = 3;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomeScreen(),
+            ),
+          );
         });
       }
     }

@@ -1,156 +1,125 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:tradewise/screens/home.dart';
-import 'package:tradewise/screens/portfolio.dart';
-import 'package:tradewise/screens/profile.dart';
-import 'package:tradewise/screens/market.dart';
-import 'package:tradewise/services/controllers/accountController.dart';
-import 'package:tradewise/state/authState.dart';
+import 'package:tradewise/state/appState.dart';
 
 const Color inActiveIconColor = Color(0xFFB6B6B6);
 
-class BottomNavScreen extends StatefulWidget {
-  const BottomNavScreen({super.key});
+class BottomNavBar extends StatefulWidget {
+  const BottomNavBar({super.key});
 
   @override
-  State<BottomNavScreen> createState() => _BottomNavScreenState();
+  State<BottomNavBar> createState() => _BottomNavBarState();
 }
 
-class _BottomNavScreenState extends State<BottomNavScreen> {
-  int currentSelectedIndex = 0;
+class _BottomNavBarState extends State<BottomNavBar> {
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    setUpAccount(context);
   }
-
-  void updateCurrentIndex(int index) {
-    setState(() {
-      currentSelectedIndex = index;
-    });
-  }
-
-  final pages = [
-    const HomeScreen(),
-    const MarketScreen(),
-    const PortfolioScreen(),
-    const ProfileScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : pages[currentSelectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: updateCurrentIndex,
-        currentIndex: currentSelectedIndex,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        selectedItemColor: Colors.blue.shade700,
-        selectedFontSize: 12,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
-        items: [
-          BottomNavigationBarItem(
-            icon: SvgPicture.string(
-              homeIcon,
-              height: 26,
-              colorFilter: const ColorFilter.mode(
-                inActiveIconColor,
-                BlendMode.srcIn,
-              ),
-            ),
-            activeIcon: SvgPicture.string(
-              height: 26,
-              homeIcon,
-              colorFilter: ColorFilter.mode(
-                Colors.blue.shade700,
-                BlendMode.srcIn,
-              ),
-            ),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.string(
-              height: 26,
-              marketIcon,
-              colorFilter: const ColorFilter.mode(
-                inActiveIconColor,
-                BlendMode.srcIn,
-              ),
-            ),
-            activeIcon: SvgPicture.string(
-              height: 26,
-              marketIcon,
-              colorFilter: ColorFilter.mode(
-                Colors.blue.shade700,
-                BlendMode.srcIn,
-              ),
-            ),
-            label: "Market",
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.string(
-              height: 26,
-              portfolioIcon,
-              colorFilter: const ColorFilter.mode(
-                inActiveIconColor,
-                BlendMode.srcIn,
-              ),
-            ),
-            activeIcon: SvgPicture.string(
-              height: 26,
-              portfolioIcon,
-              colorFilter: ColorFilter.mode(
-                Colors.blue.shade700,
-                BlendMode.srcIn,
-              ),
-            ),
-            label: "Portfolio",
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.string(
-              height: 26,
-              userIcon,
-              colorFilter: const ColorFilter.mode(
-                inActiveIconColor,
-                BlendMode.srcIn,
-              ),
-            ),
-            activeIcon: SvgPicture.string(
-              height: 26,
-              userIcon,
-              colorFilter: ColorFilter.mode(
-                Colors.blue.shade700,
-                BlendMode.srcIn,
-              ),
-            ),
-            label: "Profile",
-          ),
-        ],
+    final appState = Provider.of<AppState>(context);
+    final currentSelectedIndex = appState.pageIndex;
+
+    return BottomNavigationBar(
+      onTap: (index) => {
+        setState(() {
+          appState.setPageIndex = index;
+        })
+      },
+      backgroundColor: Theme.of(context).colorScheme.background,
+      currentIndex: currentSelectedIndex,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      selectedItemColor: Colors.blue.shade700,
+      selectedFontSize: 12,
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.w600,
       ),
+      items: [
+        BottomNavigationBarItem(
+          icon: SvgPicture.string(
+            homeIcon,
+            height: 26,
+            colorFilter: const ColorFilter.mode(
+              inActiveIconColor,
+              BlendMode.srcIn,
+            ),
+          ),
+          activeIcon: SvgPicture.string(
+            height: 26,
+            homeIcon,
+            colorFilter: ColorFilter.mode(
+              Colors.blue.shade700,
+              BlendMode.srcIn,
+            ),
+          ),
+          label: "Home",
+        ),
+        BottomNavigationBarItem(
+          icon: SvgPicture.string(
+            height: 26,
+            marketIcon,
+            colorFilter: const ColorFilter.mode(
+              inActiveIconColor,
+              BlendMode.srcIn,
+            ),
+          ),
+          activeIcon: SvgPicture.string(
+            height: 26,
+            marketIcon,
+            colorFilter: ColorFilter.mode(
+              Colors.blue.shade700,
+              BlendMode.srcIn,
+            ),
+          ),
+          label: "Market",
+        ),
+        BottomNavigationBarItem(
+          icon: SvgPicture.string(
+            height: 26,
+            portfolioIcon,
+            colorFilter: const ColorFilter.mode(
+              inActiveIconColor,
+              BlendMode.srcIn,
+            ),
+          ),
+          activeIcon: SvgPicture.string(
+            height: 26,
+            portfolioIcon,
+            colorFilter: ColorFilter.mode(
+              Colors.blue.shade700,
+              BlendMode.srcIn,
+            ),
+          ),
+          label: "Portfolio",
+        ),
+        BottomNavigationBarItem(
+          icon: SvgPicture.string(
+            height: 26,
+            userIcon,
+            colorFilter: const ColorFilter.mode(
+              inActiveIconColor,
+              BlendMode.srcIn,
+            ),
+          ),
+          activeIcon: SvgPicture.string(
+            height: 26,
+            userIcon,
+            colorFilter: ColorFilter.mode(
+              Colors.blue.shade700,
+              BlendMode.srcIn,
+            ),
+          ),
+          label: "Profile",
+        ),
+      ],
     );
-  }
-
-  Future<void> setUpAccount(BuildContext context) async {
-    late AuthState state = Provider.of<AuthState>(context, listen: false);
-    final accountController = AccountController();
-    String userId = state.userId as String;
-
-    await accountController.setAccountNameAndBalance(context: context, userId: userId);
-
-    setState(() {
-      isLoading = false; // Setup is complete
-    });
   }
 }
 

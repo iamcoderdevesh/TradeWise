@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/screens/trade.dart';
-import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
-Future buySellBottomModal({
+Future bottomModal({
   required BuildContext context,
   required String assetName,
   required String price,
   required String perChange,
+  bool isExit = false,
+  String action = '',
+  String? quantity,
+  String? entryPrice,
+  String? tradeId,
 }) {
-
   late String percentChange =
       Helper().formatNumber(value: perChange, formatNumber: 2);
 
@@ -89,10 +91,11 @@ Future buySellBottomModal({
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            handleBuySellClick(
+                            handleClick(
                               action: 'BUY',
                               context: context,
                               assetName: assetName,
+                              isExit: isExit,
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -105,17 +108,21 @@ Future buySellBottomModal({
                                   BorderRadius.all(Radius.circular(4)),
                             ),
                           ),
-                          child: const Text("BUY"),
+                          child: Text(isExit ? "ADD" : "BUY"),
                         ),
                       ),
                       const SizedBox(width: 20),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            handleBuySellClick(
-                              action: 'SELL',
+                            handleClick(
+                              action: isExit ? action : 'SELL',
                               context: context,
-                              assetName: assetName
+                              assetName: assetName,
+                              isExit: isExit,
+                              quantity: quantity,
+                              entryPrice: entryPrice,
+                              tradeId: tradeId,
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -128,7 +135,7 @@ Future buySellBottomModal({
                                   BorderRadius.all(Radius.circular(4)),
                             ),
                           ),
-                          child: const Text("SELL"),
+                          child: Text(isExit ? 'EXIT' : 'SELL'),
                         ),
                       ),
                     ],
@@ -182,21 +189,28 @@ Future buySellBottomModal({
   );
 }
 
-void handleBuySellClick({
+void handleClick({
   required BuildContext context,
   required String action,
   required String assetName,
+  required bool isExit,
+  String? quantity,
+  String? entryPrice,
+  String? tradeId,
 }) {
-  late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
-  tradeState.setTradeData(
-      action: action, assetName: assetName);
-
   Future.delayed(const Duration(milliseconds: 200), () {
     Navigator.pop(context);
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const TradeScreen(),
+        builder: (context) => TradeScreen(
+          action: action,
+          assetName: assetName,
+          isExit: isExit,
+          quantity: quantity,
+          entryPrice: entryPrice,
+          tradeId: tradeId,
+        ),
       ),
     );
   });

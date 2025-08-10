@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/assets/svg.dart';
+import 'package:tradewise/screens/portfolio.dart';
+import 'package:tradewise/screens/profile.dart';
 import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/authState.dart';
+import 'package:tradewise/widgets/bottomNavBar.dart';
 import 'package:tradewise/widgets/widgets.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/api/api.dart';
+import 'package:tradewise/services/controllers/accountController.dart';
+
+import 'market.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,49 +33,70 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
+    setUpAccount(context);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    late AuthState authState = Provider.of<AuthState>(context, listen: false);
-    late AccountState accountState =
-        Provider.of<AccountState>(context, listen: true);
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          headerSection(profileName: authState.user?.displayName),
-          Expanded(
-            child: Stack(
-              children: [
-                curveAreaSection(context, 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      heroSection(accountBalance: accountState.totalBalance),
-                      labelViewMoreSection(label: "Featured"),
-                      cardSection(),
-                      labelViewMoreSection(label: "Trending in market"),
-                      trendingSection(context),
-                    ],
-                  ),
+      bottomNavigationBar: const BottomNavBar(),
+      body: _body(context),
+    );
+  }
+
+  Widget _body(BuildContext context) {
+    final currentSelectedIndex = Provider.of<AppState>(context).pageIndex;
+
+    final pages = [
+      homeScreen(context),
+      const MarketScreen(),
+      const PortfolioScreen(),
+      const ProfileScreen(),
+    ];
+
+    return SafeArea(
+      child: pages[currentSelectedIndex],
+    );
+  }
+
+  Widget homeScreen(context) {
+    late AuthState authState = Provider.of<AuthState>(context, listen: false);
+    late AccountState accountState = Provider.of<AccountState>(context, listen: true);
+
+    _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        headerSection(profileName: authState.user?.displayName),
+        Expanded(
+          child: Stack(
+            children: [
+              curveAreaSection(context, 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    heroSection(accountBalance: accountState.totalBalance),
+                    labelViewMoreSection(label: "Featured"),
+                    cardSection(),
+                    labelViewMoreSection(label: "Trending in market"),
+                    trendingSection(context),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget headerSection({required String? profileName}) {
     return Padding(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
+      padding: const EdgeInsets.only(left: 20, right: 20),
       child: SizedBox(
         height: 100,
         child: Row(
@@ -340,5 +368,13 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  Future<void> setUpAccount(BuildContext context) async {
+    late AuthState state = Provider.of<AuthState>(context, listen: false);
+    final accountController = AccountController();
+    String userId = state.userId as String;
+
+    await accountController.setAccountBalance(context: context, userId: userId);
   }
 }

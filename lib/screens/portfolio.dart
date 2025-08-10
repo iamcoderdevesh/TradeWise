@@ -28,42 +28,35 @@ class _PortfolioScreenState extends State<PortfolioScreen>
 
   @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          headerSection("Portfolio"),
-          Center(
-            child: TabBar(
-              isScrollable: true,
-              controller: _tabController,
-              dividerColor: Theme.of(context).colorScheme.primaryContainer,
-              labelColor: Theme.of(context).colorScheme.primaryContainer,
-              indicatorColor: Theme.of(context).colorScheme.primaryContainer,
-              unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
-              labelStyle: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 16,
-              ),
-              tabs: const [
-                Tab(text: 'Orders'),
-                Tab(text: 'Positions'),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        headerSection("Portfolio"),
+        Center(
+          child: TabBar(
+            isScrollable: true,
+            controller: _tabController,
+            dividerColor: Theme.of(context).colorScheme.primaryContainer,
+            labelColor: Theme.of(context).colorScheme.primaryContainer,
+            indicatorColor: Theme.of(context).colorScheme.primaryContainer,
+            unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
             ),
+            tabs: const [
+              Tab(text: 'Orders'),
+              Tab(text: 'Positions'),
+            ],
           ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: const [
-                OrderScreen(),
-                PositionsScreen()
-              ],
-            ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: const [OrderScreen(), PositionsScreen()],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

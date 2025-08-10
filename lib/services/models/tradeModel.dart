@@ -7,7 +7,6 @@ class TradeModel {
   String? userId;
   String? marketSegment;
   String? assetName;
-  String? tradeName;
   String? status;
   String? quantity;
   String? margin;
@@ -33,7 +32,6 @@ class TradeModel {
     this.userId,
     this.marketSegment,
     this.assetName,
-    this.tradeName,
     this.status,
     this.quantity,
     this.margin,
@@ -60,6 +58,9 @@ class TradeModel {
       assetName: json["assetName"],
       quantity: json["quantity"],
       entryPrice: json["entryPrice"],
+      exitPrice: json["exitPrice"],
+      action: json["action"],
+      netPnl: json["netPnl"],
     );
   }
 
@@ -70,7 +71,6 @@ class TradeModel {
     "userId": userId,
     "marketSegment": marketSegment,
     "assetName": assetName,
-    "tradeName": tradeName,
     "status": status,
     "quantity": quantity,
     "margin": margin,

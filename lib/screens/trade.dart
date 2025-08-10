@@ -4,15 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
-import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/state/accountState.dart';
-import 'package:tradewise/state/tradeState.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
+import 'home.dart';
+
+// ignore: must_be_immutable
 class TradeScreen extends StatefulWidget {
-  const TradeScreen({super.key});
+  late String? tradeId;
+  late String? quantity;
+  late String? entryPrice;
+  final bool isExit;
+  final String assetName;
+  final String action;
+
+  TradeScreen({
+    super.key,
+    required this.assetName,
+    required this.action,
+    required this.isExit,
+    this.tradeId,
+    this.quantity,
+    this.entryPrice,
+  });
 
   @override
   State<TradeScreen> createState() => _TradeScreenState();
@@ -28,7 +45,6 @@ class _TradeScreenState extends State<TradeScreen>
   late Helper helper = Helper();
   late TabController _tabController;
 
-  late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
   final ApiService _apiService = ApiService();
 
   bool isLoading = false;
@@ -37,6 +53,7 @@ class _TradeScreenState extends State<TradeScreen>
   late String availableMargin = '0.00';
   late String tradeMargin = '0.00';
   late String fees = '0.00';
+  late String netPnl = '';
 
   @override
   void initState() {
@@ -58,9 +75,6 @@ class _TradeScreenState extends State<TradeScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    late TradeState tradeState =
-        Provider.of<TradeState>(context, listen: false);
     late AccountState accountState =
         Provider.of<AccountState>(context, listen: false);
     availableMargin = accountState.totalBalance;
@@ -68,7 +82,7 @@ class _TradeScreenState extends State<TradeScreen>
     _tabController = TabController(
       length: 2,
       vsync: this,
-      initialIndex: tradeState.action == 'BUY' ? 0 : 1,
+      initialIndex: widget.action == 'BUY' ? 0 : 1,
     );
 
     _tabController.addListener(() {
@@ -84,82 +98,113 @@ class _TradeScreenState extends State<TradeScreen>
         backgroundColor: Theme.of(context).colorScheme.background,
         elevation: 0,
         title: Text(
-          tradeState.assetName,
+          widget.assetName,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
           ),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
+      body: widget.isExit ? tradeExitWidget(context) : tradeWidget(context),
+    );
+  }
+
+  Widget tradeExitWidget(BuildContext context) {
+    quantityController.text = widget.quantity ?? '0';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [priceBox(context: context)],
+            ),
+          ),
+        ),
+        Expanded(
+          child: Stack(
+            children: [
+              curveAreaSection(context, 40),
+              tradeFormSection(context: context, type: 'EXIT'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget tradeWidget(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              borderRadius: BorderRadius.circular(
+                24,
+              ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
                 borderRadius: BorderRadius.circular(
                   24,
                 ),
+                color: _tabController.index == 0
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Colors.red,
               ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    24,
-                  ),
-                  color: _tabController.index == 0
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : Colors.red,
+              indicatorPadding:
+                  const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+              unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+              tabs: const [
+                Tab(
+                  text: 'Buy',
                 ),
-                indicatorPadding:
-                    const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-                unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
-                labelStyle:
-                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                tabs: const [
-                  Tab(
-                    text: 'Buy',
-                  ),
-                  Tab(
-                    text: 'Sell',
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [priceBox(context: context)],
-              ),
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                Stack(
-                  children: [
-                    curveAreaSection(context, 40),
-                    tradeFormSection(context: context, type: 'BUY'),
-                  ],
-                ),
-                Stack(
-                  children: [
-                    curveAreaSection(context, 40),
-                    tradeFormSection(
-                        context: context, type: 'SELL', color: Colors.red),
-                  ],
+                Tab(
+                  text: 'Sell',
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [priceBox(context: context)],
+            ),
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              Stack(
+                children: [
+                  curveAreaSection(context, 40),
+                  tradeFormSection(context: context, type: 'BUY'),
+                ],
+              ),
+              Stack(
+                children: [
+                  curveAreaSection(context, 40),
+                  tradeFormSection(
+                      context: context, type: 'SELL', color: Colors.red),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -199,7 +244,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 10,
           ),
           Text(
-            perChange,
+            widget.isExit ? netPnl : perChange,
             style: TextStyle(
               color: getPnlColor(value: perChange),
             ),
@@ -317,7 +362,8 @@ class _TradeScreenState extends State<TradeScreen>
                       bgColor: color,
                       buttonLabel: type,
                       onPressed: () {
-                        handleTradeSubmit(action: type);
+                        handleTradeSubmit(
+                            action: type == 'EXIT' ? widget.action : type);
                       },
                     ),
                   ),
@@ -477,8 +523,10 @@ class _TradeScreenState extends State<TradeScreen>
     setState(() {
       tradeMargin =
           helper.calculateTradeMargin(quantity: quantity, price: price);
-      fees = helper.calculateFees(
-          segment: 'crypto', orderType: 'market', margin: tradeMargin);
+      fees = widget.isExit
+          ? '0.00'
+          : helper.calculateFees(
+              segment: 'crypto', orderType: 'market', margin: tradeMargin);
     });
   }
 
@@ -495,37 +543,42 @@ class _TradeScreenState extends State<TradeScreen>
       });
 
       final accountController = OrderController();
-      final response = await accountController.createOrder(
+      final response = await accountController.handleOrder(
         context: context,
-        assetName: tradeState.assetName,
+        assetName: widget.assetName,
         ltp: currentPrice,
-        orderAction: action,
-        orderName: tradeState.assetName + tradeState.action,
+        orderAction: widget.isExit ? (action == 'BUY' ? 'SELL' : 'BUY') : action,
         orderPrice: currentPrice,
         orderQuantity: quantity,
         marketSegment: 'Spot',
-        orderStatus: 'OPEN',
+        orderStatus: widget.isExit ? 'CLOSED' : 'OPEN',
         orderType: 'MARKET',
         totalFees: fees,
-        margin: '0',
+        margin: '',
+        tradeId: widget.tradeId ?? '',
+        exitPrice: currentPrice,
+        netPnl: netPnl,
       );
 
       bool status = response["status"] as bool;
+      String message = response["message"] as String;
 
       setState(() {
         isLoading = false;
       });
 
       if (status) {
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Order Placed successfully.")));
-
         Future.delayed(const Duration(milliseconds: 200), () {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(message)));
+
+          final appState = Provider.of<AppState>(context, listen: false);
+          appState.setPageIndex = 2;
+
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const PortfolioScreen(),
+              builder: (context) => const HomeScreen(),
             ),
           );
         });
@@ -536,7 +589,7 @@ class _TradeScreenState extends State<TradeScreen>
   Future<void> fetchTickerData() async {
     try {
       String quantity = quantityController.text.trim();
-      final data = await _apiService.getTickerPrice(tradeState.assetName);
+      final data = await _apiService.getTickerPrice(widget.assetName);
 
       setState(() {
         currentPrice = data['assetPrice'];
@@ -544,6 +597,15 @@ class _TradeScreenState extends State<TradeScreen>
         amountController.text = currentPrice;
         if (quantity.isNotEmpty) {
           handleCalculation(price: currentPrice, quantity: quantity);
+          if (widget.isExit) {
+            double pnl = helper.calculatePnL(
+                action: widget.action,
+                currentPrice: currentPrice,
+                buyPrice: widget.entryPrice,
+                quantity: widget.quantity);
+            netPnl = helper.formatNumber(
+                value: pnl.toString(), formatNumber: 2, plusSign: true);
+          }
         }
       });
     } catch (e) {

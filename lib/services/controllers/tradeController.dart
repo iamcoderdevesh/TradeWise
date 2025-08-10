@@ -1,20 +1,19 @@
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tradewise/services/models/TradeModel.dart' hide TradeModel;
 import 'package:tradewise/services/models/tradeModel.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/authState.dart';
-import 'package:tradewise/state/tradeState.dart';
 
 class TradeController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = 'tradeDetails';
 
-  // Create Account
-  Future<Map<String, dynamic>> createTrade({
+  // Create Trade
+  Future<Map<String, dynamic>> handleTrade({
     required BuildContext context,
-    required String tradeName,
     required String assetName,
     required String marketSegment,
     required String status,
@@ -24,57 +23,98 @@ class TradeController {
     required String entryPrice,
     required String action,
     required String totalFees,
+    String tradeId = '',
+    String exitPrice = '',
+    String netPnl = '',
   }) async {
     try {
       late AuthState state = Provider.of<AuthState>(context, listen: false);
-      late AccountState accountState = Provider.of<AccountState>(context, listen: false);
+      late AccountState accountState =
+          Provider.of<AccountState>(context, listen: false);
 
       String userId = state.userId as String;
       String accountId = accountState.accountId as String;
 
-      // Create a new account
-      TradeModel trade = TradeModel(
-        key: null,
-        tradeId: null,
-        accountId: accountId,
-        userId: userId,
-        marketSegment: marketSegment,
-        assetName: assetName,
-        tradeName: tradeName,
-        status: status,
-        quantity: quantity,
-        ltp: ltp,
-        entryPrice: entryPrice,
-        entryDate: Timestamp.now(),
-        action: action,
-        totalFees: totalFees,
-        createdBy: userId,
-        updatedBy: userId,
-        createdOn: Timestamp.now(),
-        updatedOn: Timestamp.now(),
-      );
+      // Create a new trade
+      if (tradeId.isEmpty) {
+        TradeModel trade = TradeModel(
+          key: null,
+          tradeId: null,
+          accountId: accountId,
+          userId: userId,
+          marketSegment: marketSegment,
+          assetName: assetName,
+          status: status,
+          quantity: quantity,
+          ltp: ltp,
+          entryPrice: entryPrice,
+          entryDate: Timestamp.now(),
+          action: action,
+          totalFees: totalFees,
+          createdBy: userId,
+          updatedBy: userId,
+          createdOn: Timestamp.now(),
+          updatedOn: Timestamp.now(),
+        );
 
-      DocumentReference docRef =
-          await _db.collection(_collection).add(trade.toJson());
-      await docRef.update({"key": docRef.id, "tradeId": docRef.id});
+        DocumentReference docRef =
+            await _db.collection(_collection).add(trade.toJson());
+        await docRef.update({"key": docRef.id, "tradeId": docRef.id});
 
-      return {"status": true, "tradeId": docRef.id};
+        return {"status": true, "tradeId": docRef.id};
+      }
+      //Update trade
+      else {
+        DocumentSnapshot tradeData = await FirebaseFirestore.instance
+            .collection(_collection)
+            .doc(tradeId)
+            .get();
+
+        String totalFees = tradeData['totalFees'] as String;
+        double _netPnl = double.parse(netPnl) - double.parse(totalFees);
+
+        await _db.collection(_collection).doc(tradeId).update({
+          "netPnl": _netPnl.toStringAsFixed(2).toString(),
+          "exitPrice": exitPrice,
+          "exitDate": Timestamp.now(),
+          "status": status,
+          "ltp": ltp,
+          "updatedBy": userId,
+          "updatedOn": Timestamp.now(),
+        });
+
+        DocumentSnapshot accountData = await FirebaseFirestore.instance
+            .collection('accountDetails')
+            .doc(accountId)
+            .get();
+
+        String accountTotalBalance = accountData['totalBalance'] as String;
+        double updatedTotalBalance = double.parse(accountTotalBalance) + _netPnl;
+
+        await _db.collection('accountDetails').doc(accountId).update({
+          "totalBalance": updatedTotalBalance.toStringAsFixed(2).toString(),
+          "updatedBy": userId,
+          "updatedOn": Timestamp.now(),
+        });
+
+        return {"status": true, "tradeId": tradeId};
+      }
     } catch (e) {
-      print("Error creating account: $e");
+      print("Error creating trade: $e");
     }
 
     return {"status": false};
   }
 
-  void getActiveTrades({required BuildContext context}) async {
-
-    QuerySnapshot snapshot = await _db.collection(_collection).where('status', isEqualTo: 'OPEN').get();
-    final trades = snapshot.docs
-          .map((doc) => TradeModel.fromFirestore(doc.data() as Map<String, dynamic>))
-          .toList();
-
-    // ignore: use_build_context_synchronously
-    late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
-    tradeState.setActiveTrades(trades.cast<TradeModel>());
+  Future<List<TradeModel>> getTrades(
+      {required BuildContext context, required String status}) async {
+    QuerySnapshot snapshot = await _db
+        .collection(_collection)
+        .where('status', isEqualTo: status)
+        .get();
+    return snapshot.docs
+        .map((doc) =>
+            TradeModel.fromFirestore(doc.data() as Map<String, dynamic>))
+        .toList();
   }
 }

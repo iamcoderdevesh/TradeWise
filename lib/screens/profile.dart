@@ -25,89 +25,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     late AuthState state = Provider.of<AuthState>(context, listen: false);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          headerSection("Profile"),
-          profileSection(
-              context: context,
-              profileName: state.user?.displayName,
-              email: state.user?.email),
-          Expanded(
-            child: Stack(
-              children: [
-                curveAreaSection(context, 40),
-                Column(
-                  // mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    accountMenu(context),
-                    const SizedBox(height: 15),
-                    ProfileMenu(
-                      text: "Account Settings",
-                      subText: "Manage Accounts",
-                      press: () => {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AccountScreen(),
-                          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        headerSection("Profile"),
+        profileSection(
+            context: context,
+            profileName: state.user?.displayName,
+            email: state.user?.email),
+        Expanded(
+          child: Stack(
+            children: [
+              curveAreaSection(context, 40),
+              Column(
+                // mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  accountMenu(context),
+                  const SizedBox(height: 15),
+                  ProfileMenu(
+                    text: "Account Settings",
+                    subText: "Manage Accounts",
+                    press: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AccountScreen(),
                         ),
-                      },
-                    ),
-                    ProfileMenu(
-                      text: "Notifications",
-                      subText: "Choose notifications to recieve",
-                      press: () {},
-                    ),
-                    ProfileMenu(
-                      text: "Help & Support",
-                      subText: "Get help with your account",
-                      press: () {},
-                    ),
-                    ProfileMenu(
-                      text: "About Us",
-                      subText: "About, Terms of Use & Privacy Policy",
-                      press: () {},
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: TextButton(
-                            onPressed: () {
-                              state.singOut();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text("Signout Successfully.")));
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SignInScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Logout",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.w600,
+                      ),
+                    },
+                  ),
+                  ProfileMenu(
+                    text: "Notifications",
+                    subText: "Choose notifications to recieve",
+                    press: () {},
+                  ),
+                  ProfileMenu(
+                    text: "Help & Support",
+                    subText: "Get help with your account",
+                    press: () {},
+                  ),
+                  ProfileMenu(
+                    text: "About Us",
+                    subText: "About, Terms of Use & Privacy Policy",
+                    press: () {},
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: TextButton(
+                          onPressed: () {
+                            state.singOut();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Signout Successfully.")));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignInScreen(),
                               ),
+                            );
+                          },
+                          child: const Text(
+                            "Logout",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ],
-                    )
-                  ],
-                )
-              ],
-            ),
+                      ),
+                    ],
+                  )
+                ],
+              )
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
