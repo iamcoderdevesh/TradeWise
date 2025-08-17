@@ -11,7 +11,6 @@ class TradeModel {
   String? quantity;
   String? margin;
   String? ltp;
-  String? stopLossPrice;
   String? entryPrice;
   String? exitPrice;
   Timestamp? entryDate;
@@ -36,7 +35,6 @@ class TradeModel {
     this.quantity,
     this.margin,
     this.ltp,
-    this.stopLossPrice,
     this.entryPrice,
     this.exitPrice,
     this.entryDate,
@@ -75,7 +73,6 @@ class TradeModel {
     "quantity": quantity,
     "margin": margin,
     "ltp": ltp,
-    "stopLossPrice": stopLossPrice,
     "entryPrice": entryPrice,
     "exitPrice": exitPrice,
     "entryDate": entryDate,

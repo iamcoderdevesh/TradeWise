@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tradewise/assets/svg.dart';
 import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/screens/profile.dart';
+import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/authState.dart';
@@ -33,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    setUpAccount(context);
+    setUp(context);
     super.initState();
   }
 
@@ -370,11 +371,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> setUpAccount(BuildContext context) async {
+  Future<void> setUp(BuildContext context) async {
     late AuthState state = Provider.of<AuthState>(context, listen: false);
+    
     final accountController = AccountController();
+    final orderController = OrderController();
+
     String userId = state.userId as String;
 
-    await accountController.setAccountBalance(context: context, userId: userId);
+    bool status = await accountController.setAccountBalance(context: context, userId: userId);
+    // ignore: use_build_context_synchronously
+    if(status) await orderController.handlePendingOrders(context: context);
   }
 }

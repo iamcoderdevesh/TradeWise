@@ -48,7 +48,7 @@ class AccountController {
   }
 
   // Read Account by ID
-  Future<void> setAccountBalance(
+  Future<bool> setAccountBalance(
       {required BuildContext context, required String userId}) async {
     try {
       late AccountState state =
@@ -63,11 +63,16 @@ class AccountController {
       if (snapshot.docs.isNotEmpty) {
         AccountModel? accountData = AccountModel.fromJson(
             snapshot.docs.first.data() as Map<String, dynamic>);
-        state.setAccountData(accountId: accountData.accountId, totalBalance: accountData.totalBalance);
+        state.setAccountData(
+            accountId: accountData.accountId,
+            totalBalance: accountData.totalBalance);
+
+        return true;
       }
     } catch (e) {
       print("Error fetching account: $e");
     }
+    return false;
   }
 
   // Update Account

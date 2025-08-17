@@ -13,6 +13,8 @@ class OrderModel {
   String orderStatus;
   String orderQuantity;
   String ltp;
+  String? stopLossPrice;
+  String? targetPrice;
   String createdBy;
   String updatedBy;
   Timestamp createdOn;
@@ -30,6 +32,8 @@ class OrderModel {
     required this.orderType,
     required this.orderStatus,
     required this.orderQuantity,
+    required this.stopLossPrice,
+    required this.targetPrice,
     required this.ltp,
     required this.createdBy,
     required this.updatedBy,
@@ -49,6 +53,8 @@ class OrderModel {
         orderType: json["orderType"],
         orderStatus: json["orderStatus"],
         orderQuantity: json["orderQuantity"],
+        stopLossPrice: json["stopLossPrice"],
+        targetPrice: json["targetPrice"],
         ltp: json["ltp"],
         createdBy: json["createdBy"],
         updatedBy: json["updatedBy"],
@@ -68,6 +74,8 @@ class OrderModel {
         "orderType": orderType,
         "orderStatus": orderStatus,
         "orderQuantity": orderQuantity,
+        "stopLossPrice": stopLossPrice,
+        "targetPrice": targetPrice,
         "ltp": ltp,
         "createdBy": createdBy,
         "updatedBy": updatedBy,

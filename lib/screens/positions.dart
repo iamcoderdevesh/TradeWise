@@ -302,8 +302,7 @@ class _PositionsScreenState extends State<PositionsScreen> {
     double totalPnl = 0.00;
     List<Map<String, dynamic>> result = [];
 
-    final activeTradeList =
-        await tradeController.getTrades(context: context, status: status);
+    final activeTradeList = await tradeController.getTrades(context: context, status: status);
     if (activeTradeList.isEmpty && isTimerCall && status == 'OPEN') {
       _timer.cancel();
       return result;
@@ -314,7 +313,7 @@ class _PositionsScreenState extends State<PositionsScreen> {
           ? null
           : await _apiService.getTickerPrice(pos.assetName ?? '');
 
-      final currentPrice = status == 'CLOSED' ? pos.entryPrice : currentTickerData?['assetPrice'];
+      final currentPrice = status == 'CLOSED' ? pos.exitPrice : currentTickerData?['assetPrice'];
       final pnl = status == 'CLOSED' ? double.parse(pos.netPnl ?? '0.00') : helper.calculatePnL(
         action: pos.action,
         currentPrice: currentPrice,

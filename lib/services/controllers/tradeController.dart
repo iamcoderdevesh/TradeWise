@@ -1,8 +1,7 @@
-import 'dart:ffi';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/models/tradeModel.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/authState.dart';
@@ -10,33 +9,37 @@ import 'package:tradewise/state/authState.dart';
 class TradeController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = 'tradeDetails';
+  late Helper helper = Helper();
 
   // Create Trade
   Future<Map<String, dynamic>> handleTrade({
     required BuildContext context,
-    required String assetName,
-    required String marketSegment,
-    required String status,
-    required String quantity,
-    required String margin,
-    required String ltp,
-    required String entryPrice,
-    required String action,
-    required String totalFees,
+    String assetName = '',
+    String marketSegment = '',
+    String status = '',
+    String quantity = '',
+    String margin = '',
+    String ltp = '',
+    String entryPrice = '',
+    String action = '',
     String tradeId = '',
     String exitPrice = '',
-    String netPnl = '',
   }) async {
     try {
       late AuthState state = Provider.of<AuthState>(context, listen: false);
-      late AccountState accountState =
-          Provider.of<AccountState>(context, listen: false);
+      late AccountState accountState = Provider.of<AccountState>(context, listen: false);
 
       String userId = state.userId as String;
       String accountId = accountState.accountId as String;
 
+
       // Create a new trade
       if (tradeId.isEmpty) {
+
+        //Calculate Fees
+        final String tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: entryPrice);
+        final String totalFees = helper.calculateFees(segment: 'crypto', orderType: 'LIMIT', margin: tradeMargin);
+
         TradeModel trade = TradeModel(
           key: null,
           tradeId: null,
@@ -65,16 +68,19 @@ class TradeController {
       }
       //Update trade
       else {
-        DocumentSnapshot tradeData = await FirebaseFirestore.instance
-            .collection(_collection)
-            .doc(tradeId)
-            .get();
+
+        DocumentSnapshot tradeData = await _db.collection(_collection).doc(tradeId).get();
 
         String totalFees = tradeData['totalFees'] as String;
-        double _netPnl = double.parse(netPnl) - double.parse(totalFees);
+        String entryPrice = tradeData['entryPrice'] as String;
+        String quantity = tradeData['quantity'] as String;
+        String action = tradeData['action'] as String;
+
+        String grossPnl = helper.calculatePnL(action: action, currentPrice: exitPrice, buyPrice: entryPrice, quantity: quantity).toString();
+        double netPnl = double.parse(grossPnl) - double.parse(totalFees);
 
         await _db.collection(_collection).doc(tradeId).update({
-          "netPnl": _netPnl.toStringAsFixed(2).toString(),
+          "netPnl": netPnl.toStringAsFixed(2).toString(),
           "exitPrice": exitPrice,
           "exitDate": Timestamp.now(),
           "status": status,
@@ -83,13 +89,10 @@ class TradeController {
           "updatedOn": Timestamp.now(),
         });
 
-        DocumentSnapshot accountData = await FirebaseFirestore.instance
-            .collection('accountDetails')
-            .doc(accountId)
-            .get();
+        DocumentSnapshot accountData = await FirebaseFirestore.instance.collection('accountDetails').doc(accountId).get();
 
         String accountTotalBalance = accountData['totalBalance'] as String;
-        double updatedTotalBalance = double.parse(accountTotalBalance) + _netPnl;
+        double updatedTotalBalance = double.parse(accountTotalBalance) + netPnl;
 
         await _db.collection('accountDetails').doc(accountId).update({
           "totalBalance": updatedTotalBalance.toStringAsFixed(2).toString(),

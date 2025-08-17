@@ -54,7 +54,7 @@ class _OrderScreenState extends State<OrderScreen> {
                         return ordersItems(
                           context: context,
                           shortName: orders['assetName'],
-                          price: orders['orderPrice'],
+                          price: orders['ltp'],
                           quantity: orders['orderQuantity'],
                           status: orders['orderStatus'],
                           type: orders['orderType'],

@@ -124,6 +124,9 @@ class _SignInScreenState extends State<SignInScreen> {
             isLoading: isLoading,
             buttonLabel: "Continue",
             onPressed: () async {
+              
+              FocusScope.of(context).unfocus();
+              
               String email = emailController.text.trim();
               String password = passwordController.text.trim();
 
