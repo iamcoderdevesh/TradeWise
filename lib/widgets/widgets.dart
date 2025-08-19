@@ -55,12 +55,13 @@ Widget curveAreaSection(BuildContext context, double topPadding) {
   );
 }
 
-Widget tickerItems(
-    {required BuildContext context,
-    required String assetName,
-    required String shortName,
-    required String currentPrice,
-    required String perChange}) {
+Widget tickerItems({
+  required BuildContext context,
+  required String assetName,
+  required String shortName,
+  required String currentPrice,
+  required String perChange,
+}) {
   late String price =
       Helper().formatNumber(value: currentPrice, formatNumber: 4);
   late String percentChange =
@@ -77,6 +78,7 @@ Widget tickerItems(
         foregroundColor: Theme.of(context).colorScheme.onSurface,
       ),
       onPressed: () {
+        FocusScope.of(context).unfocus();
         bottomModal(
           context: context,
           assetName: assetName,
@@ -169,9 +171,13 @@ Widget tickerItems(
   );
 }
 
-Widget searchBox(context) {
+Widget searchBox(
+  BuildContext context, {
+  TextEditingController? controller,
+  void Function(String)? onChanged,
+}) {
   return Container(
-    padding: const EdgeInsets.all(12),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     decoration: BoxDecoration(
       color: Theme.of(context).colorScheme.secondary,
       borderRadius: BorderRadius.circular(8),
@@ -189,12 +195,23 @@ Widget searchBox(context) {
           Icons.search_rounded,
           color: Theme.of(context).colorScheme.tertiary,
         ),
-        const SizedBox(
-          width: 10,
-        ),
-        Text(
-          "Search e.g: Btc, Xrp",
-          style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.tertiary,
+            ),
+            decoration: InputDecoration(
+              hintText: "Search e.g: Btc, Xrp",
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.6),
+              ),
+              border: InputBorder.none,
+              isDense: true,
+            ),
+          ),
         ),
       ],
     ),

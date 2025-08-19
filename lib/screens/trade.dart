@@ -236,7 +236,7 @@ class _TradeScreenState extends State<TradeScreen>
           Text(
             currentPrice,
             style: TextStyle(
-              color: getPnlColor(value: perChange),
+              color: getPnlColor(value: widget.isExit ? netPnl : perChange),
             ),
           ),
           const SizedBox(
@@ -245,7 +245,7 @@ class _TradeScreenState extends State<TradeScreen>
           Text(
             widget.isExit ? netPnl : perChange,
             style: TextStyle(
-              color: getPnlColor(value: perChange),
+              color: getPnlColor(value: widget.isExit ? netPnl : perChange),
             ),
           ),
         ],

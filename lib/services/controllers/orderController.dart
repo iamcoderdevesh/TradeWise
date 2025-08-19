@@ -9,6 +9,7 @@ import 'package:tradewise/services/controllers/tradeController.dart';
 import 'package:tradewise/services/models/OrderModel.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/authState.dart';
+import 'package:tradewise/state/tradeState.dart';
 
 class OrderController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -151,7 +152,6 @@ class OrderController {
             .get();
 
         if (snapshot.docs.isNotEmpty) {
-          
           DocumentSnapshot doc = snapshot.docs.first;
           String orderId = doc['orderId'];
 
@@ -209,8 +209,10 @@ class OrderController {
       if (!isProcessing) {
         try {
           isProcessing = true;
-          late AuthState authState = Provider.of<AuthState>(context, listen: false);
-          late AccountState accountState = Provider.of<AccountState>(context, listen: false);
+          late AuthState authState =
+              Provider.of<AuthState>(context, listen: false);
+          late AccountState accountState =
+              Provider.of<AccountState>(context, listen: false);
 
           String userId = authState.userId as String;
           String accountId = accountState.accountId as String;
@@ -234,7 +236,8 @@ class OrderController {
               String stopLossPrice = doc['stopLossPrice'] ?? '';
               String targetPrice = doc['targetPrice'] ?? '';
 
-              final currentTickerData = await apiService.getTickerPrice(assetName);
+              final currentTickerData =
+                  await apiService.getTickerPrice(assetName);
               final currentPrice = currentTickerData['assetPrice'];
 
               bool buyLimitCond = false;
@@ -247,17 +250,38 @@ class OrderController {
               if (tradeId.isNotEmpty) {
                 action = action == "BUY" ? "SELL" : "BUY";
 
-                buyTargetCond = targetPrice.isNotEmpty ? (action == 'BUY' && double.parse(currentPrice) >= double.parse(targetPrice)) : false;
-                sellTargetCond = targetPrice.isNotEmpty ? (action == 'SELL' && double.parse(currentPrice) <= double.parse(targetPrice)) : false;
+                buyTargetCond = targetPrice.isNotEmpty
+                    ? (action == 'BUY' &&
+                        double.parse(currentPrice) >= double.parse(targetPrice))
+                    : false;
+                sellTargetCond = targetPrice.isNotEmpty
+                    ? (action == 'SELL' &&
+                        double.parse(currentPrice) <= double.parse(targetPrice))
+                    : false;
 
-                buySLCond = stopLossPrice.isNotEmpty ? (action == 'BUY' && double.parse(currentPrice) <= double.parse(stopLossPrice)) : false;
-                sellSLCond = stopLossPrice.isNotEmpty ? (action == 'SELL' && double.parse(currentPrice) >= double.parse(stopLossPrice)) : false;
+                buySLCond = stopLossPrice.isNotEmpty
+                    ? (action == 'BUY' &&
+                        double.parse(currentPrice) <=
+                            double.parse(stopLossPrice))
+                    : false;
+                sellSLCond = stopLossPrice.isNotEmpty
+                    ? (action == 'SELL' &&
+                        double.parse(currentPrice) >=
+                            double.parse(stopLossPrice))
+                    : false;
               } else {
-                buyLimitCond = (action == 'BUY' && double.parse(currentPrice) <= double.parse(orderPrice));
-                sellLimitCond = (action == 'SELL' && double.parse(currentPrice) >= double.parse(orderPrice));
+                buyLimitCond = (action == 'BUY' &&
+                    double.parse(currentPrice) <= double.parse(orderPrice));
+                sellLimitCond = (action == 'SELL' &&
+                    double.parse(currentPrice) >= double.parse(orderPrice));
               }
 
-              if (buyLimitCond || sellLimitCond || buyTargetCond || sellTargetCond || buySLCond || sellSLCond) {
+              if (buyLimitCond ||
+                  sellLimitCond ||
+                  buyTargetCond ||
+                  sellTargetCond ||
+                  buySLCond ||
+                  sellSLCond) {
                 // ignore: use_build_context_synchronously
                 final response = await tradeController.handleTrade(
                   context: context,
@@ -283,6 +307,9 @@ class OrderController {
                     "ltp": currentPrice,
                     "updatedOn": Timestamp.now(),
                   });
+
+                  // ignore: use_build_context_synchronously
+                  Provider.of<TradeState>(context, listen: false).setIsRefresh = true;
                 }
               }
             }

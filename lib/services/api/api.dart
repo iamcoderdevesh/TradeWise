@@ -15,17 +15,21 @@ class ApiService {
     bool isFuture = false,
   }) async {
     try {
-      final response =
-          await http.get(Uri.parse(isFuture ? baseFutureUrl : baseSpotUrl));
+      final response = await http.get(Uri.parse(isFuture ? baseFutureUrl : baseSpotUrl));
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
 
+        // Filter for pairs that contain "USDT"
+        data = data.where((item) => item['symbol'].toString().contains('USDT')).toList();
+
         // If symbols are provided, filter the data
         if (symbols.isNotEmpty) {
-          data =
-              data.where((item) => symbols.contains(item['symbol'])).toList();
+          data = data.where((item) => symbols.contains(item['symbol'])).toList();
         }
+
+        // Sort by price in descending order
+        data.sort((a, b) => double.parse(b['lastPrice'].toString()).compareTo(double.parse(a['lastPrice'].toString())));
 
         // Convert filtered list to a List<Map<String, dynamic>>
         return List<Map<String, dynamic>>.from(data);

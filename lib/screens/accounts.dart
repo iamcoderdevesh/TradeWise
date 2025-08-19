@@ -21,6 +21,7 @@ String? _selectedSegment = 'Stocks';
 
 class _AccountScreenState extends State<AccountScreen> {
   late bool isLoading = false;
+  late bool onScreenLoader = false;
   late AccountState state = Provider.of<AccountState>(context, listen: false);
 
   final TextEditingController accountNameController = TextEditingController();
@@ -52,23 +53,31 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                labelAreaSection(
-                    title: "Balance",
-                    subTitle: Helper().formatNumber(value: state.totalBalance),
-                    context: context),
-                accountForm(context),
-              ],
+      body: onScreenLoader
+          ? Center(
+              child: circularLoader(),
+            )
+          : SafeArea(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      labelAreaSection(
+                        title: "Balance",
+                        subTitle:
+                            Helper().formatNumber(value: state.totalBalance),
+                        context: context,
+                        isDelete: true,
+                      ),
+                      accountForm(context),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -116,28 +125,45 @@ class _AccountScreenState extends State<AccountScreen> {
     required BuildContext context,
     String subTitle = "",
     double bottomPadding = 20,
+    bool isDelete = false,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding),
       child: Column(
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.tertiary,
-                ),
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Text(
+                    subTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(
-                width: 5,
-              ),
-              Text(
-                subTitle,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              isDelete
+                  ? IconButton(
+                      onPressed: () {
+                        deleteAccount();
+                      },
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.red,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ],
           ),
           const SizedBox(height: 10),
@@ -194,6 +220,29 @@ class _AccountScreenState extends State<AccountScreen> {
           );
         });
       }
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    setState(() {
+      onScreenLoader = true;
+    });
+
+    final accountController = AccountController();
+    final response =
+        await accountController.deleteAccount(accountId: state.accountId ?? '');
+
+    setState(() {
+      onScreenLoader = false;
+    });
+
+    bool status = response["status"] as bool;
+    String message = response["message"] as String;
+
+    if (status) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 }

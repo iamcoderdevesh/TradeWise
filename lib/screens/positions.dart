@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/tradeController.dart';
+import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/widgets/bottomModal.dart';
 import 'package:tradewise/widgets/widgets.dart';
+import 'package:provider/provider.dart';
 
 class PositionsScreen extends StatefulWidget {
   const PositionsScreen({super.key});
@@ -16,6 +18,10 @@ class PositionsScreen extends StatefulWidget {
 
 class _PositionsScreenState extends State<PositionsScreen> {
   late Timer _timer;
+  bool _hasHandledRefresh = false;
+
+  dynamic activeTradeList;
+  dynamic inActiveTradeList;
 
   late Future<List<Map<String, dynamic>>> openedTradeList;
   late Future<List<Map<String, dynamic>>> closeTradeList;
@@ -31,18 +37,31 @@ class _PositionsScreenState extends State<PositionsScreen> {
 
   @override
   void initState() {
-    closeTradeList = handleTradePostion(status: 'CLOSED');
-    openedTradeList = handleTradePostion(status: 'OPEN');
-    tradeList = getCombineTrades();
-    updateTradePostion();
+    initPosition();
     super.initState();
   }
 
   @override
   void dispose() {
-    // Cancel the timer when the widget is disposed
     _timer.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final tradeState = Provider.of<TradeState>(context);
+
+    if (tradeState.isRefresh && !_hasHandledRefresh) {
+      _hasHandledRefresh = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        initPosition();
+        tradeState.setIsRefresh = false;
+        _hasHandledRefresh = false;
+      });
+    }
   }
 
   @override
@@ -286,8 +305,15 @@ class _PositionsScreenState extends State<PositionsScreen> {
     );
   }
 
+  void initPosition() {
+    closeTradeList = handleTradePostion(status: 'CLOSED');
+    openedTradeList = handleTradePostion(status: 'OPEN');
+    tradeList = getCombineTrades();
+    updateTradePostion();
+  }
+
   void updateTradePostion() {
-    _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (Timer t) {
       setState(() {
         openedTradeList = handleTradePostion(isTimerCall: true, status: 'OPEN');
         tradeList = getCombineTrades();
@@ -299,27 +325,41 @@ class _PositionsScreenState extends State<PositionsScreen> {
     required String status,
     bool isTimerCall = false,
   }) async {
+    dynamic tradeList;
     double totalPnl = 0.00;
     List<Map<String, dynamic>> result = [];
 
-    final activeTradeList = await tradeController.getTrades(context: context, status: status);
-    if (activeTradeList.isEmpty && isTimerCall && status == 'OPEN') {
+    if (activeTradeList != null && status == 'OPEN') {
+      tradeList = activeTradeList;
+    } else if (inActiveTradeList != null && status == 'CLOSED') {
+      tradeList = inActiveTradeList;
+    } else {
+      tradeList =
+          await tradeController.getTrades(context: context, status: status);
+      status == 'CLOSED' ? activeTradeList = tradeList : null;
+      status == 'OPEN' ? inActiveTradeList = tradeList : null;
+    }
+
+    if (tradeList.isEmpty && isTimerCall && status == 'OPEN') {
       _timer.cancel();
       return result;
     }
 
-    for (final pos in activeTradeList) {
+    for (final pos in tradeList) {
       final currentTickerData = status == 'CLOSED'
           ? null
           : await _apiService.getTickerPrice(pos.assetName ?? '');
 
-      final currentPrice = status == 'CLOSED' ? pos.exitPrice : currentTickerData?['assetPrice'];
-      final pnl = status == 'CLOSED' ? double.parse(pos.netPnl ?? '0.00') : helper.calculatePnL(
-        action: pos.action,
-        currentPrice: currentPrice,
-        buyPrice: pos.entryPrice,
-        quantity: pos.quantity,
-      );
+      final currentPrice =
+          status == 'CLOSED' ? pos.exitPrice : currentTickerData?['assetPrice'];
+      final pnl = status == 'CLOSED'
+          ? double.parse(pos.netPnl ?? '0.00')
+          : helper.calculatePnL(
+              action: pos.action,
+              currentPrice: currentPrice,
+              buyPrice: pos.entryPrice,
+              quantity: pos.quantity,
+            );
 
       totalPnl += pnl;
 

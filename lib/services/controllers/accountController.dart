@@ -89,10 +89,45 @@ class AccountController {
     }
   }
 
-  // Delete Account
-  Future<void> deleteAccount(String key) async {
+  Future<Map<String, dynamic>> deleteAccount(
+      {required String accountId}) async {
     try {
-      await _db.collection(_collection).doc(key).delete();
+      await _db.collection(_collection).doc(accountId).delete();
+
+      QuerySnapshot tradeSnapshot = await _db
+          .collection('tradeDetails')
+          .where('accountId', isEqualTo: accountId)
+          .get();
+      QuerySnapshot orderSnapshot = await _db
+          .collection('orderDetails')
+          .where('accountId', isEqualTo: accountId)
+          .get();
+
+      await batchDelete(snapshot: tradeSnapshot);
+      await batchDelete(snapshot: orderSnapshot);
+
+      return {"status": true, "message": "Account Deleted Successfully."};
+    } catch (e) {
+      print("Error deleting account: $e");
+    }
+
+    return {"status": true, "message": "Delete Failed."};
+  }
+
+  // Delete Account
+  Future<void> batchDelete({required QuerySnapshot snapshot}) async {
+    try {
+      if (snapshot.docs.isEmpty) {
+        return;
+      }
+
+      WriteBatch batch = _db.batch();
+
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
     } catch (e) {
       print("Error deleting account: $e");
     }
