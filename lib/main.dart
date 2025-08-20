@@ -42,7 +42,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
-      home: authStatus ? const HomeScreen() : const SignInScreen(), 
+      home: authStatus ? const HomeScreen() : const SignInScreen(),
     );
   }
 }

@@ -313,7 +313,7 @@ class _PositionsScreenState extends State<PositionsScreen> {
   }
 
   void updateTradePostion() {
-    _timer = Timer.periodic(const Duration(seconds: 5), (Timer t) {
+    _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
       setState(() {
         openedTradeList = handleTradePostion(isTimerCall: true, status: 'OPEN');
         tradeList = getCombineTrades();
@@ -336,8 +336,8 @@ class _PositionsScreenState extends State<PositionsScreen> {
     } else {
       tradeList =
           await tradeController.getTrades(context: context, status: status);
-      status == 'CLOSED' ? activeTradeList = tradeList : null;
-      status == 'OPEN' ? inActiveTradeList = tradeList : null;
+      status == 'CLOSED' ? inActiveTradeList = tradeList : null;
+      status == 'OPEN' ? activeTradeList = tradeList : null;
     }
 
     if (tradeList.isEmpty && isTimerCall && status == 'OPEN') {
