@@ -63,6 +63,7 @@ class OrderController {
         orderStatus: orderStatus,
         orderQuantity: orderQuantity,
         ltp: ltp,
+        marketSegment: marketSegment,
         stopLossPrice: null,
         targetPrice: null,
         createdBy: userId,
@@ -178,6 +179,7 @@ class OrderController {
             stopLossPrice: stopLossPrice,
             targetPrice: targetPrice,
             ltp: ltp,
+            marketSegment: marketSegment,
             createdBy: userId,
             updatedBy: userId,
             createdOn: Timestamp.now(),
@@ -230,14 +232,14 @@ class OrderController {
               final assetName = doc['assetName'];
               final orderPrice = doc['orderPrice'];
               final orderQuantity = doc['orderQuantity'];
+              final marketSegment = doc['marketSegment'];
 
               String action = doc['orderAction'];
               String tradeId = doc['tradeId'] ?? '';
               String stopLossPrice = doc['stopLossPrice'] ?? '';
               String targetPrice = doc['targetPrice'] ?? '';
 
-              final currentTickerData =
-                  await apiService.getTickerPrice(assetName);
+              final currentTickerData = await apiService.getTickerPrice(assetName, marketSegment: marketSegment);
               final currentPrice = currentTickerData['assetPrice'];
 
               bool buyLimitCond = false;
@@ -276,12 +278,7 @@ class OrderController {
                     double.parse(currentPrice) >= double.parse(orderPrice));
               }
 
-              if (buyLimitCond ||
-                  sellLimitCond ||
-                  buyTargetCond ||
-                  sellTargetCond ||
-                  buySLCond ||
-                  sellSLCond) {
+              if (buyLimitCond || sellLimitCond || buyTargetCond || sellTargetCond || buySLCond || sellSLCond) {
                 // ignore: use_build_context_synchronously
                 final response = await tradeController.handleTrade(
                   context: context,
@@ -309,7 +306,7 @@ class OrderController {
                   });
 
                   // ignore: use_build_context_synchronously
-                  Provider.of<TradeState>(context, listen: false).setIsRefresh = true;
+                  Provider.of<TradeState>(context, listen: false).initPosition();
                 }
               }
             }

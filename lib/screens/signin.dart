@@ -124,15 +124,15 @@ class _SignInScreenState extends State<SignInScreen> {
             isLoading: isLoading,
             buttonLabel: "Continue",
             onPressed: () async {
-              
               FocusScope.of(context).unfocus();
-              
+
               String email = emailController.text.trim();
               String password = passwordController.text.trim();
 
               if (email.isEmpty || password.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("Please fill all the fields.")));
+                showSnackbar(context,
+                    message: "Please fill all the fields.",
+                    type: SnackbarType.error);
               } else {
                 setState(() {
                   isLoading = true;
@@ -144,12 +144,12 @@ class _SignInScreenState extends State<SignInScreen> {
                 String message = response["message"] as String;
 
                 // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(message)));
+                showSnackbar(context, message: message, type: status ? SnackbarType.success : SnackbarType.error);
 
                 setState(() {
                   isLoading = false;
                 });
+
                 if (status) {
                   setState(() {
                     state.updateAuthStatus(authStatus: status);

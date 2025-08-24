@@ -85,6 +85,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                 currentPrice: crypto['lastPrice'],
                 assetName: crypto['symbol'],
                 shortName: crypto['symbol'],
+                marketSegment: widget.isFuture ? "Futures" : "Spot",
               );
             },
           );

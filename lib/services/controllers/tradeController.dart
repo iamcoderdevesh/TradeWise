@@ -27,18 +27,19 @@ class TradeController {
   }) async {
     try {
       late AuthState state = Provider.of<AuthState>(context, listen: false);
-      late AccountState accountState = Provider.of<AccountState>(context, listen: false);
+      late AccountState accountState =
+          Provider.of<AccountState>(context, listen: false);
 
       String userId = state.userId as String;
       String accountId = accountState.accountId as String;
 
-
       // Create a new trade
       if (tradeId.isEmpty) {
-
         //Calculate Fees
-        final String tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: entryPrice);
-        final String totalFees = helper.calculateFees(segment: 'crypto', orderType: 'LIMIT', margin: tradeMargin);
+        final String tradeMargin =
+            helper.calculateTradeMargin(quantity: quantity, price: entryPrice);
+        final String totalFees = helper.calculateFees(
+            segment: 'crypto', orderType: 'LIMIT', margin: tradeMargin);
 
         TradeModel trade = TradeModel(
           key: null,
@@ -68,15 +69,21 @@ class TradeController {
       }
       //Update trade
       else {
-
-        DocumentSnapshot tradeData = await _db.collection(_collection).doc(tradeId).get();
+        DocumentSnapshot tradeData =
+            await _db.collection(_collection).doc(tradeId).get();
 
         String totalFees = tradeData['totalFees'] as String;
         String entryPrice = tradeData['entryPrice'] as String;
         String quantity = tradeData['quantity'] as String;
         String action = tradeData['action'] as String;
 
-        String grossPnl = helper.calculatePnL(action: action, currentPrice: exitPrice, buyPrice: entryPrice, quantity: quantity).toString();
+        String grossPnl = helper
+            .calculatePnL(
+                action: action,
+                currentPrice: exitPrice,
+                buyPrice: entryPrice,
+                quantity: quantity)
+            .toString();
         double netPnl = double.parse(grossPnl) - double.parse(totalFees);
 
         await _db.collection(_collection).doc(tradeId).update({
@@ -89,7 +96,10 @@ class TradeController {
           "updatedOn": Timestamp.now(),
         });
 
-        DocumentSnapshot accountData = await FirebaseFirestore.instance.collection('accountDetails').doc(accountId).get();
+        DocumentSnapshot accountData = await FirebaseFirestore.instance
+            .collection('accountDetails')
+            .doc(accountId)
+            .get();
 
         String accountTotalBalance = accountData['totalBalance'] as String;
         double updatedTotalBalance = double.parse(accountTotalBalance) + netPnl;
@@ -109,8 +119,9 @@ class TradeController {
     return {"status": false};
   }
 
-  Future<List<TradeModel>> getTrades(
-      {required BuildContext context, required String status}) async {
+  Future<List<TradeModel>> getTrades({
+    required String status,
+  }) async {
     QuerySnapshot snapshot = await _db
         .collection(_collection)
         .where('status', isEqualTo: status)

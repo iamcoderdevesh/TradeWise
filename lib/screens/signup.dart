@@ -132,8 +132,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             String password = passwordController.text.trim();
 
             if (name.isEmpty || email.isEmpty || password.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Please fill all the fields.")));
+              showSnackbar(context,
+                  message: "Please fill all the fields.",
+                  type: SnackbarType.error);
             } else {
               setState(() {
                 isLoading = true;
@@ -145,8 +146,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               String message = response["message"] as String;
 
               // ignore: use_build_context_synchronously
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text(message)));
+              showSnackbar(context, message: message, type: SnackbarType.success);
+
               setState(() {
                 isLoading = false;
               });

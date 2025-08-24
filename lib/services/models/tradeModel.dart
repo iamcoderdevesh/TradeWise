@@ -59,6 +59,7 @@ class TradeModel {
       exitPrice: json["exitPrice"],
       action: json["action"],
       netPnl: json["netPnl"],
+      marketSegment: json["marketSegment"],
     );
   }
 

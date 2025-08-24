@@ -181,8 +181,8 @@ class _AccountScreenState extends State<AccountScreen> {
     String initialBalance = amountController.text.trim();
 
     if (accountName.isEmpty || initialBalance.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please fill all the fields.")));
+      showSnackbar(context,
+          message: "Please fill all the fields.", type: SnackbarType.error);
     } else {
       setState(() {
         isLoading = true;
@@ -205,8 +205,9 @@ class _AccountScreenState extends State<AccountScreen> {
             context: context, userId: userId);
 
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Account created successfully.")));
+        showSnackbar(context,
+            message: "Account created successfully.",
+            type: SnackbarType.success);
 
         Future.delayed(const Duration(milliseconds: 200), () {
           final appState = Provider.of<AppState>(context, listen: false);
@@ -241,8 +242,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
     if (status) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      showSnackbar(context, message: message, type: SnackbarType.success);
     }
   }
 }

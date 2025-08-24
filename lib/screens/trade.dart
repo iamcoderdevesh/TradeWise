@@ -18,12 +18,14 @@ class TradeScreen extends StatefulWidget {
   final bool isExit;
   final String assetName;
   final String action;
+  final String marketSegment;
 
   TradeScreen({
     super.key,
     required this.assetName,
     required this.action,
     required this.isExit,
+    required this.marketSegment,
     this.tradeId,
     this.quantity,
     this.entryPrice,
@@ -63,7 +65,8 @@ class _TradeScreenState extends State<TradeScreen>
   @override
   void initState() {
     super.initState();
-    late AccountState accountState = Provider.of<AccountState>(context, listen: false);
+    late AccountState accountState =
+        Provider.of<AccountState>(context, listen: false);
     availableMargin = accountState.totalBalance;
 
     _tabController = TabController(
@@ -84,8 +87,8 @@ class _TradeScreenState extends State<TradeScreen>
 
   @override
   void dispose() {
-    _timer.cancel();
     _tabController.dispose();
+    _timer.cancel();
     super.dispose();
   }
 
@@ -243,7 +246,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 10,
           ),
           Text(
-            widget.isExit ? netPnl : perChange,
+            widget.isExit ? netPnl : '$perChange%',
             style: TextStyle(
               color: getPnlColor(value: widget.isExit ? netPnl : perChange),
             ),
@@ -719,22 +722,25 @@ class _TradeScreenState extends State<TradeScreen>
     String amount = amountController.text.trim();
 
     if (quantity.isEmpty || amount.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please fill all the fields.")));
+      showSnackbar(context,
+          message: "Please fill all the fields.", type: SnackbarType.error);
+    } else if (double.parse(tradeMargin) > double.parse(availableMargin)) {
+      showSnackbar(context,
+          message: "Insufficient Funds.", type: SnackbarType.error);
     } else {
       setState(() {
         isLoading = true;
       });
 
-      final accountController = OrderController();
-      final response = await accountController.handleOrder(
+      final orderController = OrderController();
+      final response = await orderController.handleOrder(
         context: context,
         assetName: widget.assetName,
         ltp: amount,
         orderAction: action,
         orderPrice: amount,
         orderQuantity: quantity,
-        marketSegment: 'Spot',
+        marketSegment: widget.marketSegment,
         orderType: orderType,
         margin: '',
         tradeId: widget.tradeId ?? '',
@@ -749,9 +755,10 @@ class _TradeScreenState extends State<TradeScreen>
       });
 
       if (status) {
+        _timer.cancel();
+
         Future.delayed(const Duration(milliseconds: 200), () {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(message)));
+          showSnackbar(context, message: message, type: SnackbarType.success);
 
           final appState = Provider.of<AppState>(context, listen: false);
           appState.setPageIndex = 2;
@@ -794,8 +801,7 @@ class _TradeScreenState extends State<TradeScreen>
 
     if (status) {
       Future.delayed(const Duration(milliseconds: 200), () {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
+        showSnackbar(context, message: message, type: SnackbarType.success);
       });
     }
   }
@@ -803,7 +809,8 @@ class _TradeScreenState extends State<TradeScreen>
   Future<void> fetchTickerData() async {
     try {
       String quantity = quantityController.text.trim();
-      final data = await _apiService.getTickerPrice(widget.assetName);
+      final data = await _apiService.getTickerPrice(widget.assetName,
+          marketSegment: widget.marketSegment);
 
       setState(() {
         currentPrice = data['assetPrice'];

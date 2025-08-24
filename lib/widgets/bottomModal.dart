@@ -8,6 +8,7 @@ Future bottomModal({
   required String assetName,
   required String price,
   required String perChange,
+  required String marketSegment,
   bool isExit = false,
   String action = '',
   String? quantity,
@@ -96,6 +97,7 @@ Future bottomModal({
                               context: context,
                               assetName: assetName,
                               isExit: isExit,
+                              marketSegment: marketSegment,
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -123,6 +125,7 @@ Future bottomModal({
                               quantity: quantity,
                               entryPrice: entryPrice,
                               tradeId: tradeId,
+                              marketSegment: marketSegment,
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -194,6 +197,7 @@ void handleClick({
   required String action,
   required String assetName,
   required bool isExit,
+  required String marketSegment,
   String? quantity,
   String? entryPrice,
   String? tradeId,
@@ -210,6 +214,7 @@ void handleClick({
           quantity: quantity,
           entryPrice: entryPrice,
           tradeId: tradeId,
+          marketSegment: marketSegment,
         ),
       ),
     );

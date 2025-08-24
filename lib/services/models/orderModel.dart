@@ -13,6 +13,7 @@ class OrderModel {
   String orderStatus;
   String orderQuantity;
   String ltp;
+  String marketSegment;
   String? stopLossPrice;
   String? targetPrice;
   String createdBy;
@@ -35,6 +36,7 @@ class OrderModel {
     required this.stopLossPrice,
     required this.targetPrice,
     required this.ltp,
+    required this.marketSegment,
     required this.createdBy,
     required this.updatedBy,
     required this.createdOn,
@@ -56,6 +58,7 @@ class OrderModel {
         stopLossPrice: json["stopLossPrice"],
         targetPrice: json["targetPrice"],
         ltp: json["ltp"],
+        marketSegment: json["marketSegment"],
         createdBy: json["createdBy"],
         updatedBy: json["updatedBy"],
         createdOn: json["createdOn"],
@@ -77,6 +80,7 @@ class OrderModel {
         "stopLossPrice": stopLossPrice,
         "targetPrice": targetPrice,
         "ltp": ltp,
+        "marketSegment": marketSegment,
         "createdBy": createdBy,
         "updatedBy": updatedBy,
         "createdOn": createdOn,

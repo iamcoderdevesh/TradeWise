@@ -1,9 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:tradewise/helpers/helper.dart';
-import 'package:tradewise/services/api/api.dart';
-import 'package:tradewise/services/controllers/tradeController.dart';
 import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/widgets/bottomModal.dart';
 import 'package:tradewise/widgets/widgets.dart';
@@ -17,51 +13,19 @@ class PositionsScreen extends StatefulWidget {
 }
 
 class _PositionsScreenState extends State<PositionsScreen> {
-  late Timer _timer;
-  bool _hasHandledRefresh = false;
-
-  dynamic activeTradeList;
-  dynamic inActiveTradeList;
-
-  late Future<List<Map<String, dynamic>>> openedTradeList;
-  late Future<List<Map<String, dynamic>>> closeTradeList;
-
-  late Future<List<Map<String, dynamic>>> tradeList;
-
+  late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
   final Helper helper = Helper();
-  final ApiService _apiService = ApiService();
-  final tradeController = TradeController();
-
-  late double _totalPnL = 0.00;
-  late double _closedPnL = 0.00;
 
   @override
   void initState() {
-    initPosition();
+    initPositions();
     super.initState();
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    tradeState.cancelTimer();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    final tradeState = Provider.of<TradeState>(context);
-
-    if (tradeState.isRefresh && !_hasHandledRefresh) {
-      _hasHandledRefresh = true;
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        initPosition();
-        tradeState.setIsRefresh = false;
-        _hasHandledRefresh = false;
-      });
-    }
   }
 
   @override
@@ -118,10 +82,12 @@ class _PositionsScreenState extends State<PositionsScreen> {
           Center(
             child: Text(
               helper.formatNumber(
-                  value: _totalPnL.toString(), formatNumber: 2, plusSign: true),
+                  value: tradeState.totalPnl.toString(),
+                  formatNumber: 2,
+                  plusSign: true),
               style: TextStyle(
                 fontSize: 20,
-                color: getPnlColor(value: _totalPnL.toString()),
+                color: getPnlColor(value: tradeState.totalPnl.toString()),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -132,9 +98,11 @@ class _PositionsScreenState extends State<PositionsScreen> {
   }
 
   Widget postionList() {
+    late TradeState state = Provider.of<TradeState>(context, listen: true);
+    
     return Flexible(
       child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: tradeList,
+        future: state.tradeList,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Center(child: circularLoader());
@@ -155,6 +123,7 @@ class _PositionsScreenState extends State<PositionsScreen> {
                 tradeId: tradeData['tradeId'] ?? '',
                 status: tradeData['status'] ?? '',
                 action: tradeData['action'] ?? '',
+                marketSegment: tradeData['marketSegment'] ?? '',
                 context: context,
               );
             },
@@ -174,6 +143,7 @@ class _PositionsScreenState extends State<PositionsScreen> {
     required String action,
     required String entryPrice,
     required String tradeId,
+    required String marketSegment,
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 10),
@@ -200,6 +170,7 @@ class _PositionsScreenState extends State<PositionsScreen> {
                     tradeId: tradeId,
                     isExit: true,
                     action: action,
+                    marketSegment: marketSegment,
                   );
           },
           child: Padding(
@@ -305,90 +276,7 @@ class _PositionsScreenState extends State<PositionsScreen> {
     );
   }
 
-  void initPosition() {
-    closeTradeList = handleTradePostion(status: 'CLOSED');
-    openedTradeList = handleTradePostion(status: 'OPEN');
-    tradeList = getCombineTrades();
-    updateTradePostion();
-  }
-
-  void updateTradePostion() {
-    _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
-      setState(() {
-        openedTradeList = handleTradePostion(isTimerCall: true, status: 'OPEN');
-        tradeList = getCombineTrades();
-      });
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> handleTradePostion({
-    required String status,
-    bool isTimerCall = false,
-  }) async {
-    dynamic tradeList;
-    double totalPnl = 0.00;
-    List<Map<String, dynamic>> result = [];
-
-    if (activeTradeList != null && status == 'OPEN') {
-      tradeList = activeTradeList;
-    } else if (inActiveTradeList != null && status == 'CLOSED') {
-      tradeList = inActiveTradeList;
-    } else {
-      tradeList =
-          await tradeController.getTrades(context: context, status: status);
-      status == 'CLOSED' ? inActiveTradeList = tradeList : null;
-      status == 'OPEN' ? activeTradeList = tradeList : null;
-    }
-
-    if (tradeList.isEmpty && isTimerCall && status == 'OPEN') {
-      _timer.cancel();
-      return result;
-    }
-
-    for (final pos in tradeList) {
-      final currentTickerData = status == 'CLOSED'
-          ? null
-          : await _apiService.getTickerPrice(pos.assetName ?? '');
-
-      final currentPrice =
-          status == 'CLOSED' ? pos.exitPrice : currentTickerData?['assetPrice'];
-      final pnl = status == 'CLOSED'
-          ? double.parse(pos.netPnl ?? '0.00')
-          : helper.calculatePnL(
-              action: pos.action,
-              currentPrice: currentPrice,
-              buyPrice: pos.entryPrice,
-              quantity: pos.quantity,
-            );
-
-      totalPnl += pnl;
-
-      result.add({
-        'tradeId': pos.tradeId,
-        'assetName': pos.assetName,
-        'ltp': currentPrice,
-        'quantity': pos.quantity,
-        'entryPrice': pos.entryPrice,
-        'action': pos.action,
-        'status': status,
-        'pnl': helper.formatNumber(
-            value: pnl.toString(), formatNumber: 2, plusSign: true)
-      });
-    }
-
-    setState(() {
-      _totalPnL = totalPnl + _closedPnL;
-    });
-
-    if (status == 'CLOSED') {
-      _closedPnL = totalPnl;
-    }
-
-    return result;
-  }
-
-  Future<List<Map<String, dynamic>>> getCombineTrades() async {
-    final results = await Future.wait([openedTradeList, closeTradeList]);
-    return [...results[0], ...results[1]];
+  void initPositions() {
+    tradeState.initPosition();
   }
 }

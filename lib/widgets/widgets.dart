@@ -9,6 +9,8 @@ const authOutlineInputBorder = OutlineInputBorder(
   borderRadius: BorderRadius.all(Radius.circular(100)),
 );
 
+enum SnackbarType { success, error, info }
+
 Widget circularLoader() {
   return const CircularProgressIndicator(
     color: Color(0xFF287BFF),
@@ -61,6 +63,7 @@ Widget tickerItems({
   required String shortName,
   required String currentPrice,
   required String perChange,
+  required String marketSegment,
 }) {
   late String price =
       Helper().formatNumber(value: currentPrice, formatNumber: 4);
@@ -84,6 +87,7 @@ Widget tickerItems({
           assetName: assetName,
           perChange: percentChange,
           price: price,
+          marketSegment: marketSegment,
         );
       },
       child: Padding(
@@ -334,4 +338,40 @@ Color getPnlColor({required String value}) {
       : (number < 0)
           ? Colors.red
           : Colors.grey.shade500;
+}
+
+void showSnackbar(
+  BuildContext context, {
+  required String message,
+  required SnackbarType type,
+}) {
+  // Determine background color based on type
+  Color backgroundColor;
+
+  switch (type) {
+    case SnackbarType.success:
+      backgroundColor = const Color(0xE215CC8A);
+      break;
+    case SnackbarType.error:
+      backgroundColor = const Color(0xFFFF6467);
+      break;
+    case SnackbarType.info:
+    default:
+      backgroundColor = Colors.blue;
+      break;
+  }
+
+  // Create the snackbar
+  final snackBar = SnackBar(
+    content: Text(
+      message,
+      style: const TextStyle(color: Colors.white),
+    ),
+    backgroundColor: backgroundColor,
+    // behavior: SnackBarBehavior.floating,
+    duration: const Duration(seconds: 3),
+  );
+
+  // Show the snackbar
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }

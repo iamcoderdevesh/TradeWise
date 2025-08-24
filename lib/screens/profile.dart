@@ -78,9 +78,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: TextButton(
                           onPressed: () {
                             state.singOut();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Signout Successfully.")));
+                            showSnackbar(context,
+                                message: "Signout successfully.",
+                                type: SnackbarType.success);
                             Navigator.push(
                               context,
                               MaterialPageRoute(

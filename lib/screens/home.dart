@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/assets/svg.dart';
+import 'package:tradewise/screens/market.dart';
 import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/screens/profile.dart';
 import 'package:tradewise/services/controllers/orderController.dart';
@@ -13,8 +14,6 @@ import 'package:tradewise/widgets/widgets.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
-
-import 'market.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -363,6 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 currentPrice: crypto['lastPrice'],
                 assetName: crypto['symbol'],
                 shortName: crypto['symbol'],
+                marketSegment: "Spot",
               );
             },
           );
