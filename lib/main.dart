@@ -11,8 +11,7 @@ import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/theme/theme.dart';
 
 Future<void> main() async {
-  SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();

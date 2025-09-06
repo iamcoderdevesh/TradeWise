@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:tradewise/theme/theme.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class AppState extends ChangeNotifier {
   late ThemeData themeData = darkTheme;
   String theme = 'sys';
   int _pageIndex = 0;
+  bool _isOnline = true;
+  final Connectivity _connectivity = Connectivity();
+
+  AppState() {
+    _initConnectivity();
+    _connectivity.onConnectivityChanged.listen(_updateStatus);
+  }
+
+  bool get isOnline => _isOnline;
+
+  int get pageIndex => _pageIndex;
+
+  void _initConnectivity() async {
+    final result = await _connectivity.checkConnectivity();
+    _updateStatus(result);
+  }
+
+  void _updateStatus(ConnectivityResult result) {
+    _isOnline = result != ConnectivityResult.none;
+    notifyListeners();
+  }
 
   void toggleTheme({required String mode, String? isSys}) {
     if (mode == 'dark' && isSys == null) {
@@ -19,10 +41,6 @@ class AppState extends ChangeNotifier {
     }
 
     notifyListeners();
-  }
-
-  int get pageIndex {
-    return _pageIndex;
   }
 
   set setPageIndex(int index) {

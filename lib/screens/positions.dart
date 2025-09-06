@@ -52,6 +52,8 @@ class _PositionsScreenState extends State<PositionsScreen> {
   }
 
   Widget totalPnlBox(context) {
+    late TradeState state = Provider.of<TradeState>(context, listen: true);
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -82,12 +84,12 @@ class _PositionsScreenState extends State<PositionsScreen> {
           Center(
             child: Text(
               helper.formatNumber(
-                  value: tradeState.totalPnl.toString(),
+                  value: state.totalPnl.toString(),
                   formatNumber: 2,
                   plusSign: true),
               style: TextStyle(
                 fontSize: 20,
-                color: getPnlColor(value: tradeState.totalPnl.toString()),
+                color: getPnlColor(value: state.totalPnl.toString()),
                 fontWeight: FontWeight.w500,
               ),
             ),

@@ -60,6 +60,8 @@ class TradeModel {
       action: json["action"],
       netPnl: json["netPnl"],
       marketSegment: json["marketSegment"],
+      ltp: json["ltp"],
+      userId: json["userId"],
     );
   }
 

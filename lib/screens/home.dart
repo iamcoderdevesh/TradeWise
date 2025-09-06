@@ -23,6 +23,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool isOnline = true;
   final List<String> trackedSymbols = [
     'BTCUSDT',
     'ETHUSDT',
@@ -39,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       bottomNavigationBar: const BottomNavBar(),
@@ -63,10 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget homeScreen(context) {
     late AuthState authState = Provider.of<AuthState>(context, listen: false);
-    late AccountState accountState = Provider.of<AccountState>(context, listen: true);
+    late AccountState accountState =
+        Provider.of<AccountState>(context, listen: true);
 
-    _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -338,49 +339,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget trendingSection(context) {
+    
+    if (isOnline) _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
+
     return Expanded(
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _cryptoData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: circularLoader());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+      child: isOnline
+          ? FutureBuilder<List<Map<String, dynamic>>>(
+              future: _cryptoData,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: circularLoader());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-          final data = snapshot.data!;
+                final data = snapshot.data!;
 
-          return ListView.builder(
-            padding: EdgeInsets.zero,
-            physics: const BouncingScrollPhysics(),
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final crypto = data[index];
-              return tickerItems(
-                context: context,
-                perChange: crypto['priceChangePercent'],
-                currentPrice: crypto['lastPrice'],
-                assetName: crypto['symbol'],
-                shortName: crypto['symbol'],
-                marketSegment: "Spot",
-              );
-            },
-          );
-        },
-      ),
+                return ListView.builder(
+                  padding: EdgeInsets.zero,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    final crypto = data[index];
+                    return tickerItems(
+                      context: context,
+                      perChange: crypto['priceChangePercent'],
+                      currentPrice: crypto['lastPrice'],
+                      assetName: crypto['symbol'],
+                      shortName: crypto['symbol'],
+                      marketSegment: "Spot",
+                    );
+                  },
+                );
+              },
+            )
+          : const Center(
+              child: Text("Data not found"),
+            ),
     );
   }
 
   Future<void> setUp(BuildContext context) async {
     late AuthState state = Provider.of<AuthState>(context, listen: false);
-    
+
     final accountController = AccountController();
     final orderController = OrderController();
 
     String userId = state.userId as String;
 
     bool status = await accountController.setAccountBalance(context: context, userId: userId);
-    // ignore: use_build_context_synchronously
-    if(status) await orderController.handlePendingOrders(context: context);
+    
+    if (status && isOnline) await orderController.handlePendingOrders(context: context); // ignore: use_build_context_synchronously
   }
 }

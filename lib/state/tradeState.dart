@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/tradeController.dart';
@@ -29,6 +28,7 @@ class TradeState extends AppState {
   void initPosition() {
     activeTradeList = null;
     inActiveTradeList = null;
+    _totalPnL = 0.00;
     _isTradeScreenActive = true;
     closeTradeList = handleTradePostion(status: 'CLOSED');
     openedTradeList = handleTradePostion(status: 'OPEN');
@@ -38,11 +38,18 @@ class TradeState extends AppState {
   }
 
   void updateTradePostion() {
-    _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
-      openedTradeList = handleTradePostion(isTimerCall: true, status: 'OPEN');
-      tradeList = getCombineTrades();
-      notifyListeners();
-    });
+    if (isOnline) {
+      _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
+        if (!isOnline) {
+          _timer.cancel();
+        } else {
+          openedTradeList =
+              handleTradePostion(isTimerCall: true, status: 'OPEN');
+          tradeList = getCombineTrades();
+          notifyListeners();
+        }
+      });
+    }
   }
 
   Future<List<Map<String, dynamic>>> handleTradePostion({
@@ -71,8 +78,10 @@ class TradeState extends AppState {
     for (final pos in tradeList) {
       final currentTickerData = status == 'CLOSED'
           ? null
-          : await _apiService.getTickerPrice(pos.assetName ?? '',
-              marketSegment: pos.marketSegment);
+          : (isOnline
+              ? await _apiService.getTickerPrice(pos.assetName ?? '',
+                  marketSegment: pos.marketSegment)
+              : pos.ltp);
 
       final currentPrice =
           status == 'CLOSED' ? pos.exitPrice : currentTickerData?['assetPrice'];
@@ -99,13 +108,19 @@ class TradeState extends AppState {
         'pnl': helper.formatNumber(
             value: pnl.toString(), formatNumber: 2, plusSign: true)
       });
-    }
 
-    _totalPnL = totalPnl + _closedPnL;
+      if (status == 'OPEN') await tradeController.updateLtp(userId: pos.userId, tradeId: pos.tradeId, ltp: currentPrice);
+    }
 
     if (status == 'CLOSED') {
       _closedPnL = totalPnl;
+      _totalPnL = _closedPnL;
+    } else {
+      _totalPnL = totalPnl + _closedPnL;
     }
+
+    print(_closedPnL);
+    print(_totalPnL);
 
     return result;
   }

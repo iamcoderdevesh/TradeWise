@@ -207,7 +207,7 @@ class OrderController {
   }
 
   Future<void> handlePendingOrders({required BuildContext context}) async {
-    _timer = Timer.periodic(const Duration(seconds: 3), (Timer t) async {
+    _timer = Timer.periodic(const Duration(seconds: 5), (Timer t) async {
       if (!isProcessing) {
         try {
           isProcessing = true;

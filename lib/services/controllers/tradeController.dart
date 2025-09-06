@@ -119,6 +119,22 @@ class TradeController {
     return {"status": false};
   }
 
+  Future<void> updateLtp({
+    required String tradeId,
+    required String userId,
+    required String ltp,
+  }) async {
+    try {
+      await _db.collection(_collection).doc(tradeId).update({
+        "ltp": ltp,
+        "updatedBy": userId,
+        "updatedOn": Timestamp.now(),
+      });
+    } catch (e) {
+      print("Error creating trade: $e");
+    }
+  }
+
   Future<List<TradeModel>> getTrades({
     required String status,
   }) async {

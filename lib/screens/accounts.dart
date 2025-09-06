@@ -3,9 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/screens/home.dart';
-import 'package:tradewise/screens/profile.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
-import 'package:tradewise/services/models/accountModel.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/widgets.dart';
@@ -22,6 +20,7 @@ String? _selectedSegment = 'Stocks';
 class _AccountScreenState extends State<AccountScreen> {
   late bool isLoading = false;
   late bool onScreenLoader = false;
+  late Helper helper = Helper();
   late AccountState state = Provider.of<AccountState>(context, listen: false);
 
   final TextEditingController accountNameController = TextEditingController();
@@ -67,8 +66,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     children: [
                       labelAreaSection(
                         title: "Balance",
-                        subTitle:
-                            Helper().formatNumber(value: state.totalBalance),
+                        subTitle: helper.formatNumber(value: state.totalBalance),
                         context: context,
                         isDelete: true,
                       ),
@@ -184,42 +182,45 @@ class _AccountScreenState extends State<AccountScreen> {
       showSnackbar(context,
           message: "Please fill all the fields.", type: SnackbarType.error);
     } else {
-      setState(() {
-        isLoading = true;
-      });
-
-      final accountController = AccountController();
-      final response = await accountController.createAccount(
-        context: context,
-        accountName: accountName,
-        accountType: _selectedSegment as String,
-        initialBalance: initialBalance,
-      );
-
-      bool status = response["status"] as bool;
-
-      if (status) {
-        String userId = response["userId"] as String;
-        // ignore: use_build_context_synchronously
-        await accountController.setAccountBalance(
-            context: context, userId: userId);
-
-        // ignore: use_build_context_synchronously
-        showSnackbar(context,
-            message: "Account created successfully.",
-            type: SnackbarType.success);
-
-        Future.delayed(const Duration(milliseconds: 200), () {
-          final appState = Provider.of<AppState>(context, listen: false);
-          appState.setPageIndex = 3;
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-            ),
-          );
+      if (await helper.checkConnectivity(context)) {
+        setState(() {
+          isLoading = true;
         });
+
+        final accountController = AccountController();
+        // ignore: use_build_context_synchronously
+        final response = await accountController.createAccount(
+          context: context,
+          accountName: accountName,
+          accountType: _selectedSegment as String,
+          initialBalance: initialBalance,
+        );
+
+        bool status = response["status"] as bool;
+
+        if (status) {
+          String userId = response["userId"] as String;
+          // ignore: use_build_context_synchronously
+          await accountController.setAccountBalance(
+              context: context, userId: userId);
+
+          // ignore: use_build_context_synchronously
+          showSnackbar(context,
+              message: "Account created successfully.",
+              type: SnackbarType.success);
+
+          Future.delayed(const Duration(milliseconds: 200), () {
+            final appState = Provider.of<AppState>(context, listen: false);
+            appState.setPageIndex = 3;
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          });
+        }
       }
     }
   }

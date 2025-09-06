@@ -1,8 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:tradewise/state/appState.dart';
+import 'package:tradewise/widgets/widgets.dart';
 
 class Helper {
   Helper();
+
+  Future<bool> checkConnectivity(BuildContext context) async {
+    final isOnline = Provider.of<AppState>(context, listen: false).isOnline;
+    if (!isOnline) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        showSnackbar(context, message: "No internet connection. Please try again later.", type: SnackbarType.error);
+      });
+      return false;
+    }
+
+    return true;
+  }
 
   String getFirstLetter({required String value}) =>
       value.toString().substring(0, 1);
@@ -58,7 +74,9 @@ class Helper {
     double _buyPrice = double.parse(buyPrice ?? '0.00');
     double _quantity = double.parse(quantity ?? '0.00');
 
-    late double pnl = action == 'SELL' ? (_buyPrice - _currentPrice) * _quantity : (_currentPrice  - _buyPrice) * _quantity;
+    late double pnl = action == 'SELL'
+        ? (_buyPrice - _currentPrice) * _quantity
+        : (_currentPrice - _buyPrice) * _quantity;
     return pnl;
   }
 

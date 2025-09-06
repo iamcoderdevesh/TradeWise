@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:tradewise/services/api/api.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 // ignore: must_be_immutable
@@ -14,21 +16,19 @@ class WatchlistScreen extends StatefulWidget {
 }
 
 class _WatchlistScreenState extends State<WatchlistScreen> {
-  late Timer _timer;
+  bool isOnline = true;
   final List<String> trackedSymbols = [];
-  late Future<List<Map<String, dynamic>>> _cryptoList;
+  late Future<List<Map<String, dynamic>>> _tickerList;
 
   late String _searchQuery = '';
 
   @override
   void initState() {
-    initTickerList();
     super.initState();
   }
 
   @override
   void dispose() {
-    _timer.cancel();
     super.dispose();
   }
 
@@ -53,55 +53,57 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
   }
 
   Widget tickerListSections(context) {
+    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
+    if(isOnline) initTickerList(context);
+    
     return Padding(
       padding: const EdgeInsets.only(top: 70, left: 20, right: 20),
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _cryptoList,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: circularLoader());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+      child: isOnline
+          ? FutureBuilder<List<Map<String, dynamic>>>(
+              future: _tickerList,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: circularLoader());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-          List<Map<String, dynamic>>? filteredData = snapshot.data!;
-          if (_searchQuery.isNotEmpty) {
-            filteredData = snapshot.data!
-                .where((item) => item['symbol']
-                    .toString()
-                    .toUpperCase()
-                    .contains(_searchQuery))
-                .toList();
-          }
+                List<Map<String, dynamic>>? filteredData = snapshot.data!;
+                if (_searchQuery.isNotEmpty) {
+                  filteredData = snapshot.data!
+                      .where((item) => item['symbol']
+                          .toString()
+                          .toUpperCase()
+                          .contains(_searchQuery))
+                      .toList();
+                }
 
-          return ListView.builder(
-            physics: const BouncingScrollPhysics(),
-            itemCount: filteredData.length,
-            itemBuilder: (context, index) {
-              final crypto = filteredData![index];
-              return tickerItems(
-                context: context,
-                perChange: crypto['priceChangePercent'],
-                currentPrice: crypto['lastPrice'],
-                assetName: crypto['symbol'],
-                shortName: crypto['symbol'],
-                marketSegment: widget.isFuture ? "Futures" : "Spot",
-              );
-            },
-          );
-        },
-      ),
+                return ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: filteredData.length,
+                  itemBuilder: (context, index) {
+                    final crypto = filteredData![index];
+                    return tickerItems(
+                      context: context,
+                      perChange: crypto['priceChangePercent'],
+                      currentPrice: crypto['lastPrice'],
+                      assetName: crypto['symbol'],
+                      shortName: crypto['symbol'],
+                      marketSegment: widget.isFuture ? "Futures" : "Spot",
+                    );
+                  },
+                );
+              },
+            )
+          : const Center(
+              child: Text("Data not found"),
+            ),
     );
   }
 
-  void initTickerList() {
-    _cryptoList =
-        ApiService.fetchCryptoData(trackedSymbols, isFuture: widget.isFuture);
-    _timer = Timer.periodic(const Duration(seconds: 10), (Timer t) {
-      setState(() {
-        _cryptoList = ApiService.fetchCryptoData(trackedSymbols,
-            isFuture: widget.isFuture);
-      });
-    });
+  Future<void> initTickerList(BuildContext context) async {
+    if (isOnline) {
+      _tickerList = ApiService.fetchCryptoData(trackedSymbols, isFuture: widget.isFuture);
+    }
   }
 }

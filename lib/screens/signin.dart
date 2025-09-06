@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/screens/home.dart';
 import 'package:tradewise/services/controllers/authController.dart';
 import 'package:tradewise/screens/signup.dart';
@@ -16,6 +17,8 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   late bool isLoading = false;
+  late Helper helper = Helper();
+  
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -93,8 +96,6 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget signInForm(BuildContext context) {
-    late AuthState state = Provider.of<AuthState>(context, listen: false);
-
     return Form(
       child: Column(
         children: [
@@ -123,53 +124,59 @@ class _SignInScreenState extends State<SignInScreen> {
           elevatedButton(
             isLoading: isLoading,
             buttonLabel: "Continue",
-            onPressed: () async {
-              FocusScope.of(context).unfocus();
-
-              String email = emailController.text.trim();
-              String password = passwordController.text.trim();
-
-              if (email.isEmpty || password.isEmpty) {
-                showSnackbar(context,
-                    message: "Please fill all the fields.",
-                    type: SnackbarType.error);
-              } else {
-                setState(() {
-                  isLoading = true;
-                });
-                final response = await AuthenticationController()
-                    .handleSignIn(email: email, password: password);
-
-                bool status = response["status"] as bool;
-                String message = response["message"] as String;
-
-                // ignore: use_build_context_synchronously
-                showSnackbar(context, message: message, type: status ? SnackbarType.success : SnackbarType.error);
-
-                setState(() {
-                  isLoading = false;
-                });
-
-                if (status) {
-                  setState(() {
-                    state.updateAuthStatus(authStatus: status);
-                  });
-
-                  Future.delayed(const Duration(milliseconds: 200), () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
-                  });
-                }
-              }
-            },
+            onPressed: () => handleSigninSubmit(),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> handleSigninSubmit() async {
+
+    late AuthState state = Provider.of<AuthState>(context, listen: false);
+    FocusScope.of(context).unfocus();
+
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      showSnackbar(context,
+          message: "Please fill all the fields.", type: SnackbarType.error);
+    } else {
+      if (await helper.checkConnectivity(context)) {
+        setState(() {
+          isLoading = true;
+        });
+        final response = await AuthenticationController().handleSignIn(email: email, password: password);
+
+        bool status = response["status"] as bool;
+        String message = response["message"] as String;
+
+        // ignore: use_build_context_synchronously
+        showSnackbar(context,
+            message: message,
+            type: status ? SnackbarType.success : SnackbarType.error);
+
+        setState(() {
+          isLoading = false;
+        });
+
+        if (status) {
+          setState(() {
+            state.updateAuthStatus(authStatus: status);
+          });
+
+          Future.delayed(const Duration(milliseconds: 200), () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          });
+        }
+      }
+    }
   }
 }
 

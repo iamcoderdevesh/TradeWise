@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/controllers/authController.dart';
 import 'package:tradewise/screens/signin.dart';
 import 'package:tradewise/widgets/widgets.dart';
@@ -13,6 +14,8 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   late bool isLoading = false;
+  late Helper helper = Helper();
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -125,47 +128,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
         const SizedBox(height: 8),
         elevatedButton(
           buttonLabel: "Continue",
-          onPressed: () async {
-            // Handle navigation to Sign Up
-            String name = nameController.text.trim();
-            String email = emailController.text.trim();
-            String password = passwordController.text.trim();
-
-            if (name.isEmpty || email.isEmpty || password.isEmpty) {
-              showSnackbar(context,
-                  message: "Please fill all the fields.",
-                  type: SnackbarType.error);
-            } else {
-              setState(() {
-                isLoading = true;
-              });
-              final response = await AuthenticationController().handleSignup(
-                  fullName: name, email: email, password: password);
-
-              bool status = response["status"] as bool;
-              String message = response["message"] as String;
-
-              // ignore: use_build_context_synchronously
-              showSnackbar(context, message: message, type: SnackbarType.success);
-
-              setState(() {
-                isLoading = false;
-              });
-              if (status) {
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SignInScreen(),
-                    ),
-                  );
-                });
-              }
-            }
-          },
+          onPressed: () => handleSignupSubmit(),
         ),
       ],
     );
+  }
+
+  Future<void> handleSignupSubmit() async {
+    String name = nameController.text.trim();
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      showSnackbar(context,
+          message: "Please fill all the fields.", type: SnackbarType.error);
+    } else {
+      if (await helper.checkConnectivity(context)) {
+        setState(() {
+          isLoading = true;
+        });
+        final response = await AuthenticationController()
+            .handleSignup(fullName: name, email: email, password: password);
+
+        bool status = response["status"] as bool;
+        String message = response["message"] as String;
+
+        // ignore: use_build_context_synchronously
+        showSnackbar(context, message: message, type: SnackbarType.success);
+
+        setState(() {
+          isLoading = false;
+        });
+        if (status) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SignInScreen(),
+              ),
+            );
+          });
+        }
+      }
+    }
   }
 }
 

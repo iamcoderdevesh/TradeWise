@@ -35,8 +35,7 @@ class TradeScreen extends StatefulWidget {
   State<TradeScreen> createState() => _TradeScreenState();
 }
 
-class _TradeScreenState extends State<TradeScreen>
-    with SingleTickerProviderStateMixin {
+class _TradeScreenState extends State<TradeScreen> with SingleTickerProviderStateMixin {
   late Timer _timer;
 
   final TextEditingController quantityController = TextEditingController();
@@ -65,8 +64,7 @@ class _TradeScreenState extends State<TradeScreen>
   @override
   void initState() {
     super.initState();
-    late AccountState accountState =
-        Provider.of<AccountState>(context, listen: false);
+    late AccountState accountState = Provider.of<AccountState>(context, listen: false);
     availableMargin = accountState.totalBalance;
 
     _tabController = TabController(
@@ -79,10 +77,7 @@ class _TradeScreenState extends State<TradeScreen>
       setState(() {});
     });
 
-    fetchTickerData();
-    _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
-      fetchTickerData();
-    });
+    initTicker();
   }
 
   @override
@@ -246,7 +241,9 @@ class _TradeScreenState extends State<TradeScreen>
             width: 10,
           ),
           Text(
-            widget.isExit ? netPnl : '$perChange%',
+            widget.isExit
+                ? helper.formatNumber(value: netPnl, plusSign: true)
+                : '${helper.formatNumber(value: perChange, plusSign: true)}%',
             style: TextStyle(
               color: getPnlColor(value: widget.isExit ? netPnl : perChange),
             ),
@@ -329,29 +326,8 @@ class _TradeScreenState extends State<TradeScreen>
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      tradeForm(
-                          context: context, currentColor: color, type: type),
-                    ],
-                  ),
-                ),
+                tradeForm(context: context, currentColor: color, type: type),
                 const SizedBox(height: 20),
                 isViewMore
                     ? addFieldsSection(context: context)
@@ -383,109 +359,128 @@ class _TradeScreenState extends State<TradeScreen>
     );
   }
 
-  Widget tradeForm(
-      {required BuildContext context,
-      required Color currentColor,
-      required String type}) {
-    return Form(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+  Widget tradeForm({
+    required BuildContext context,
+    required Color currentColor,
+    required String type,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Form(
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: inputText(
-                    label: "Quantity",
-                    hintText: "0",
-                    context: context,
-                    color: currentColor,
-                    controller: quantityController,
-                    onChanged: (text) => {handleCalculation(quantity: text)},
-                  ),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: Theme.of(context).colorScheme.tertiary),
-                  ),
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.tertiary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {},
-                    child: const Icon(
-                      Icons.compare_arrows_rounded,
-                    ),
-                  ),
-                ),
-              ],
+            inputAreaSection(
+              label: "Quantity",
+              hintText: "0",
+              currentColor: currentColor,
+              controller: quantityController,
+              onChanged: (p0) {
+                handleCalculation();
+              },
             ),
-            const SizedBox(
-              height: 25,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: orderType == "MARKET"
-                      ? inputText(
-                          label: "Market",
-                          hintText: "0.00",
-                          context: context,
-                          color: currentColor,
-                          controller: amountController,
-                          readOnly: true,
-                        )
-                      : inputText(
-                          label: "Limit",
-                          hintText: "0.00",
-                          context: context,
-                          color: currentColor,
-                          controller: amountController,
-                          onChanged: (text) => {
-                            handleCalculation(quantity: quantityController.text)
-                          },
-                        ),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: Theme.of(context).colorScheme.tertiary),
-                  ),
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.tertiary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        orderType = orderType == "MARKET" ? "LIMIT" : "MARKET";
-                      });
-                    },
-                    child: const Icon(
-                      Icons.compare_arrows_rounded,
-                    ),
-                  ),
-                ),
-              ],
+            inputAreaSection(
+              label: orderType == "MARKET" ? "Market" : "Limit",
+              hintText: "0.00",
+              currentColor: currentColor,
+              controller: amountController,
+              readOnly: orderType == "MARKET" ? true : false,
+              onChanged: (p0) {
+                handleCalculation();
+              },
+              onActionButtonPressed: () {
+                setState(() {
+                  orderType = orderType == "MARKET" ? "LIMIT" : "MARKET";
+                });
+              },
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget inputAreaSection({
+    required String label,
+    required String hintText,
+    bool readOnly = false,
+    required Color currentColor,
+    void Function(String)? onChanged,
+    void Function()? onActionButtonPressed,
+    void Function()? onEditingComplete,
+    required TextEditingController controller,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.tertiary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: inputText(
+                  label: label,
+                  hintText: hintText,
+                  context: context,
+                  color: currentColor,
+                  controller: controller,
+                  onChanged: onChanged,
+                  readOnly: readOnly,
+                  onEditingComplete: onEditingComplete,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .tertiary
+                          .withOpacity(0.5)),
+                ),
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        Theme.of(context).colorScheme.tertiary.withOpacity(0.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: onActionButtonPressed,
+                  child: Icon(
+                    Icons.compare_arrows_outlined,
+                    color: currentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -575,11 +570,10 @@ class _TradeScreenState extends State<TradeScreen>
                   ),
                   child: Column(
                     children: [
-                      inputText(
-                        label: "Stoploss",
-                        hintText: "0",
-                        context: context,
-                        color: Colors.blue,
+                      inputAreaSection(
+                        label: "Trigger price",
+                        hintText: "0.00",
+                        currentColor: Colors.blue,
                         controller: stopLossController,
                         onEditingComplete: () {
                           handleSLAndTarget();
@@ -636,11 +630,10 @@ class _TradeScreenState extends State<TradeScreen>
                   ),
                   child: Column(
                     children: [
-                      inputText(
-                        label: "Target",
-                        hintText: "0",
-                        context: context,
-                        color: Colors.blue,
+                      inputAreaSection(
+                        label: "Trigger price",
+                        hintText: "0.00",
+                        currentColor: Colors.blue,
                         controller: targetContorller,
                         onEditingComplete: () {
                           handleSLAndTarget();
@@ -655,56 +648,57 @@ class _TradeScreenState extends State<TradeScreen>
     );
   }
 
-  Widget inputText(
-      {required BuildContext context,
-      required String label,
-      required String hintText,
-      required Color color,
-      required TextEditingController controller,
-      bool readOnly = false,
-      void Function(String)? onChanged,
-      void Function()? onEditingComplete}) {
+  Widget inputText({
+    required BuildContext context,
+    required String label,
+    required String hintText,
+    required Color color,
+    required TextEditingController controller,
+    bool readOnly = false,
+    void Function(String)? onChanged,
+    void Function()? onEditingComplete,
+  }) {
     return TextFormField(
       controller: controller,
-      keyboardType: TextInputType.number, //
+      keyboardType: TextInputType.number,
       readOnly: readOnly,
       onEditingComplete: onEditingComplete,
       onChanged: onChanged,
+      cursorColor: color,
       decoration: InputDecoration(
-        hintText: hintText,
-        labelText: label,
-        labelStyle: TextStyle(
-          color: Theme.of(context).colorScheme.tertiary,
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        hintStyle: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 16,
-        ),
-        focusColor: Theme.of(context).colorScheme.tertiary,
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.tertiary),
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.tertiary),
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.tertiary),
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-        ).copyWith(
-          borderSide: BorderSide(color: color),
-        ),
-      ),
+          hintText: hintText,
+          labelStyle: TextStyle(
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          hintStyle: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          focusColor: Theme.of(context).colorScheme.tertiary,
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.5)),
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.5)),
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.5)),
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+          )),
     );
   }
 
-  void handleCalculation({
-    required String quantity,
-  }) {
+  void handleCalculation() {
     final price = amountController.text;
+    final quantity = quantityController.text;
+
     setState(() {
       tradeMargin =
           helper.calculateTradeMargin(quantity: quantity, price: price);
@@ -727,12 +721,15 @@ class _TradeScreenState extends State<TradeScreen>
     } else if (double.parse(tradeMargin) > double.parse(availableMargin)) {
       showSnackbar(context,
           message: "Insufficient Funds.", type: SnackbarType.error);
+    } else if (!await helper.checkConnectivity(context)) {
+      //do nothing
     } else {
       setState(() {
         isLoading = true;
       });
 
       final orderController = OrderController();
+      // ignore: use_build_context_synchronously
       final response = await orderController.handleOrder(
         context: context,
         assetName: widget.assetName,
@@ -775,33 +772,45 @@ class _TradeScreenState extends State<TradeScreen>
   }
 
   Future<void> handleSLAndTarget() async {
-    String amount = amountController.text.trim();
-    String quantity = quantityController.text.trim();
-    String stopLoss = stopLossController.text.trim();
-    String target = targetContorller.text.trim();
+    if (await helper.checkConnectivity(context)) {
+      String amount = amountController.text.trim();
+      String quantity = quantityController.text.trim();
+      String stopLoss = stopLossController.text.trim();
+      String target = targetContorller.text.trim();
 
-    final accountController = OrderController();
-    final response = await accountController.handleSLAndTargetOrders(
-      context: context,
-      assetName: widget.assetName,
-      ltp: amount,
-      orderAction: widget.action,
-      orderPrice: amount,
-      orderQuantity: quantity,
-      marketSegment: 'Spot',
-      orderType: 'LIMIT',
-      margin: '',
-      tradeId: widget.tradeId ?? '',
-      stopLossPrice: stopLoss,
-      targetPrice: target,
-    );
+      final accountController = OrderController();
+      // ignore: use_build_context_synchronously
+      final response = await accountController.handleSLAndTargetOrders(
+        context: context,
+        assetName: widget.assetName,
+        ltp: amount,
+        orderAction: widget.action,
+        orderPrice: amount,
+        orderQuantity: quantity,
+        marketSegment: 'Spot',
+        orderType: 'LIMIT',
+        margin: '',
+        tradeId: widget.tradeId ?? '',
+        stopLossPrice: stopLoss,
+        targetPrice: target,
+      );
 
-    bool status = response["status"] as bool;
-    String message = response["message"] as String;
+      bool status = response["status"] as bool;
+      String message = response["message"] as String;
 
-    if (status) {
-      Future.delayed(const Duration(milliseconds: 200), () {
-        showSnackbar(context, message: message, type: SnackbarType.success);
+      if (status) {
+        Future.delayed(const Duration(milliseconds: 200), () {
+          showSnackbar(context, message: message, type: SnackbarType.success);
+        });
+      }
+    }
+  }
+
+  Future<void> initTicker() async {
+    if (await helper.checkConnectivity(context)) {
+      fetchTickerData();
+      _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
+        fetchTickerData();
       });
     }
   }
@@ -809,16 +818,16 @@ class _TradeScreenState extends State<TradeScreen>
   Future<void> fetchTickerData() async {
     try {
       String quantity = quantityController.text.trim();
-      final data = await _apiService.getTickerPrice(widget.assetName,
-          marketSegment: widget.marketSegment);
+      final data = await _apiService.getTickerPrice(widget.assetName, marketSegment: widget.marketSegment);
 
       setState(() {
         currentPrice = data['assetPrice'];
         perChange = data['assetPriceChange'];
+
         if (orderType == "MARKET") amountController.text = currentPrice;
 
         if (quantity.isNotEmpty) {
-          handleCalculation(quantity: quantity);
+          handleCalculation();
           if (widget.isExit) {
             double pnl = helper.calculatePnL(
                 action: widget.action,
