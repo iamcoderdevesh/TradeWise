@@ -306,7 +306,7 @@ class OrderController {
                   });
 
                   // ignore: use_build_context_synchronously
-                  Provider.of<TradeState>(context, listen: false).initPosition();
+                  Provider.of<TradeState>(context, listen: false).initOpenPosition();
                 }
               }
             }

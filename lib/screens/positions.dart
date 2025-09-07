@@ -12,18 +12,33 @@ class PositionsScreen extends StatefulWidget {
   State<PositionsScreen> createState() => _PositionsScreenState();
 }
 
-class _PositionsScreenState extends State<PositionsScreen> {
+class _PositionsScreenState extends State<PositionsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
   final Helper helper = Helper();
 
   @override
   void initState() {
-    initPositions();
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initPosition();
+    });
+
+    _tabController.addListener(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _tabController.index == 0
+            ? Provider.of<TradeState>(context, listen: false).initOpenPosition()
+            : Provider.of<TradeState>(context, listen: false)
+                .initClosedPosition();
+      });
+    });
     super.initState();
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     tradeState.cancelTimer();
     super.dispose();
   }
@@ -33,7 +48,9 @@ class _PositionsScreenState extends State<PositionsScreen> {
     return Stack(
       children: [
         curveAreaSection(context, 40),
-        postionSection(context),
+        Positioned.fill(
+          child: postionSection(context),
+        ),
       ],
     );
   }
@@ -42,18 +59,44 @@ class _PositionsScreenState extends State<PositionsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           totalPnlBox(context),
           const SizedBox(height: 10),
-          postionList(),
+          TabBar(
+            isScrollable: true,
+            controller: _tabController,
+            dividerColor: Theme.of(context).colorScheme.primaryContainer,
+            labelColor: Theme.of(context).colorScheme.primaryContainer,
+            indicatorColor: Theme.of(context).colorScheme.primaryContainer,
+            unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+            ),
+            tabs: const [
+              Tab(text: 'Open'),
+              Tab(text: 'Closed'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                postionList(isOpenPostion: true),
+                postionList(isOpenPostion: false),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget totalPnlBox(context) {
-    late TradeState state = Provider.of<TradeState>(context, listen: true);
-    
+    double totalPnl = Provider.of<TradeState>(context, listen: true).totalPnl;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -84,12 +127,10 @@ class _PositionsScreenState extends State<PositionsScreen> {
           Center(
             child: Text(
               helper.formatNumber(
-                  value: state.totalPnl.toString(),
-                  formatNumber: 2,
-                  plusSign: true),
+                  value: totalPnl.toString(), formatNumber: 2, plusSign: true),
               style: TextStyle(
                 fontSize: 20,
-                color: getPnlColor(value: state.totalPnl.toString()),
+                color: getPnlColor(value: totalPnl.toString()),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -99,39 +140,37 @@ class _PositionsScreenState extends State<PositionsScreen> {
     );
   }
 
-  Widget postionList() {
+  Widget postionList({required bool isOpenPostion}) {
     late TradeState state = Provider.of<TradeState>(context, listen: true);
-    
-    return Flexible(
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: state.tradeList,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: circularLoader());
-          }
 
-          final data = snapshot.data!;
-          return ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final tradeData = data[index];
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: isOpenPostion ? state.openedTradeList : state.closeTradeList,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(child: circularLoader());
+        }
 
-              return postionItems(
-                shortName: tradeData['assetName'] ?? '',
-                price: tradeData['ltp'] ?? '',
-                pnl: tradeData['pnl'] ?? '',
-                qty: tradeData['quantity'] ?? '',
-                entryPrice: tradeData['entryPrice'] ?? '',
-                tradeId: tradeData['tradeId'] ?? '',
-                status: tradeData['status'] ?? '',
-                action: tradeData['action'] ?? '',
-                marketSegment: tradeData['marketSegment'] ?? '',
-                context: context,
-              );
-            },
-          );
-        },
-      ),
+        final data = snapshot.data!;
+        return ListView.builder(
+          itemCount: data.length,
+          itemBuilder: (context, index) {
+            final tradeData = data[index];
+
+            return postionItems(
+              shortName: tradeData['assetName'] ?? '',
+              price: tradeData['ltp'] ?? '',
+              pnl: tradeData['pnl'] ?? '',
+              qty: tradeData['quantity'] ?? '',
+              entryPrice: tradeData['entryPrice'] ?? '',
+              tradeId: tradeData['tradeId'] ?? '',
+              status: tradeData['status'] ?? '',
+              action: tradeData['action'] ?? '',
+              marketSegment: tradeData['marketSegment'] ?? '',
+              context: context,
+            );
+          },
+        );
+      },
     );
   }
 
@@ -278,7 +317,8 @@ class _PositionsScreenState extends State<PositionsScreen> {
     );
   }
 
-  void initPositions() {
-    tradeState.initPosition();
+  void initPosition() {
+    Provider.of<TradeState>(context, listen: false).initOpenPosition();
+    Provider.of<TradeState>(context, listen: false).initClosedPosition();
   }
 }

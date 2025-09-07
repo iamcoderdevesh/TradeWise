@@ -23,7 +23,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isOnline = true;
+  bool isOnline = false;
   final List<String> trackedSymbols = [
     'BTCUSDT',
     'ETHUSDT',
@@ -40,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       bottomNavigationBar: const BottomNavBar(),
@@ -339,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget trendingSection(context) {
-    
+    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
     if (isOnline) _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
 
     return Expanded(
@@ -381,6 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> setUp(BuildContext context) async {
     late AuthState state = Provider.of<AuthState>(context, listen: false);
+    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
 
     final accountController = AccountController();
     final orderController = OrderController();

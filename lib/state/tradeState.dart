@@ -8,93 +8,73 @@ class TradeState extends AppState {
   late Timer _timer;
   late bool _isTradeScreenActive = false;
 
-  dynamic activeTradeList;
-  dynamic inActiveTradeList;
-
   late Future<List<Map<String, dynamic>>> openedTradeList;
   late Future<List<Map<String, dynamic>>> closeTradeList;
-
-  late Future<List<Map<String, dynamic>>> tradeList;
 
   final Helper helper = Helper();
   final ApiService _apiService = ApiService();
   final tradeController = TradeController();
 
   late double _totalPnL = 0.00;
-  late double _closedPnL = 0.00;
 
   double get totalPnl => _totalPnL;
 
-  void initPosition() {
-    activeTradeList = null;
-    inActiveTradeList = null;
+  TradeState() {
     _totalPnL = 0.00;
     _isTradeScreenActive = true;
-    closeTradeList = handleTradePostion(status: 'CLOSED');
-    openedTradeList = handleTradePostion(status: 'OPEN');
-    tradeList = getCombineTrades();
+  }
+
+  void initOpenPosition() {
+    openedTradeList = handleOpenTradePostion();
     updateTradePostion();
+    notifyListeners();
+  }
+
+  void initClosedPosition() {
+    closeTradeList = handleClosedTradePostion();
     notifyListeners();
   }
 
   void updateTradePostion() {
     if (isOnline) {
       _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
-        if (!isOnline) {
-          _timer.cancel();
-        } else {
-          openedTradeList =
-              handleTradePostion(isTimerCall: true, status: 'OPEN');
-          tradeList = getCombineTrades();
-          notifyListeners();
-        }
+        openedTradeList = handleOpenTradePostion(isTimerCall: true);
+        notifyListeners();
       });
     }
   }
 
-  Future<List<Map<String, dynamic>>> handleTradePostion({
-    required String status,
+  Future<List<Map<String, dynamic>>> handleOpenTradePostion({
     bool isTimerCall = false,
   }) async {
+    double totalPnL = 0.00;
     dynamic tradeList;
-    double totalPnl = 0.00;
     List<Map<String, dynamic>> result = [];
 
-    if (activeTradeList != null && status == 'OPEN') {
-      tradeList = activeTradeList;
-    } else if (inActiveTradeList != null && status == 'CLOSED') {
-      tradeList = inActiveTradeList;
-    } else {
-      tradeList = await tradeController.getTrades(status: status);
-      status == 'CLOSED' ? inActiveTradeList = tradeList : null;
-      status == 'OPEN' ? activeTradeList = tradeList : null;
-    }
+    tradeList = await tradeController.getTrades(status: "OPEN");
 
-    if ((tradeList.isEmpty && isTimerCall && status == 'OPEN') || !_isTradeScreenActive) {
+    if ((tradeList.isEmpty && isTimerCall) ||
+        !_isTradeScreenActive ||
+        !isOnline) {
       _timer.cancel();
       return result;
     }
 
     for (final pos in tradeList) {
-      final currentTickerData = status == 'CLOSED'
-          ? null
-          : (isOnline
-              ? await _apiService.getTickerPrice(pos.assetName ?? '',
-                  marketSegment: pos.marketSegment)
-              : pos.ltp);
+      final currentTickerData = isOnline
+          ? await _apiService.getTickerPrice(pos.assetName ?? '',
+              marketSegment: pos.marketSegment)
+          : pos.ltp;
+      final currentPrice = isOnline ? currentTickerData['assetPrice'] : pos.ltp;
 
-      final currentPrice =
-          status == 'CLOSED' ? pos.exitPrice : currentTickerData?['assetPrice'];
-      final pnl = status == 'CLOSED'
-          ? double.parse(pos.netPnl ?? '0.00')
-          : helper.calculatePnL(
-              action: pos.action,
-              currentPrice: currentPrice,
-              buyPrice: pos.entryPrice,
-              quantity: pos.quantity,
-            );
+      final pnl = helper.calculatePnL(
+        action: pos.action,
+        currentPrice: currentPrice,
+        buyPrice: pos.entryPrice,
+        quantity: pos.quantity,
+      );
 
-      totalPnl += pnl;
+      totalPnL += pnl;
 
       result.add({
         'tradeId': pos.tradeId,
@@ -103,31 +83,50 @@ class TradeState extends AppState {
         'quantity': pos.quantity,
         'entryPrice': pos.entryPrice,
         'action': pos.action,
-        'status': status,
+        'status': "OPEN",
         'marketSegment': pos.marketSegment,
         'pnl': helper.formatNumber(
             value: pnl.toString(), formatNumber: 2, plusSign: true)
       });
 
-      if (status == 'OPEN') await tradeController.updateLtp(userId: pos.userId, tradeId: pos.tradeId, ltp: currentPrice);
+      await tradeController.updateLtp(
+          userId: pos.userId, tradeId: pos.tradeId, ltp: currentPrice);
     }
 
-    if (status == 'CLOSED') {
-      _closedPnL = totalPnl;
-      _totalPnL = _closedPnL;
-    } else {
-      _totalPnL = totalPnl + _closedPnL;
-    }
+    _totalPnL = totalPnL;
 
-    print(_closedPnL);
-    print(_totalPnL);
-
+    notifyListeners();
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> getCombineTrades() async {
-    final results = await Future.wait([openedTradeList, closeTradeList]);
-    return [...results[0], ...results[1]];
+  Future<List<Map<String, dynamic>>> handleClosedTradePostion() async {
+
+    double totalPnL = 0.00;
+    List<Map<String, dynamic>> result = [];
+
+    dynamic tradeList = await tradeController.getTrades(status: "CLOSED");
+
+    for (final pos in tradeList) {
+      result.add({
+        'tradeId': pos.tradeId,
+        'assetName': pos.assetName,
+        'ltp': pos.ltp,
+        'quantity': pos.quantity,
+        'entryPrice': pos.entryPrice,
+        'action': pos.action,
+        'status': "CLOSED",
+        'marketSegment': pos.marketSegment,
+        'pnl': helper.formatNumber(
+            value: pos.netPnl.toString(), formatNumber: 2, plusSign: true)
+      });
+
+      totalPnL += double.parse(pos.netPnl);
+    }
+
+    _totalPnL = totalPnL;
+
+    notifyListeners();
+    return result;
   }
 
   void cancelTimer() {
