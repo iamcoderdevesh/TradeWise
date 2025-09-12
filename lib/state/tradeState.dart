@@ -15,12 +15,15 @@ class TradeState extends AppState {
   final ApiService _apiService = ApiService();
   final tradeController = TradeController();
 
-  late double _totalPnL = 0.00;
+  late double _openedPnL = 0.00;
+  late double _closedPnL = 0.00;
 
-  double get totalPnl => _totalPnL;
+  double get openedPnl => _openedPnL;
+  double get closedPnL => _closedPnL;
 
   TradeState() {
-    _totalPnL = 0.00;
+    _openedPnL = 0.00;
+    _closedPnL = 0.00;
     _isTradeScreenActive = true;
   }
 
@@ -93,7 +96,7 @@ class TradeState extends AppState {
           userId: pos.userId, tradeId: pos.tradeId, ltp: currentPrice);
     }
 
-    _totalPnL = totalPnL;
+    _openedPnL = totalPnL;
 
     notifyListeners();
     return result;
@@ -123,7 +126,7 @@ class TradeState extends AppState {
       totalPnL += double.parse(pos.netPnl);
     }
 
-    _totalPnL = totalPnL;
+    _closedPnL = totalPnL;
 
     notifyListeners();
     return result;

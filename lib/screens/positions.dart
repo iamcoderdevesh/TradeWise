@@ -29,8 +29,7 @@ class _PositionsScreenState extends State<PositionsScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _tabController.index == 0
             ? Provider.of<TradeState>(context, listen: false).initOpenPosition()
-            : Provider.of<TradeState>(context, listen: false)
-                .initClosedPosition();
+            : Provider.of<TradeState>(context, listen: false).initClosedPosition();
       });
     });
     super.initState();
@@ -95,7 +94,7 @@ class _PositionsScreenState extends State<PositionsScreen>
   }
 
   Widget totalPnlBox(context) {
-    double totalPnl = Provider.of<TradeState>(context, listen: true).totalPnl;
+    late TradeState state = Provider.of<TradeState>(context, listen: true);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -127,10 +126,10 @@ class _PositionsScreenState extends State<PositionsScreen>
           Center(
             child: Text(
               helper.formatNumber(
-                  value: totalPnl.toString(), formatNumber: 2, plusSign: true),
+                  value: _tabController.index == 0 ? state.openedPnl.toString() : state.closedPnL.toString(), formatNumber: 2, plusSign: true),
               style: TextStyle(
                 fontSize: 20,
-                color: getPnlColor(value: totalPnl.toString()),
+                color: getPnlColor(value: _tabController.index == 0 ? state.openedPnl.toString() : state.closedPnL.toString()),
                 fontWeight: FontWeight.w500,
               ),
             ),
