@@ -25,100 +25,114 @@ class _BottomNavBarState extends State<BottomNavBar> {
     final appState = Provider.of<AppState>(context);
     final currentSelectedIndex = appState.pageIndex;
 
-    return BottomNavigationBar(
-      onTap: (index) => {
-        setState(() {
-          appState.setPageIndex = index;
-        })
-      },
-      backgroundColor: Theme.of(context).colorScheme.background,
-      currentIndex: currentSelectedIndex,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      selectedItemColor: Colors.blue.shade700,
-      selectedFontSize: 12,
-      type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w600,
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      items: [
-        BottomNavigationBarItem(
-          icon: SvgPicture.string(
-            homeIcon,
-            height: 26,
-            colorFilter: const ColorFilter.mode(
-              inActiveIconColor,
-              BlendMode.srcIn,
-            ),
-          ),
-          activeIcon: SvgPicture.string(
-            height: 26,
-            homeIcon,
-            colorFilter: ColorFilter.mode(
-              Colors.blue.shade700,
-              BlendMode.srcIn,
-            ),
-          ),
-          label: "Home",
+      child: BottomNavigationBar(
+        onTap: (index) => {
+          setState(() {
+            appState.setPageIndex = index;
+          })
+        },
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        currentIndex: currentSelectedIndex,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        selectedItemColor: Colors.blue.shade700,
+        selectedFontSize: 12,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
         ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.string(
-            height: 26,
-            marketIcon,
-            colorFilter: const ColorFilter.mode(
-              inActiveIconColor,
-              BlendMode.srcIn,
+        items: [
+          BottomNavigationBarItem(
+            icon: SvgPicture.string(
+              homeIcon,
+              height: 26,
+              colorFilter: const ColorFilter.mode(
+                inActiveIconColor,
+                BlendMode.srcIn,
+              ),
             ),
-          ),
-          activeIcon: SvgPicture.string(
-            height: 26,
-            marketIcon,
-            colorFilter: ColorFilter.mode(
-              Colors.blue.shade700,
-              BlendMode.srcIn,
+            activeIcon: SvgPicture.string(
+              height: 26,
+              homeIcon,
+              colorFilter: ColorFilter.mode(
+                Colors.blue.shade700,
+                BlendMode.srcIn,
+              ),
             ),
+            label: "Home",
           ),
-          label: "Market",
-        ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.string(
-            height: 26,
-            portfolioIcon,
-            colorFilter: const ColorFilter.mode(
-              inActiveIconColor,
-              BlendMode.srcIn,
+          BottomNavigationBarItem(
+            icon: SvgPicture.string(
+              height: 26,
+              marketIcon,
+              colorFilter: const ColorFilter.mode(
+                inActiveIconColor,
+                BlendMode.srcIn,
+              ),
             ),
-          ),
-          activeIcon: SvgPicture.string(
-            height: 26,
-            portfolioIcon,
-            colorFilter: ColorFilter.mode(
-              Colors.blue.shade700,
-              BlendMode.srcIn,
+            activeIcon: SvgPicture.string(
+              height: 26,
+              marketIcon,
+              colorFilter: ColorFilter.mode(
+                Colors.blue.shade700,
+                BlendMode.srcIn,
+              ),
             ),
+            label: "Market",
           ),
-          label: "Portfolio",
-        ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.string(
-            height: 26,
-            userIcon,
-            colorFilter: const ColorFilter.mode(
-              inActiveIconColor,
-              BlendMode.srcIn,
+          BottomNavigationBarItem(
+            icon: SvgPicture.string(
+              height: 26,
+              portfolioIcon,
+              colorFilter: const ColorFilter.mode(
+                inActiveIconColor,
+                BlendMode.srcIn,
+              ),
             ),
-          ),
-          activeIcon: SvgPicture.string(
-            height: 26,
-            userIcon,
-            colorFilter: ColorFilter.mode(
-              Colors.blue.shade700,
-              BlendMode.srcIn,
+            activeIcon: SvgPicture.string(
+              height: 26,
+              portfolioIcon,
+              colorFilter: ColorFilter.mode(
+                Colors.blue.shade700,
+                BlendMode.srcIn,
+              ),
             ),
+            label: "Portfolio",
           ),
-          label: "Profile",
-        ),
-      ],
+          BottomNavigationBarItem(
+            icon: SvgPicture.string(
+              height: 26,
+              userIcon,
+              colorFilter: const ColorFilter.mode(
+                inActiveIconColor,
+                BlendMode.srcIn,
+              ),
+            ),
+            activeIcon: SvgPicture.string(
+              height: 26,
+              userIcon,
+              colorFilter: ColorFilter.mode(
+                Colors.blue.shade700,
+                BlendMode.srcIn,
+              ),
+            ),
+            label: "Profile",
+          ),
+        ],
+      ),
     );
   }
 }

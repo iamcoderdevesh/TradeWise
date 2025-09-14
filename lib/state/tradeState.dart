@@ -24,16 +24,17 @@ class TradeState extends AppState {
   TradeState() {
     _openedPnL = 0.00;
     _closedPnL = 0.00;
-    _isTradeScreenActive = true;
   }
 
   void initOpenPosition() {
+    _isTradeScreenActive = true;
     openedTradeList = handleOpenTradePostion();
     updateTradePostion();
     notifyListeners();
   }
 
   void initClosedPosition() {
+    _isTradeScreenActive = true;
     closeTradeList = handleClosedTradePostion();
     notifyListeners();
   }
@@ -56,18 +57,14 @@ class TradeState extends AppState {
 
     tradeList = await tradeController.getTrades(status: "OPEN");
 
-    if ((tradeList.isEmpty && isTimerCall) ||
-        !_isTradeScreenActive ||
-        !isOnline) {
+
+    if ((tradeList.isEmpty && isTimerCall) || !_isTradeScreenActive || !isOnline) {
       _timer.cancel();
       return result;
     }
 
     for (final pos in tradeList) {
-      final currentTickerData = isOnline
-          ? await _apiService.getTickerPrice(pos.assetName ?? '',
-              marketSegment: pos.marketSegment)
-          : pos.ltp;
+      final currentTickerData = isOnline ? await _apiService.getTickerPrice(pos.assetName ?? '', marketSegment: pos.marketSegment) : pos.ltp;
       final currentPrice = isOnline ? currentTickerData['assetPrice'] : pos.ltp;
 
       final pnl = helper.calculatePnL(
@@ -103,7 +100,6 @@ class TradeState extends AppState {
   }
 
   Future<List<Map<String, dynamic>>> handleClosedTradePostion() async {
-
     double totalPnL = 0.00;
     List<Map<String, dynamic>> result = [];
 

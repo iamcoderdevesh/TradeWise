@@ -35,7 +35,8 @@ class TradeScreen extends StatefulWidget {
   State<TradeScreen> createState() => _TradeScreenState();
 }
 
-class _TradeScreenState extends State<TradeScreen> with SingleTickerProviderStateMixin {
+class _TradeScreenState extends State<TradeScreen>
+    with SingleTickerProviderStateMixin {
   late Timer _timer;
 
   final TextEditingController quantityController = TextEditingController();
@@ -59,12 +60,13 @@ class _TradeScreenState extends State<TradeScreen> with SingleTickerProviderStat
   late String availableMargin = '0.00';
   late String tradeMargin = '0.00';
   late String fees = '0.00';
-  late String netPnl = '';
+  late String netPnl = '0.00';
 
   @override
   void initState() {
     super.initState();
-    late AccountState accountState = Provider.of<AccountState>(context, listen: false);
+    late AccountState accountState =
+        Provider.of<AccountState>(context, listen: false);
     availableMargin = accountState.totalBalance;
 
     _tabController = TabController(
@@ -116,7 +118,9 @@ class _TradeScreenState extends State<TradeScreen> with SingleTickerProviderStat
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [priceBox(context: context)],
+              children: [
+                priceBox(context: context),
+              ],
             ),
           ),
         ),
@@ -818,7 +822,8 @@ class _TradeScreenState extends State<TradeScreen> with SingleTickerProviderStat
   Future<void> fetchTickerData() async {
     try {
       String quantity = quantityController.text.trim();
-      final data = await _apiService.getTickerPrice(widget.assetName, marketSegment: widget.marketSegment);
+      final data = await _apiService.getTickerPrice(widget.assetName,
+          marketSegment: widget.marketSegment);
 
       setState(() {
         currentPrice = data['assetPrice'];

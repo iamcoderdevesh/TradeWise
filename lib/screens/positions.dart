@@ -15,7 +15,7 @@ class PositionsScreen extends StatefulWidget {
 class _PositionsScreenState extends State<PositionsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late TradeState tradeState = Provider.of<TradeState>(context, listen: false);
+  late TradeState tradeState;
   final Helper helper = Helper();
 
   @override
@@ -27,12 +27,21 @@ class _PositionsScreenState extends State<PositionsScreen>
 
     _tabController.addListener(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _tabController.index == 0
-            ? Provider.of<TradeState>(context, listen: false).initOpenPosition()
-            : Provider.of<TradeState>(context, listen: false).initClosedPosition();
+        if (_tabController.index == 0) {
+          Provider.of<TradeState>(context, listen: false).initOpenPosition();
+        } else {
+          tradeState.cancelTimer();
+          Provider.of<TradeState>(context, listen: false).initClosedPosition();
+        }
       });
     });
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    tradeState = Provider.of<TradeState>(context, listen: false);
   }
 
   @override
@@ -56,27 +65,47 @@ class _PositionsScreenState extends State<PositionsScreen>
 
   Widget postionSection(context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          totalPnlBox(context),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+            child: totalPnlBox(context),
+          ),
           const SizedBox(height: 10),
-          TabBar(
-            isScrollable: true,
-            controller: _tabController,
-            dividerColor: Theme.of(context).colorScheme.primaryContainer,
-            labelColor: Theme.of(context).colorScheme.primaryContainer,
-            indicatorColor: Theme.of(context).colorScheme.primaryContainer,
-            unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 16,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+            child: Container(
+              margin: const EdgeInsets.only(
+                top: 0.0,
+              ),
+              height: 30.0,
+              child: TabBar(
+                isScrollable: true,
+                controller: _tabController,
+                dividerColor: Theme.of(context).colorScheme.primaryContainer,
+                labelColor: Theme.of(context).colorScheme.primaryContainer,
+                indicatorColor: Theme.of(context).colorScheme.primaryContainer,
+                unselectedLabelColor: Theme.of(context).colorScheme.tertiary,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+                indicator: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                tabs: const [
+                  Tab(text: 'Open'),
+                  Tab(text: 'Closed'),
+                ],
+              ),
             ),
-            tabs: const [
-              Tab(text: 'Open'),
-              Tab(text: 'Closed'),
-            ],
+          ),
+          Divider(
+            thickness: 0.5,
+            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.2),
           ),
           const SizedBox(height: 10),
           Expanded(
@@ -126,10 +155,17 @@ class _PositionsScreenState extends State<PositionsScreen>
           Center(
             child: Text(
               helper.formatNumber(
-                  value: _tabController.index == 0 ? state.openedPnl.toString() : state.closedPnL.toString(), formatNumber: 2, plusSign: true),
+                  value: _tabController.index == 0
+                      ? state.openedPnl.toString()
+                      : state.closedPnL.toString(),
+                  formatNumber: 2,
+                  plusSign: true),
               style: TextStyle(
                 fontSize: 20,
-                color: getPnlColor(value: _tabController.index == 0 ? state.openedPnl.toString() : state.closedPnL.toString()),
+                color: getPnlColor(
+                    value: _tabController.index == 0
+                        ? state.openedPnl.toString()
+                        : state.closedPnL.toString()),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -142,34 +178,37 @@ class _PositionsScreenState extends State<PositionsScreen>
   Widget postionList({required bool isOpenPostion}) {
     late TradeState state = Provider.of<TradeState>(context, listen: true);
 
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: isOpenPostion ? state.openedTradeList : state.closeTradeList,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Center(child: circularLoader());
-        }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: isOpenPostion ? state.openedTradeList : state.closeTradeList,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: circularLoader());
+          }
 
-        final data = snapshot.data!;
-        return ListView.builder(
-          itemCount: data.length,
-          itemBuilder: (context, index) {
-            final tradeData = data[index];
+          final data = snapshot.data!;
+          return ListView.builder(
+            itemCount: data.length,
+            itemBuilder: (context, index) {
+              final tradeData = data[index];
 
-            return postionItems(
-              shortName: tradeData['assetName'] ?? '',
-              price: tradeData['ltp'] ?? '',
-              pnl: tradeData['pnl'] ?? '',
-              qty: tradeData['quantity'] ?? '',
-              entryPrice: tradeData['entryPrice'] ?? '',
-              tradeId: tradeData['tradeId'] ?? '',
-              status: tradeData['status'] ?? '',
-              action: tradeData['action'] ?? '',
-              marketSegment: tradeData['marketSegment'] ?? '',
-              context: context,
-            );
-          },
-        );
-      },
+              return postionItems(
+                shortName: tradeData['assetName'] ?? '',
+                price: tradeData['ltp'] ?? '',
+                pnl: tradeData['pnl'] ?? '',
+                qty: tradeData['quantity'] ?? '',
+                entryPrice: tradeData['entryPrice'] ?? '',
+                tradeId: tradeData['tradeId'] ?? '',
+                status: tradeData['status'] ?? '',
+                action: tradeData['action'] ?? '',
+                marketSegment: tradeData['marketSegment'] ?? '',
+                context: context,
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -198,20 +237,20 @@ class _PositionsScreenState extends State<PositionsScreen>
             foregroundColor: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () {
-            status == 'CLOSED'
-                ? null
-                : bottomModal(
-                    context: context,
-                    assetName: shortName,
-                    perChange: '0.00',
-                    price: price,
-                    quantity: qty,
-                    entryPrice: entryPrice,
-                    tradeId: tradeId,
-                    isExit: true,
-                    action: action,
-                    marketSegment: marketSegment,
-                  );
+            if (status == 'OPEN') {
+              bottomModal(
+                context: context,
+                assetName: shortName,
+                perChange: '0.00',
+                price: price,
+                quantity: qty,
+                entryPrice: entryPrice,
+                tradeId: tradeId,
+                isExit: true,
+                action: action,
+                marketSegment: marketSegment,
+              );
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(4),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/screens/trade.dart';
+import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 Future bottomModal({
@@ -99,6 +101,7 @@ Future bottomModal({
                               isExit: isExit,
                               marketSegment: marketSegment,
                             );
+                            // Provider.of<TradeState>(context, listen: false).cancelTimer();
                           },
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
@@ -127,6 +130,7 @@ Future bottomModal({
                               tradeId: tradeId,
                               marketSegment: marketSegment,
                             );
+                            // Provider.of<TradeState>(context, listen: false).cancelTimer();
                           },
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
