@@ -359,4 +359,5 @@ class _PositionsScreenState extends State<PositionsScreen>
     Provider.of<TradeState>(context, listen: false).initOpenPosition();
     Provider.of<TradeState>(context, listen: false).initClosedPosition();
   }
+
 }

@@ -8,8 +8,8 @@ class TradeState extends AppState {
   late Timer _timer;
   late bool _isTradeScreenActive = false;
 
-  late Future<List<Map<String, dynamic>>> openedTradeList;
-  late Future<List<Map<String, dynamic>>> closeTradeList;
+  late Future<List<Map<String, dynamic>>> openedTradeList = Future.value([]);
+  late Future<List<Map<String, dynamic>>> closeTradeList = Future.value([]);
 
   final Helper helper = Helper();
   final ApiService _apiService = ApiService();
@@ -132,4 +132,5 @@ class TradeState extends AppState {
     _isTradeScreenActive = false;
     _timer.cancel();
   }
+
 }

@@ -211,10 +211,8 @@ class OrderController {
       if (!isProcessing) {
         try {
           isProcessing = true;
-          late AuthState authState =
-              Provider.of<AuthState>(context, listen: false);
-          late AccountState accountState =
-              Provider.of<AccountState>(context, listen: false);
+          late AuthState authState = Provider.of<AuthState>(context, listen: false);
+          late AccountState accountState = Provider.of<AccountState>(context, listen: false);
 
           String userId = authState.userId as String;
           String accountId = accountState.accountId as String;
