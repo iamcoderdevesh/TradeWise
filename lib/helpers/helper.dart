@@ -74,9 +74,7 @@ class Helper {
     double _buyPrice = double.parse(buyPrice ?? '0.00');
     double _quantity = double.parse(quantity ?? '0.00');
 
-    late double pnl = action == 'SELL'
-        ? (_buyPrice - _currentPrice) * _quantity
-        : (_currentPrice - _buyPrice) * _quantity;
+    late double pnl = action == 'SELL' ? (_buyPrice - _currentPrice) * _quantity : (_currentPrice - _buyPrice) * _quantity;
     return pnl;
   }
 

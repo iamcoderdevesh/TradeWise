@@ -62,6 +62,9 @@ class _TradeScreenState extends State<TradeScreen>
   late String fees = '0.00';
   late String netPnl = '0.00';
 
+  late String stopLoss = '0.00';
+  late String target = '0.00';
+
   @override
   void initState() {
     super.initState();
@@ -321,8 +324,6 @@ class _TradeScreenState extends State<TradeScreen>
     required String type,
     Color color = Colors.blue,
   }) {
-    String tradeId = widget.tradeId ?? '';
-
     return Column(
       children: [
         Expanded(
@@ -336,9 +337,7 @@ class _TradeScreenState extends State<TradeScreen>
                 isViewMore
                     ? addFieldsSection(context: context)
                     : const SizedBox.shrink(),
-                tradeId.isNotEmpty
-                    ? viewMore(context: context)
-                    : const SizedBox.shrink(),
+                viewMore(context: context)
               ],
             ),
           ),
@@ -423,6 +422,8 @@ class _TradeScreenState extends State<TradeScreen>
     void Function()? onActionButtonPressed,
     void Function()? onEditingComplete,
     required TextEditingController controller,
+    bool showExpectedLabel = false,
+    String expectedPnl = '',
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
@@ -431,13 +432,29 @@ class _TradeScreenState extends State<TradeScreen>
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.tertiary,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.tertiary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                showExpectedLabel
+                    ? Text(
+                        helper.formatNumber(value: expectedPnl, plusSign: true),
+                        style: TextStyle(
+                          color: getPnlColor(
+                              value: widget.isExit ? netPnl : perChange),
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.4,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ],
             ),
           ),
           Row(
@@ -461,10 +478,9 @@ class _TradeScreenState extends State<TradeScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .tertiary
-                          .withOpacity(0.5)),
+                    color:
+                        Theme.of(context).colorScheme.tertiary.withOpacity(0.5),
+                  ),
                 ),
                 child: TextButton(
                   style: TextButton.styleFrom(
@@ -579,6 +595,13 @@ class _TradeScreenState extends State<TradeScreen>
                         hintText: "0.00",
                         currentColor: Colors.blue,
                         controller: stopLossController,
+                        showExpectedLabel: true,
+                        expectedPnl: stopLoss,
+                        onChanged: (triggerPrice) {
+                          setState(() {
+                            stopLoss = expectedPnlCalculation(triggerPrice);
+                          });
+                        },
                         onEditingComplete: () {
                           handleSLAndTarget();
                         },
@@ -639,6 +662,13 @@ class _TradeScreenState extends State<TradeScreen>
                         hintText: "0.00",
                         currentColor: Colors.blue,
                         controller: targetContorller,
+                        showExpectedLabel: true,
+                        expectedPnl: target,
+                        onChanged: (triggerPrice) {
+                          setState(() {
+                            target = expectedPnlCalculation(triggerPrice);
+                          });
+                        },
                         onEditingComplete: () {
                           handleSLAndTarget();
                         },
@@ -711,6 +741,23 @@ class _TradeScreenState extends State<TradeScreen>
           : helper.calculateFees(
               segment: 'crypto', orderType: orderType, margin: tradeMargin);
     });
+  }
+
+  String expectedPnlCalculation(String triggerPrice) {
+    final currentPrice = amountController.text;
+    final quantity = quantityController.text;
+    double pnl = 0.00;
+
+    if (currentPrice.isNotEmpty && quantity.isNotEmpty && triggerPrice.isNotEmpty) {
+      pnl = helper.calculatePnL(
+        action: widget.action,
+        currentPrice: triggerPrice,
+        buyPrice: currentPrice,
+        quantity: quantity,
+      );
+    }
+
+    return pnl.toString();
   }
 
   Future<void> handleTradeSubmit({required String action}) async {
@@ -835,10 +882,11 @@ class _TradeScreenState extends State<TradeScreen>
           handleCalculation();
           if (widget.isExit) {
             double pnl = helper.calculatePnL(
-                action: widget.action,
-                currentPrice: currentPrice,
-                buyPrice: widget.entryPrice,
-                quantity: widget.quantity);
+              action: widget.action,
+              currentPrice: currentPrice,
+              buyPrice: widget.entryPrice,
+              quantity: widget.quantity,
+            );
             netPnl = helper.formatNumber(
                 value: pnl.toString(), formatNumber: 2, plusSign: true);
           }
