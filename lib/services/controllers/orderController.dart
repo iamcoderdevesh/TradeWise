@@ -25,7 +25,7 @@ class OrderController {
     required BuildContext context,
     required String assetName,
     required String marketSegment,
-    required String margin,
+    required String leverage,
     required String orderPrice,
     required String orderAction,
     required String orderType,
@@ -38,16 +38,13 @@ class OrderController {
   }) async {
     try {
       late AuthState state = Provider.of<AuthState>(context, listen: false);
-      late AccountState accountState =
-          Provider.of<AccountState>(context, listen: false);
+      late AccountState accountState = Provider.of<AccountState>(context, listen: false);
 
       String userId = state.userId as String;
       String accountId = accountState.accountId as String;
 
       String orderStatus = orderType == "MARKET" ? "CLOSED" : "OPEN";
-      String action = tradeId.isNotEmpty
-          ? (orderAction == 'BUY' ? 'SELL' : 'BUY')
-          : orderAction;
+      String action = tradeId.isNotEmpty ? (orderAction == 'BUY' ? 'SELL' : 'BUY') : orderAction;
 
       // Create a new order
       OrderModel order = OrderModel(
@@ -72,8 +69,7 @@ class OrderController {
         updatedOn: Timestamp.now(),
       );
 
-      DocumentReference docRef =
-          await _db.collection(_collection).add(order.toJson());
+      DocumentReference docRef = await _db.collection(_collection).add(order.toJson());
       await docRef.update({"key": docRef.id, "orderId": docRef.id});
 
       if (tradeId.isNotEmpty) {
@@ -90,12 +86,13 @@ class OrderController {
           assetName: assetName,
           entryPrice: orderPrice,
           ltp: ltp,
-          margin: margin,
+          leverage: leverage,
           marketSegment: marketSegment,
           quantity: orderQuantity,
           status: tradeStatus,
           exitPrice: exitPrice,
           tradeId: tradeId,
+          orderType: orderType
         );
 
         bool status = response["status"] as bool;
@@ -107,9 +104,7 @@ class OrderController {
 
       return {
         "status": true,
-        "message": tradeId.isNotEmpty && orderType == "MARKET"
-            ? "Trade Exit Successfully."
-            : "Order Placed Successfully."
+        "message": tradeId.isNotEmpty && orderType == "MARKET" ? "Trade Exit Successfully." : "Order Placed Successfully."
       };
     } catch (e) {
       print("Error creating account: $e");
@@ -287,7 +282,7 @@ class OrderController {
                   marketSegment: "Spot",
                   quantity: orderQuantity,
                   status: tradeId.isEmpty ? "OPEN" : "CLOSED",
-                  margin: "",
+                  leverage: "",
                   exitPrice: currentPrice,
                   tradeId: tradeId,
                 );

@@ -36,11 +36,11 @@ class Helper {
   String calculateTradeMargin({
     required String quantity,
     required String price,
+    required String leverage,
   }) {
     late double margin = 0.00;
-    margin = (quantity.isNotEmpty && quantity != '0')
-        ? double.parse(quantity) * double.parse(price)
-        : 0.00;
+    margin = (quantity.isNotEmpty && quantity != '0') ? double.parse(quantity) * double.parse(price) : 0.00;
+    margin = (leverage.isNotEmpty && leverage != '0') ? margin / double.parse(leverage) : margin;
 
     return margin.toStringAsFixed(2).toString();
   }
@@ -49,11 +49,16 @@ class Helper {
     required String segment,
     required String orderType,
     required String margin,
+    required String leverage,
   }) {
     late double fees = 0.0;
     double marginValue = double.parse(margin);
 
     if (segment.toLowerCase() == 'crypto') {
+      if(leverage.isNotEmpty && leverage != '0') {
+        marginValue = marginValue * double.parse(leverage);
+      }
+
       if (orderType.toLowerCase() == 'market') {
         fees = (marginValue * 0.05) / 100;
       } else if (orderType.toLowerCase() == 'limit') {

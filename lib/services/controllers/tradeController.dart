@@ -18,28 +18,26 @@ class TradeController {
     String marketSegment = '',
     String status = '',
     String quantity = '',
-    String margin = '',
+    String leverage = '',
     String ltp = '',
     String entryPrice = '',
     String action = '',
     String tradeId = '',
     String exitPrice = '',
+    String orderType = '',
   }) async {
     try {
       late AuthState state = Provider.of<AuthState>(context, listen: false);
-      late AccountState accountState =
-          Provider.of<AccountState>(context, listen: false);
+      late AccountState accountState = Provider.of<AccountState>(context, listen: false);
 
       String userId = state.userId as String;
       String accountId = accountState.accountId as String;
 
       // Create a new trade
       if (tradeId.isEmpty) {
-        //Calculate Fees
-        final String tradeMargin =
-            helper.calculateTradeMargin(quantity: quantity, price: entryPrice);
-        final String totalFees = helper.calculateFees(
-            segment: 'crypto', orderType: 'LIMIT', margin: tradeMargin);
+
+        final String tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: entryPrice, leverage: leverage);
+        final String totalFees = helper.calculateFees(segment: "crypto", orderType: orderType, margin: tradeMargin, leverage: leverage);
 
         TradeModel trade = TradeModel(
           key: null,
@@ -55,6 +53,7 @@ class TradeController {
           entryDate: Timestamp.now(),
           action: action,
           totalFees: totalFees,
+          leverage: leverage,
           createdBy: userId,
           updatedBy: userId,
           createdOn: Timestamp.now(),

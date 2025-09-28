@@ -9,7 +9,7 @@ class TradeModel {
   String? assetName;
   String? status;
   String? quantity;
-  String? margin;
+  String? leverage;
   String? ltp;
   String? entryPrice;
   String? exitPrice;
@@ -33,7 +33,7 @@ class TradeModel {
     this.assetName,
     this.status,
     this.quantity,
-    this.margin,
+    this.leverage,
     this.ltp,
     this.entryPrice,
     this.exitPrice,
@@ -74,7 +74,7 @@ class TradeModel {
     "assetName": assetName,
     "status": status,
     "quantity": quantity,
-    "margin": margin,
+    "leverage": leverage,
     "ltp": ltp,
     "entryPrice": entryPrice,
     "exitPrice": exitPrice,

@@ -1,8 +1,8 @@
+import 'package:action_slider/action_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/widgets/bottomModal.dart';
-import 'package:swipeable_button_view/swipeable_button_view.dart';
 
 const authOutlineInputBorder = OutlineInputBorder(
   borderSide: BorderSide(color: Color(0xFF757575)),
@@ -222,15 +222,16 @@ Widget searchBox(
   );
 }
 
-Widget textFormField(
-    {required BuildContext context,
-    required String hintText,
-    required String labelText,
-    required TextInputType keyboardType,
-    TextEditingController? controller,
-    List<TextInputFormatter>? inputFormatters,
-    Widget? suffix,
-    bool obscureText = false}) {
+Widget textFormField({
+  required BuildContext context,
+  required String hintText,
+  required String labelText,
+  required TextInputType keyboardType,
+  TextEditingController? controller,
+  List<TextInputFormatter>? inputFormatters,
+  Widget? suffix,
+  bool obscureText = false,
+}) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 14),
     child: TextFormField(
@@ -296,41 +297,6 @@ Widget elevatedButton({
   );
 }
 
-Widget swipeButton({
-  required bool isFinished,
-  required String message,
-  required String buttonText,
-  required Function() onWaitingProcess,
-  required void Function() onFinish,
-}) {
-  return Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20),
-          child: SwipeableButtonView(
-            buttonText: buttonText,
-            buttonWidget: Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.blue.shade600,
-            ),
-            activeColor: Colors.blue.shade600,
-            isFinished: isFinished,
-            onWaitingProcess: onWaitingProcess,
-            onFinish: onFinish,
-          ),
-        ),
-        if (isFinished)
-          Text(
-            message,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-      ],
-    ),
-  );
-}
-
 Color getPnlColor({required String value}) {
   final double number = double.tryParse(value) ?? 0.0;
   return (number > 0)
@@ -338,6 +304,40 @@ Color getPnlColor({required String value}) {
       : (number < 0)
           ? Colors.red
           : Colors.grey.shade500;
+}
+
+Widget slideButton(
+    {required String buttonText,
+    required dynamic Function(ActionSliderController)? onSlide,
+    Color backgroundColor = Colors.blue}) {
+  return ActionSlider.standard(
+    icon: Icon(
+      size: 30,
+      Icons.chevron_right,
+      color: backgroundColor,
+    ),
+    loadingIcon: SizedBox(
+      width: 24.0,
+      height: 24.0,
+      child: CircularProgressIndicator(
+        strokeWidth: 2.0,
+        color: backgroundColor,
+      ),
+    ),
+    successIcon: Icon(
+      Icons.check_rounded,
+      color: backgroundColor,
+    ),
+    failureIcon: Icon(
+      Icons.close_rounded,
+      color: backgroundColor,
+    ),
+    reverseSlideAnimationCurve: Curves.easeInExpo,
+    backgroundColor: backgroundColor,
+    toggleColor: Colors.white,
+    action: onSlide,
+    child: Text(buttonText),
+  );
 }
 
 void showSnackbar(
@@ -369,7 +369,7 @@ void showSnackbar(
     ),
     backgroundColor: backgroundColor,
     // behavior: SnackBarBehavior.floating,
-    duration: const Duration(seconds: 3),
+    duration: const Duration(seconds: 2),
   );
 
   // Show the snackbar

@@ -120,6 +120,7 @@ Future bottomModal({
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
+                            Provider.of<TradeState>(context, listen: false).cancelTimer();
                             handleClick(
                               action: isExit ? action : 'SELL',
                               context: context,
@@ -130,7 +131,6 @@ Future bottomModal({
                               tradeId: tradeId,
                               marketSegment: marketSegment,
                             );
-                            // Provider.of<TradeState>(context, listen: false).cancelTimer();
                           },
                           style: ElevatedButton.styleFrom(
                             elevation: 0,

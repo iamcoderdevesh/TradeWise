@@ -43,6 +43,7 @@ class _TradeScreenState extends State<TradeScreen>
   final TextEditingController amountController = TextEditingController();
   final TextEditingController stopLossController = TextEditingController();
   final TextEditingController targetContorller = TextEditingController();
+  final TextEditingController marginContorller = TextEditingController();
 
   late Helper helper = Helper();
   late TabController _tabController;
@@ -54,6 +55,7 @@ class _TradeScreenState extends State<TradeScreen>
   bool stopLossSwitch = false;
   bool targetSwitch = false;
 
+  late double leverage = 0;
   late String orderType = "MARKET";
   late String currentPrice = '0.00';
   late String perChange = '0.00';
@@ -68,9 +70,13 @@ class _TradeScreenState extends State<TradeScreen>
   @override
   void initState() {
     super.initState();
-    late AccountState accountState =
-        Provider.of<AccountState>(context, listen: false);
+    late AccountState accountState = Provider.of<AccountState>(context, listen: false);
     availableMargin = accountState.totalBalance;
+
+    if(widget.marketSegment == "Futures" && !widget.isExit) {
+      leverage = 20;
+      marginContorller.text = leverage.toString();
+    }
 
     _tabController = TabController(
       length: 2,
@@ -184,7 +190,9 @@ class _TradeScreenState extends State<TradeScreen>
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [priceBox(context: context)],
+              children: [
+                priceBox(context: context),
+              ],
             ),
           ),
         ),
@@ -344,18 +352,36 @@ class _TradeScreenState extends State<TradeScreen>
         ),
         marginBox(context, color),
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-          child: SafeArea(
-            top: false,
-            child: elevatedButton(
-              isLoading: isLoading,
-              bgColor: color,
-              buttonLabel: type,
-              onPressed: () {
-                handleTradeSubmit(
-                    action: type == 'EXIT' ? widget.action : type);
-              },
-            ),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 50),
+          child: slideButton(
+            backgroundColor: color,
+            buttonText: "SWIPE TO $type",
+            onSlide: (sliderController) async {
+              sliderController.loading();
+              await Future.delayed(const Duration(milliseconds: 500));
+
+              bool status = await handleTradeSubmit(action: type == 'EXIT' ? widget.action : type);
+
+              if (status) {
+                sliderController.success();
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  final appState =
+                      Provider.of<AppState>(context, listen: false);
+                  appState.setPageIndex = 2;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HomeScreen(),
+                    ),
+                  );
+                });
+              } else {
+                sliderController.failure();
+                await Future.delayed(const Duration(seconds: 1));
+                sliderController.reset();
+              }
+            },
           ),
         ),
       ],
@@ -383,6 +409,7 @@ class _TradeScreenState extends State<TradeScreen>
       child: Form(
         child: Column(
           children: [
+            widget.marketSegment == "Futures" && !widget.isExit ? leverageSection(context, currentColor, type) : const SizedBox.shrink(),
             inputAreaSection(
               label: "Quantity",
               hintText: "0",
@@ -409,6 +436,243 @@ class _TradeScreenState extends State<TradeScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget leverageSection(BuildContext context, Color currentColor, String type) {
+    return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.primary.withOpacity(1),
+                    constraints: BoxConstraints.loose(
+                      Size(
+                        MediaQuery.of(context).size.width,
+                        340,
+                      ),
+                    ),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                    ),
+                    builder: (context) {
+                      return StatefulBuilder(
+                        builder: (BuildContext context,
+                            StateSetter localSetState) {
+                          return leverageBox(
+                            context: context,
+                            currentColor: currentColor,
+                            type: type,
+                            localSetState: localSetState,
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .tertiary
+                          .withOpacity(0.5),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        leverage.round().toString(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                        ),
+                      ),
+                      const Text(
+                        "x",
+                        style: TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                      const Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Icon(Icons.arrow_drop_down),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+  }
+
+  Widget leverageBox({
+    required BuildContext context,
+    required Color currentColor,
+    required String type,
+    required StateSetter localSetState,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 15),
+                child: Text(
+                  "Adjust Leverage",
+                  style: TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: TextFormField(
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  controller: marginContorller,
+                  onChanged: (value) {
+                    setState(() {
+                      leverage = double.parse(value);
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: "20x",
+                    labelText: "Leverage",
+                    labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    hintStyle: const TextStyle(color: Color(0xFF757575)),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    suffixIcon: Icon(
+                      Icons.add_rounded,
+                      color: currentColor,
+                      size: 20,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.remove,
+                      color: currentColor,
+                      size: 20,
+                    ),
+                    focusColor: Theme.of(context).colorScheme.tertiary,
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .tertiary
+                            .withOpacity(0.5),
+                      ),
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .tertiary
+                              .withOpacity(0.5)),
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .tertiary
+                            .withOpacity(0.5),
+                      ),
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    ),
+                  ),
+                ),
+              ),
+              Slider(
+                label: "${leverage.round()}x",
+                value: leverage,
+                activeColor: currentColor,
+                onChanged: (value) {
+                  localSetState(() {
+                    marginContorller.text = value.round().toString();
+                    leverage = value;
+                  });
+                },
+                min: 0,
+                max: 100,
+                divisions: 100,
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '\u2022',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.tertiary,
+                      fontSize: 16,
+                      height: 1.55,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        "Selecting higher leverage such as [10x] increase your liquidation risk. Always manage your risk levels. See our help article for more information.",
+                        textAlign: TextAlign.left,
+                        softWrap: true,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.tertiary,
+                          fontSize: 12.5,
+                          height: 1.55,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          elevatedButton(
+            isLoading: isLoading,
+            bgColor: currentColor,
+            buttonLabel: "Confirm",
+            onPressed: () {
+              setState(() {
+                leverage = double.parse(marginContorller.text);
+                handleCalculation();
+                Navigator.pop(context);
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -447,8 +711,7 @@ class _TradeScreenState extends State<TradeScreen>
                     ? Text(
                         helper.formatNumber(value: expectedPnl, plusSign: true),
                         style: TextStyle(
-                          color: getPnlColor(
-                              value: widget.isExit ? netPnl : perChange),
+                          color: getPnlColor(value: expectedPnl),
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.4,
                         ),
@@ -730,16 +993,13 @@ class _TradeScreenState extends State<TradeScreen>
   }
 
   void handleCalculation() {
+
     final price = amountController.text;
     final quantity = quantityController.text;
 
     setState(() {
-      tradeMargin =
-          helper.calculateTradeMargin(quantity: quantity, price: price);
-      fees = widget.isExit
-          ? '0.00'
-          : helper.calculateFees(
-              segment: 'crypto', orderType: orderType, margin: tradeMargin);
+      tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: price, leverage: leverage.round().toString());
+      fees = widget.isExit ? '0.00' : helper.calculateFees(segment: 'crypto', orderType: orderType, margin: tradeMargin,  leverage: leverage.round().toString());
     });
   }
 
@@ -760,25 +1020,23 @@ class _TradeScreenState extends State<TradeScreen>
     return pnl.toString();
   }
 
-  Future<void> handleTradeSubmit({required String action}) async {
+  Future<bool> handleTradeSubmit({required String action}) async {
+
     FocusScope.of(context).unfocus();
+    handleCalculation();
 
     String quantity = quantityController.text.trim();
     String amount = amountController.text.trim();
 
     if (quantity.isEmpty || amount.isEmpty) {
-      showSnackbar(context,
-          message: "Please fill all the fields.", type: SnackbarType.error);
+      showSnackbar(context, message: "Please fill all the fields.", type: SnackbarType.error);
+      return false;
     } else if (double.parse(tradeMargin) > double.parse(availableMargin)) {
-      showSnackbar(context,
-          message: "Insufficient Funds.", type: SnackbarType.error);
+      showSnackbar(context, message: "Insufficient Funds.", type: SnackbarType.error);
+      return false;
     } else if (!await helper.checkConnectivity(context)) {
-      //do nothing
+      return false;
     } else {
-      setState(() {
-        isLoading = true;
-      });
-
       final orderController = OrderController();
       // ignore: use_build_context_synchronously
       final response = await orderController.handleOrder(
@@ -790,7 +1048,7 @@ class _TradeScreenState extends State<TradeScreen>
         orderQuantity: quantity,
         marketSegment: widget.marketSegment,
         orderType: orderType,
-        margin: '',
+        leverage: leverage.round().toString(),
         tradeId: widget.tradeId ?? '',
         exitPrice: amount,
       );
@@ -798,27 +1056,19 @@ class _TradeScreenState extends State<TradeScreen>
       bool status = response["status"] as bool;
       String message = response["message"] as String;
 
-      setState(() {
-        isLoading = false;
-      });
-
       if (status) {
-        _timer.cancel();
+        if(_timer.isActive) {
+          _timer.cancel();
+        }
 
         Future.delayed(const Duration(milliseconds: 200), () {
           showSnackbar(context, message: message, type: SnackbarType.success);
-
-          final appState = Provider.of<AppState>(context, listen: false);
-          appState.setPageIndex = 2;
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-            ),
-          );
         });
+
+        return true;
       }
+
+      return false;
     }
   }
 
@@ -869,8 +1119,7 @@ class _TradeScreenState extends State<TradeScreen>
   Future<void> fetchTickerData() async {
     try {
       String quantity = quantityController.text.trim();
-      final data = await _apiService.getTickerPrice(widget.assetName,
-          marketSegment: widget.marketSegment);
+      final data = await _apiService.getTickerPrice(widget.assetName, marketSegment: widget.marketSegment);
 
       setState(() {
         currentPrice = data['assetPrice'];
@@ -896,4 +1145,5 @@ class _TradeScreenState extends State<TradeScreen>
       print('Error fetching ticker data: $e');
     }
   }
+
 }

@@ -57,8 +57,7 @@ class TradeState extends AppState {
 
     tradeList = await tradeController.getTrades(status: "OPEN");
 
-
-    if ((tradeList.isEmpty && isTimerCall) || !_isTradeScreenActive || !isOnline) {
+    if ((tradeList.isEmpty || !_isTradeScreenActive || !isOnline) && isTimerCall) {
       _timer.cancel();
       return result;
     }
@@ -85,12 +84,12 @@ class TradeState extends AppState {
         'action': pos.action,
         'status': "OPEN",
         'marketSegment': pos.marketSegment,
-        'pnl': helper.formatNumber(
-            value: pnl.toString(), formatNumber: 2, plusSign: true)
+        'pnl': helper.formatNumber(value: pnl.toString(), formatNumber: 2, plusSign: true)
       });
 
-      await tradeController.updateLtp(
-          userId: pos.userId, tradeId: pos.tradeId, ltp: currentPrice);
+      if (isOnline) {
+        await tradeController.updateLtp(userId: pos.userId, tradeId: pos.tradeId, ltp: currentPrice);
+      }
     }
 
     _openedPnL = totalPnL;
@@ -131,6 +130,6 @@ class TradeState extends AppState {
   void cancelTimer() {
     _isTradeScreenActive = false;
     _timer.cancel();
+    print("timer cancel");
   }
-
 }
