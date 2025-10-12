@@ -63,9 +63,7 @@ class AccountController {
       if (snapshot.docs.isNotEmpty) {
         AccountModel? accountData = AccountModel.fromJson(
             snapshot.docs.first.data() as Map<String, dynamic>);
-        state.setAccountData(
-            accountId: accountData.accountId,
-            totalBalance: accountData.totalBalance);
+        state.setAccountData(accountId: accountData.accountId, totalBalance: accountData.totalBalance, accountType: accountData.accountType);
 
         return true;
       }

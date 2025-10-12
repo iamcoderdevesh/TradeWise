@@ -1031,7 +1031,7 @@ class _TradeScreenState extends State<TradeScreen>
     if (quantity.isEmpty || amount.isEmpty) {
       showSnackbar(context, message: "Please fill all the fields.", type: SnackbarType.error);
       return false;
-    } else if (double.parse(tradeMargin) > double.parse(availableMargin)) {
+    } else if (double.parse(tradeMargin) > double.parse(availableMargin) && !widget.isExit) {
       showSnackbar(context, message: "Insufficient Funds.", type: SnackbarType.error);
       return false;
     } else if (!await helper.checkConnectivity(context)) {

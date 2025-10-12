@@ -1,50 +1,70 @@
-// binance_websocket_service.dart
+// services/websocket/binance_websocket_service.dart
 
+import 'dart:async';
 import 'dart:convert';
-import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 typedef TickerCallback = void Function(String symbol, double price);
 
 class WebSocketService {
-  static final WebSocketService _instance = WebSocketService._internal();
-  factory WebSocketService() => _instance;
+  final Map<String, WebSocketChannel> _channels = {};
+  final Map<String, StreamSubscription> _subscriptions = {};
+  final TickerCallback onTickerUpdate;
 
-  WebSocketService._internal();
+  WebSocketService({required this.onTickerUpdate});
 
-  IOWebSocketChannel? _channel;
-  final Map<String, TickerCallback> _callbacks = {};
+  void subscribeToSymbol({required String symbol, bool isFuture = false}) {
+    final lowerSymbol = symbol.toLowerCase();
+    final url = 'wss://${isFuture ? 'f' : ''}stream.binance.com:9443/ws/$lowerSymbol@ticker';
 
-  void connect(List<String> symbols, TickerCallback onTickerUpdate) {
-    final streams = symbols.map((s) => '${s.toLowerCase()}@ticker').join('/');
-    final url = 'wss://stream.binance.com:9443/stream?streams=$streams';
+    if (_channels.containsKey(symbol)) return; // Already subscribed
 
-    _channel?.sink.close(); // Close previous connection if any
-    _channel = IOWebSocketChannel.connect(Uri.parse(url));
+    try {
+      final channel = WebSocketChannel.connect(Uri.parse(url));
+      _channels[symbol] = channel;
 
-    _channel?.stream.listen((message) {
-      final data = jsonDecode(message);
-      if (data.containsKey('data')) {
-        final streamData = data['data'];
-        final symbol = streamData['s']; // e.g., BTCUSDT
-        final price = double.tryParse(streamData['c']) ?? 0.0; // current price
+      final subscription = channel.stream.listen(
+        (data) {
+          final json = jsonDecode(data);
+          if (json != null && json['c'] != null) {
+            final price = double.tryParse(json['c']) ?? 0.0;
+            onTickerUpdate(symbol, price);
+          }
+        },
+        onError: (error) {
+          print("WebSocket error for $symbol: $error");
+          _reconnect(symbol, isFuture: isFuture);
+        },
+        onDone: () {
+          print("WebSocket closed for $symbol");
+          _reconnect(symbol, isFuture: isFuture);
+        },
+        cancelOnError: true,
+      );
 
-        if (_callbacks.containsKey(symbol)) {
-          _callbacks[symbol]?.call(symbol, price);
-        }
-      }
-    });
+      _subscriptions[symbol] = subscription;
+    } catch (e) {
+      print("Failed to connect WebSocket for $symbol: $e");
+    }
   }
 
-  void registerCallback(String symbol, TickerCallback callback) {
-    _callbacks[symbol] = callback;
+  void unsubscribeFromSymbol(String symbol) {
+    _subscriptions[symbol]?.cancel();
+    _channels[symbol]?.sink.close();
+    _subscriptions.remove(symbol);
+    _channels.remove(symbol);
   }
 
-  void unregisterCallback(String symbol) {
-    _callbacks.remove(symbol);
+  void _reconnect(String symbol, {bool isFuture = false}) async {
+    unsubscribeFromSymbol(symbol);
+    await Future.delayed(const Duration(seconds: 3));
+    subscribeToSymbol(symbol: symbol);
   }
 
-  void disconnect() {
-    _channel?.sink.close();
-    _callbacks.clear();
+  void disposeAll() {
+    _subscriptions.forEach((_, sub) => sub.cancel());
+    _channels.forEach((_, ch) => ch.sink.close());
+    _subscriptions.clear();
+    _channels.clear();
   }
 }

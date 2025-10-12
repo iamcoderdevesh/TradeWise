@@ -1,7 +1,10 @@
 import 'package:action_slider/action_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/helpers/sharedPreferences.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/bottomModal.dart';
 
 const authOutlineInputBorder = OutlineInputBorder(
@@ -172,6 +175,66 @@ Widget tickerItems({
         ),
       ),
     ),
+  );
+}
+
+Widget tickerSection({
+  required BuildContext context,
+  required Future<List<Map<String, dynamic>>>? tickerList,
+  required String cachekey,
+  List<String>? tickerSymbols,
+  String searchQuery = '',
+  bool isFuture = false,
+}) {
+  bool isOnline = Provider.of<AppState>(context, listen: false).isOnline;
+
+  Future<List<Map<String, dynamic>>> fetchData() async {
+    if (isOnline && tickerList != null) {
+      final data = await tickerList;
+      await cacheApiData(key: cachekey, data: data);
+      return data;
+    } else {
+      return await getCachedData(key: cachekey);
+    }
+  }
+
+  return FutureBuilder<List<Map<String, dynamic>>>(
+    future: fetchData(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: circularLoader());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return const Center(child: Text("No data available"));
+      }
+
+      List<Map<String, dynamic>> filteredData = snapshot.data!;
+
+      if (searchQuery.isNotEmpty) {
+        filteredData = filteredData.where((item) => item['symbol'].toString().toUpperCase().contains(searchQuery.toUpperCase())).toList();
+      }
+
+      if(tickerSymbols!.isNotEmpty) {
+        filteredData = filteredData.where((item) => tickerSymbols.contains(item['symbol'])).toList();
+      }
+
+      return ListView.builder(
+        physics: const BouncingScrollPhysics(),
+        itemCount: filteredData.length,
+        itemBuilder: (context, index) {
+          final data = filteredData[index];
+          return tickerItems(
+            context: context,
+            perChange: data['priceChangePercent'],
+            currentPrice: data['lastPrice'],
+            assetName: data['symbol'],
+            shortName: data['symbol'],
+            marketSegment: isFuture ? "Futures" : "Spot",
+          );
+        },
+      );
+    },
   );
 }
 

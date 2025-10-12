@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class AppState extends ChangeNotifier {
   late ThemeData themeData = darkTheme;
   String theme = 'sys';
+  String _marketType = 'crypto';
   int _pageIndex = 0;
   bool _isOnline = true;
   final Connectivity _connectivity = Connectivity();
@@ -14,8 +15,8 @@ class AppState extends ChangeNotifier {
     _connectivity.onConnectivityChanged.listen(_updateStatus);
   }
 
+  String get marketType => _marketType;
   bool get isOnline => _isOnline;
-
   int get pageIndex => _pageIndex;
 
   void _initConnectivity() async {

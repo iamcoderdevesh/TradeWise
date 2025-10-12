@@ -23,6 +23,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String cacheKey = 'homeList';
   bool isOnline = false;
   final List<String> trackedSymbols = [
     'BTCUSDT',
@@ -30,8 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
     'TRXUSDT',
     'XRPUSDT',
   ];
-  late Future<List<Map<String, dynamic>>> _cryptoData;
 
+  // ignore: prefer_final_fields
+  late Future<List<Map<String, dynamic>>> _tickerList = Future.value([]);
+  
   @override
   void initState() {
     setUp(context);
@@ -339,42 +342,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget trendingSection(context) {
     isOnline = Provider.of<AppState>(context, listen: false).isOnline;
-    if (isOnline) _cryptoData = ApiService.fetchCryptoData(trackedSymbols);
+    if (isOnline) _tickerList = ApiService.fetchCryptoData(trackedSymbols);
 
     return Expanded(
-      child: isOnline
-          ? FutureBuilder<List<Map<String, dynamic>>>(
-              future: _cryptoData,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: circularLoader());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                final data = snapshot.data!;
-
-                return ListView.builder(
-                  padding: EdgeInsets.zero,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: data.length,
-                  itemBuilder: (context, index) {
-                    final crypto = data[index];
-                    return tickerItems(
-                      context: context,
-                      perChange: crypto['priceChangePercent'],
-                      currentPrice: crypto['lastPrice'],
-                      assetName: crypto['symbol'],
-                      shortName: crypto['symbol'],
-                      marketSegment: "Spot",
-                    );
-                  },
-                );
-              },
-            )
-          : const Center(
-              child: Text("Data not found"),
-            ),
+      child: tickerSection(context: context, tickerList: _tickerList, tickerSymbols: trackedSymbols, cachekey: cacheKey)
     );
   }
 
