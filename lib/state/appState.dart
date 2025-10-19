@@ -12,7 +12,7 @@ class AppState extends ChangeNotifier {
 
   AppState() {
     _initConnectivity();
-    _connectivity.onConnectivityChanged.listen(_updateStatus);
+    _connectivity.onConnectivityChanged.listen(_updateConnectivityStatus);
   }
 
   String get marketType => _marketType;
@@ -21,10 +21,10 @@ class AppState extends ChangeNotifier {
 
   void _initConnectivity() async {
     final result = await _connectivity.checkConnectivity();
-    _updateStatus(result);
+    _updateConnectivityStatus(result);
   }
 
-  void _updateStatus(ConnectivityResult result) {
+  void _updateConnectivityStatus(ConnectivityResult result) {
     _isOnline = result != ConnectivityResult.none;
     notifyListeners();
   }
@@ -46,6 +46,11 @@ class AppState extends ChangeNotifier {
 
   set setPageIndex(int index) {
     _pageIndex = index;
+    notifyListeners();
+  }
+
+  set setMarketType(String segment) {
+    _marketType = segment;
     notifyListeners();
   }
 }

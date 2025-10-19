@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/helpers/sharedPreferences.dart';
 import 'package:tradewise/screens/accounts.dart';
 import 'package:tradewise/screens/signin.dart';
 import 'package:tradewise/state/accountState.dart';
@@ -16,6 +18,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  late Helper helper = Helper();
+  bool accountSwtich = false;
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     late AuthState state = Provider.of<AuthState>(context, listen: false);
+    accountSwtich = state.marketType == 'crypto' ? true : false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +123,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: TextButton(
         style: TextButton.styleFrom(
           foregroundColor: Theme.of(context).colorScheme.onSurface,
-          padding: const EdgeInsets.all(20),
+          padding:
+              const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -125,33 +132,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
           elevation: 2,
         ),
         onPressed: () {},
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Account Balance",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Account Balance",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    Helper().formatNumber(value: accountState.totalBalance),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.tertiary,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
+                    const SizedBox(height: 10),
+                    Text(
+                      Helper().formatNumber(value: accountState.totalBalance),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.tertiary,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Color(0xFF757575),
+                ),
+              ],
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Color(0xFF757575),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  accountSwtich ? "Crypto" : "Stocks",
+                  style: const TextStyle(
+                    letterSpacing: 0.9,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Transform.scale(
+                  scale: 0.65, // Adjust as needed (1.0 for original size)
+                  child: CupertinoSwitch(
+                    value: accountSwtich,
+                    activeColor: Colors.blue,
+                    onChanged: (bool value) {
+                      setSegment(switchState: value);
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -211,6 +248,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> setSegment({required bool switchState}) async {
+    String marketType = switchState ? "crypto" : "stocks";
+
+    await cacheApiData(key: 'marketType', data: [{"marketType": marketType}]);
+    Provider.of<AuthState>(context, listen: false).setMarketType = marketType; // ignore: use_build_context_synchronously
+    setState(() {
+      accountSwtich = switchState;
+    });
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      showSnackbar(context, message: "Switch to $marketType", type: SnackbarType.success);
+    });
   }
 }
 

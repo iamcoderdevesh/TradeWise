@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/assets/svg.dart';
+import 'package:tradewise/helpers/sharedPreferences.dart';
 import 'package:tradewise/screens/market.dart';
 import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/screens/profile.dart';
@@ -351,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> setUp(BuildContext context) async {
     late AuthState state = Provider.of<AuthState>(context, listen: false);
-    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
+    isOnline = state.isOnline;
 
     final accountController = AccountController();
     final orderController = OrderController();
@@ -359,6 +360,11 @@ class _HomeScreenState extends State<HomeScreen> {
     String userId = state.userId as String;
 
     bool status = await accountController.setAccountBalance(context: context, userId: userId);
+    List<Map<String, dynamic>> cdata = await getCachedData(key: "marketType");
+
+    if(cdata.isNotEmpty) {
+      state.setMarketType = cdata[0]['marketType'];
+    }
     
     if (status && isOnline) await orderController.handlePendingOrders(context: context); // ignore: use_build_context_synchronously
   }
