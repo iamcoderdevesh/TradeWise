@@ -5,6 +5,7 @@ import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/helpers/sharedPreferences.dart';
 import 'package:tradewise/screens/accounts.dart';
 import 'package:tradewise/screens/signin.dart';
+import 'package:tradewise/services/controllers/accountController.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/authState.dart';
@@ -19,6 +20,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late Helper helper = Helper();
+  final accountController = AccountController();
   bool accountSwtich = false;
 
   @override
@@ -254,18 +256,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> setSegment({required bool switchState}) async {
     String marketType = switchState ? "crypto" : "stocks";
 
-    await cacheApiData(key: 'marketType', data: [
-      {"marketType": marketType}
-    ]);
+    await cacheApiData(key: 'marketType', data: [{"marketType": marketType}]);
     Provider.of<AppState>(context, listen: false).setMarketType(marketType); // ignore: use_build_context_synchronously
+    await accountController.setAccountBalance(context: context); // ignore: use_build_context_synchronously
 
     setState(() {
       accountSwtich = switchState;
     });
 
     Future.delayed(const Duration(milliseconds: 200), () {
-      showSnackbar(context,
-          message: "Switch to $marketType", type: SnackbarType.success);
+      showSnackbar(context, message: "Switch to $marketType", type: SnackbarType.success);
     });
   }
 }

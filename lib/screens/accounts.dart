@@ -192,22 +192,16 @@ class _AccountScreenState extends State<AccountScreen> {
         final response = await accountController.createAccount(
           context: context,
           accountName: accountName,
-          accountType: _selectedSegment as String,
+          accountType: _selectedSegment.toString().toLowerCase(),
           initialBalance: initialBalance,
         );
 
         bool status = response["status"] as bool;
 
         if (status) {
-          String userId = response["userId"] as String;
-          // ignore: use_build_context_synchronously
-          await accountController.setAccountBalance(
-              context: context, userId: userId);
-
-          // ignore: use_build_context_synchronously
-          showSnackbar(context,
-              message: "Account created successfully.",
-              type: SnackbarType.success);
+          
+          await accountController.setAccountBalance(context: context); // ignore: use_build_context_synchronously
+          showSnackbar(context, message: "Account created successfully.", type: SnackbarType.success);// ignore: use_build_context_synchronously
 
           Future.delayed(const Duration(milliseconds: 200), () {
             final appState = Provider.of<AppState>(context, listen: false);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/services/models/accountModel.dart';
 import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/authState.dart';
 
 class AccountController {
@@ -48,14 +49,19 @@ class AccountController {
   }
 
   // Read Account by ID
-  Future<bool> setAccountBalance(
-      {required BuildContext context, required String userId}) async {
+  Future<bool> setAccountBalance({
+    required BuildContext context,
+  }) async {
     try {
-      late AccountState state =
-          Provider.of<AccountState>(context, listen: false);
+      late AccountState state = Provider.of<AccountState>(context, listen: false);
+      
+      String? userId = Provider.of<AuthState>(context, listen: false).userId;
+      String marketType = Provider.of<AppState>(context, listen: false).marketType;
+
       QuerySnapshot snapshot = await _db
           .collection(_collection)
           .where('userId', isEqualTo: userId)
+          .where('accountType', isEqualTo: marketType)
           .limit(1)
           .get();
 
@@ -63,9 +69,11 @@ class AccountController {
       if (snapshot.docs.isNotEmpty) {
         AccountModel? accountData = AccountModel.fromJson(snapshot.docs.first.data() as Map<String, dynamic>);
         state.setAccountData(accountId: accountData.accountId, totalBalance: accountData.totalBalance, accountType: accountData.accountType);
-
-        return true;
       }
+      else {
+        state.setAccountData(accountId: '', totalBalance: '0.00', accountType: marketType);
+      }
+      return true;
     } catch (e) {
       print("Error fetching account: $e");
     }

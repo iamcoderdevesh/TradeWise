@@ -5,7 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class AppState extends ChangeNotifier {
   late ThemeData themeData = darkTheme;
   String theme = 'sys';
-  String _marketType = '';
+  String _marketType = 'stocks';
   int _pageIndex = 0;
   bool _isOnline = true;
   final Connectivity _connectivity = Connectivity();

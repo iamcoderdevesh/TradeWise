@@ -278,7 +278,8 @@ Widget searchBox(
         Expanded(
           child: TextField(
             controller: controller,
-            onChanged: onChanged,
+            // onChanged: onChanged,
+            onSubmitted: onChanged,
             style: TextStyle(
               color: Theme.of(context).colorScheme.tertiary,
             ),
