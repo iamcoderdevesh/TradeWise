@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/tradeState.dart';
 import 'package:tradewise/widgets/bottomModal.dart';
 import 'package:tradewise/widgets/widgets.dart';
@@ -14,6 +15,7 @@ class PositionsScreen extends StatefulWidget {
 
 class _PositionsScreenState extends State<PositionsScreen>
     with SingleTickerProviderStateMixin {
+  late String marketType = '';
   late TabController _tabController;
   late TradeState tradeState;
   final Helper helper = Helper();
@@ -28,7 +30,7 @@ class _PositionsScreenState extends State<PositionsScreen>
     _tabController.addListener(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_tabController.index == 0) {
-          Provider.of<TradeState>(context, listen: false).initOpenPosition();
+          Provider.of<TradeState>(context, listen: false).initOpenPosition(marketType);
         } else {
           tradeState.cancelTimer();
           Provider.of<TradeState>(context, listen: false).initClosedPosition();
@@ -53,6 +55,8 @@ class _PositionsScreenState extends State<PositionsScreen>
 
   @override
   Widget build(BuildContext context) {
+    marketType = Provider.of<AppState>(context, listen: false).marketType;
+
     return Stack(
       children: [
         curveAreaSection(context, 40),
@@ -203,6 +207,7 @@ class _PositionsScreenState extends State<PositionsScreen>
                 status: tradeData['status'] ?? '',
                 action: tradeData['action'] ?? '',
                 marketSegment: tradeData['marketSegment'] ?? '',
+                identifier: tradeData['identifier'] ?? '',
                 context: context,
               );
             },
@@ -223,6 +228,7 @@ class _PositionsScreenState extends State<PositionsScreen>
     required String entryPrice,
     required String tradeId,
     required String marketSegment,
+    required String identifier,
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 10),
@@ -249,6 +255,7 @@ class _PositionsScreenState extends State<PositionsScreen>
                 isExit: true,
                 action: action,
                 marketSegment: marketSegment,
+                identifier: identifier,
               );
             }
           },
@@ -356,7 +363,7 @@ class _PositionsScreenState extends State<PositionsScreen>
   }
 
   void initPosition() {
-    Provider.of<TradeState>(context, listen: false).initOpenPosition();
+    Provider.of<TradeState>(context, listen: false).initOpenPosition(marketType);
     Provider.of<TradeState>(context, listen: false).initClosedPosition();
   }
 

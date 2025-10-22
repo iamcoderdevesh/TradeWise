@@ -7,6 +7,7 @@ import 'package:tradewise/state/appState.dart';
 
 class TradeState extends AppState {
   Timer? _timer;
+  late String _marketType = '';
   late bool _isTradeScreenActive = false;
   List<Map<String, dynamic>> _openTrades = [];
 
@@ -31,12 +32,17 @@ class TradeState extends AppState {
   }
 
   /// api code starts.
-  void initOpenPosition() {
+  void initOpenPosition(marketType) {
     _isTradeScreenActive = true;
-    openedTradeList = marketType == 'crypto'
-        ? initSocketOpenPosition()
-        : handleOpenTradePostion();
-    if (marketType == 'stocks') updateTradePostion();
+    _marketType = marketType;
+
+    if (marketType == 'crypto') {
+      openedTradeList = initSocketOpenPosition();
+    }
+    else {
+      openedTradeList = handleOpenTradePostion();
+      updateTradePostion();
+    }
     notifyListeners();
   }
 
@@ -48,7 +54,7 @@ class TradeState extends AppState {
 
   void updateTradePostion() {
     if (isOnline) {
-      _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
+      _timer = Timer.periodic(const Duration(seconds: 5), (Timer t) {
         openedTradeList = handleOpenTradePostion(isTimerCall: true);
         notifyListeners();
       });
@@ -64,14 +70,13 @@ class TradeState extends AppState {
 
     tradeList = await tradeController.getTrades(status: "OPEN");
 
-    if ((tradeList.isEmpty || !_isTradeScreenActive || !isOnline) &&
-        isTimerCall) {
+    if ((tradeList.isEmpty || !_isTradeScreenActive || !isOnline) && isTimerCall) {
       _timer!.cancel();
       return result;
     }
 
     for (final pos in tradeList) {
-      final currentTickerData = isOnline? await _apiService.getTickerPrice(pos.assetName ?? '', marketSegment: pos.marketSegment): pos.ltp;
+      final currentTickerData = isOnline ? await _apiService.getTickerPrice(identifier: pos.identifier, marketSegment: pos.marketSegment, marketType: _marketType) : pos.ltp;
       final currentPrice = isOnline ? currentTickerData['assetPrice'] : pos.ltp;
 
       final pnl = helper.calculatePnL(
@@ -86,14 +91,14 @@ class TradeState extends AppState {
       result.add({
         'tradeId': pos.tradeId,
         'assetName': pos.assetName,
+        'identifier': pos.identifier,
         'ltp': currentPrice,
         'quantity': pos.quantity,
         'entryPrice': pos.entryPrice,
         'action': pos.action,
         'status': "OPEN",
         'marketSegment': pos.marketSegment,
-        'pnl': helper.formatNumber(
-            value: pnl.toString(), formatNumber: 2, plusSign: true)
+        'pnl': helper.formatNumber(value: pnl.toString(), formatNumber: 2, plusSign: true)
       });
 
       if (isOnline) {
@@ -141,7 +146,7 @@ class TradeState extends AppState {
     if(_timer != null) {
       _timer?.cancel();
     }
-    else {
+    else if(_openTrades.isNotEmpty){
       cancelWebSockets();
     }
   }

@@ -67,9 +67,11 @@ Widget tickerItems({
   required String currentPrice,
   required String perChange,
   required String marketSegment,
+  required String identifier,
+  int formatNumber = 2,
 }) {
   late String price =
-      Helper().formatNumber(value: currentPrice, formatNumber: 4);
+      Helper().formatNumber(value: currentPrice, formatNumber: formatNumber);
   late String percentChange =
       Helper().formatNumber(value: perChange, formatNumber: 2, plusSign: true);
 
@@ -91,6 +93,7 @@ Widget tickerItems({
           perChange: percentChange,
           price: price,
           marketSegment: marketSegment,
+          identifier: identifier,
         );
       },
       child: Padding(
@@ -114,9 +117,10 @@ Widget tickerItems({
                           child: Text(
                             shortName.substring(0, 1),
                             style: const TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500),
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
@@ -186,7 +190,8 @@ Widget tickerSection({
   String searchQuery = '',
   bool isFuture = false,
 }) {
-  bool isOnline = Provider.of<AppState>(context, listen: false).isOnline;
+  late AppState state = Provider.of<AppState>(context, listen: false);
+  bool isOnline = state.isOnline;
 
   Future<List<Map<String, dynamic>>> fetchData() async {
     if (isOnline && tickerList != null) {
@@ -212,10 +217,15 @@ Widget tickerSection({
       List<Map<String, dynamic>> filteredData = snapshot.data!;
 
       if (searchQuery.isNotEmpty) {
-        filteredData = filteredData.where((item) => item['symbol'].toString().toUpperCase().contains(searchQuery.toUpperCase())).toList();
+        filteredData = filteredData
+            .where((item) => item['symbol']
+                .toString()
+                .toUpperCase()
+                .contains(searchQuery.toUpperCase()))
+            .toList();
       }
 
-      if(tickerSymbols!.isNotEmpty) {
+      if (tickerSymbols!.isNotEmpty && state.marketType == "crypto") {
         filteredData = filteredData.where((item) => tickerSymbols.contains(item['symbol'])).toList();
       }
 
@@ -226,11 +236,13 @@ Widget tickerSection({
           final data = filteredData[index];
           return tickerItems(
             context: context,
-            perChange: data['priceChangePercent'],
-            currentPrice: data['lastPrice'],
+            perChange: data['priceChangePercent'].toString(),
+            currentPrice: data['lastPrice'].toString(),
             assetName: data['symbol'],
             shortName: data['symbol'],
+            identifier: data['identifier'] ?? '',
             marketSegment: isFuture ? "Futures" : "Spot",
+            formatNumber: state.marketType == "stocks" ? 2 : 4,
           );
         },
       );

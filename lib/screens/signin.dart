@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
-import 'package:tradewise/screens/home.dart';
+import 'package:tradewise/screens/base.dart';
 import 'package:tradewise/services/controllers/authController.dart';
 import 'package:tradewise/screens/signup.dart';
 import 'package:tradewise/state/authState.dart';
@@ -170,7 +170,7 @@ class _SignInScreenState extends State<SignInScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const HomeScreen(),
+                builder: (context) => const BaseScreen(),
               ),
             );
           });

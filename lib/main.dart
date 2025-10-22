@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:tradewise/screens/home.dart';
+import 'package:tradewise/screens/base.dart';
 import 'package:tradewise/screens/signin.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
@@ -41,7 +41,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
-      home: authStatus ? const HomeScreen() : const SignInScreen(),
+      home: authStatus ? const BaseScreen() : const SignInScreen(),
     );
   }
 }

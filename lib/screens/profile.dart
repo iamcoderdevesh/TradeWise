@@ -29,7 +29,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     late AuthState state = Provider.of<AuthState>(context, listen: false);
-    accountSwtich = state.marketType == 'crypto' ? true : false;
+    String marketType = Provider.of<AppState>(context, listen: false).marketType;
+    accountSwtich = marketType == 'crypto' ? true : false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,14 +254,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> setSegment({required bool switchState}) async {
     String marketType = switchState ? "crypto" : "stocks";
 
-    await cacheApiData(key: 'marketType', data: [{"marketType": marketType}]);
-    Provider.of<AuthState>(context, listen: false).setMarketType = marketType; // ignore: use_build_context_synchronously
+    await cacheApiData(key: 'marketType', data: [
+      {"marketType": marketType}
+    ]);
+    Provider.of<AppState>(context, listen: false).setMarketType(marketType); // ignore: use_build_context_synchronously
+
     setState(() {
       accountSwtich = switchState;
     });
 
     Future.delayed(const Duration(milliseconds: 200), () {
-      showSnackbar(context, message: "Switch to $marketType", type: SnackbarType.success);
+      showSnackbar(context,
+          message: "Switch to $marketType", type: SnackbarType.success);
     });
   }
 }

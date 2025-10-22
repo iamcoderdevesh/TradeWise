@@ -11,14 +11,14 @@ Future bottomModal({
   required String price,
   required String perChange,
   required String marketSegment,
+  required String identifier,
   bool isExit = false,
   String action = '',
   String? quantity,
   String? entryPrice,
   String? tradeId,
 }) {
-  late String percentChange =
-      Helper().formatNumber(value: perChange, formatNumber: 2);
+  late String percentChange = Helper().formatNumber(value: perChange, formatNumber: 2);
 
   return showModalBottomSheet(
     context: context,
@@ -100,6 +100,7 @@ Future bottomModal({
                               assetName: assetName,
                               isExit: isExit,
                               marketSegment: marketSegment,
+                              identifier: identifier,
                             );
                             // Provider.of<TradeState>(context, listen: false).cancelTimer();
                           },
@@ -130,6 +131,7 @@ Future bottomModal({
                               entryPrice: entryPrice,
                               tradeId: tradeId,
                               marketSegment: marketSegment,
+                              identifier: identifier,
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -202,6 +204,7 @@ void handleClick({
   required String assetName,
   required bool isExit,
   required String marketSegment,
+  required String identifier,
   String? quantity,
   String? entryPrice,
   String? tradeId,
@@ -219,6 +222,7 @@ void handleClick({
           entryPrice: entryPrice,
           tradeId: tradeId,
           marketSegment: marketSegment,
+          identifier: identifier,
         ),
       ),
     );

@@ -3,12 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
+import 'package:tradewise/screens/base.dart';
 import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/widgets.dart';
-import 'home.dart';
 
 // ignore: must_be_immutable
 class TradeScreen extends StatefulWidget {
@@ -19,6 +19,7 @@ class TradeScreen extends StatefulWidget {
   final String assetName;
   final String action;
   final String marketSegment;
+  final String identifier;
 
   TradeScreen({
     super.key,
@@ -26,6 +27,7 @@ class TradeScreen extends StatefulWidget {
     required this.action,
     required this.isExit,
     required this.marketSegment,
+    required this.identifier,
     this.tradeId,
     this.quantity,
     this.entryPrice,
@@ -37,7 +39,7 @@ class TradeScreen extends StatefulWidget {
 
 class _TradeScreenState extends State<TradeScreen>
     with SingleTickerProviderStateMixin {
-  late Timer _timer;
+  Timer?_timer;
 
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
@@ -56,6 +58,7 @@ class _TradeScreenState extends State<TradeScreen>
   bool targetSwitch = false;
 
   late double leverage = 0;
+  late String marketType = '';
   late String orderType = "MARKET";
   late String currentPrice = '0.00';
   late String perChange = '0.00';
@@ -94,12 +97,17 @@ class _TradeScreenState extends State<TradeScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _timer.cancel();
+    if(_timer != null) {
+      _timer!.cancel();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    marketType = Provider.of<AppState>(context, listen: false).marketType;
+    // initQuantity();
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
@@ -109,6 +117,7 @@ class _TradeScreenState extends State<TradeScreen>
           widget.assetName,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
+            fontSize: 16,
           ),
         ),
       ),
@@ -247,7 +256,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 10,
           ),
           Text(
-            currentPrice,
+            '${marketType == 'stocks' ? '₹' : '\$'} $currentPrice',
             style: TextStyle(
               color: getPnlColor(value: widget.isExit ? netPnl : perChange),
             ),
@@ -293,7 +302,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 10,
           ),
           Text(
-            "\$$tradeMargin",
+            "${marketType == 'stocks' ? '₹' : '\$'}$tradeMargin",
             style: TextStyle(color: currentColor),
           ),
           const SizedBox(
@@ -306,7 +315,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 5,
           ),
           Text(
-            "\$$fees",
+            "${marketType == 'stocks' ? '₹' : '\$'}$fees",
             style: TextStyle(color: currentColor),
           ),
           const SizedBox(
@@ -319,7 +328,7 @@ class _TradeScreenState extends State<TradeScreen>
             width: 5,
           ),
           Text(
-            "\$$availableMargin",
+            "${marketType == 'stocks' ? '₹' : '\$'}$availableMargin",
             style: TextStyle(color: currentColor),
           ),
         ],
@@ -372,7 +381,7 @@ class _TradeScreenState extends State<TradeScreen>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const HomeScreen(),
+                      builder: (context) => const BaseScreen(),
                     ),
                   );
                 });
@@ -999,7 +1008,7 @@ class _TradeScreenState extends State<TradeScreen>
 
     setState(() {
       tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: price, leverage: leverage.round().toString());
-      fees = widget.isExit ? '0.00' : helper.calculateFees(segment: 'crypto', orderType: orderType, margin: tradeMargin,  leverage: leverage.round().toString());
+      fees = widget.isExit ? '0.00' : helper.calculateFees(segment: marketType, orderType: orderType, margin: tradeMargin, leverage: leverage.round().toString());
     });
   }
 
@@ -1042,6 +1051,7 @@ class _TradeScreenState extends State<TradeScreen>
       final response = await orderController.handleOrder(
         context: context,
         assetName: widget.assetName,
+        identifier: widget.identifier,
         ltp: amount,
         orderAction: action,
         orderPrice: amount,
@@ -1057,8 +1067,8 @@ class _TradeScreenState extends State<TradeScreen>
       String message = response["message"] as String;
 
       if (status) {
-        if(_timer.isActive) {
-          _timer.cancel();
+        if(_timer != null) {
+          _timer!.cancel();
         }
 
         Future.delayed(const Duration(milliseconds: 200), () {
@@ -1109,9 +1119,9 @@ class _TradeScreenState extends State<TradeScreen>
 
   Future<void> initTicker() async {
     if (await helper.checkConnectivity(context)) {
-      fetchTickerData();
-      _timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
-        fetchTickerData();
+      await fetchTickerData();
+      _timer = Timer.periodic(const Duration(seconds: 5), (Timer t) async {
+        await fetchTickerData();
       });
     }
   }
@@ -1119,7 +1129,7 @@ class _TradeScreenState extends State<TradeScreen>
   Future<void> fetchTickerData() async {
     try {
       String quantity = quantityController.text.trim();
-      final data = await _apiService.getTickerPrice(widget.assetName, marketSegment: widget.marketSegment);
+      final data = await _apiService.getTickerPrice(identifier: widget.identifier, marketSegment: widget.marketSegment, marketType: marketType);
 
       setState(() {
         currentPrice = data['assetPrice'];
@@ -1130,14 +1140,8 @@ class _TradeScreenState extends State<TradeScreen>
         if (quantity.isNotEmpty) {
           handleCalculation();
           if (widget.isExit) {
-            double pnl = helper.calculatePnL(
-              action: widget.action,
-              currentPrice: currentPrice,
-              buyPrice: widget.entryPrice,
-              quantity: widget.quantity,
-            );
-            netPnl = helper.formatNumber(
-                value: pnl.toString(), formatNumber: 2, plusSign: true);
+            double pnl = helper.calculatePnL(action: widget.action, currentPrice: currentPrice, buyPrice: widget.entryPrice, quantity: widget.quantity);
+            netPnl = helper.formatNumber(value: pnl.toString(), formatNumber: 2, plusSign: true);
           }
         }
       });
@@ -1145,5 +1149,16 @@ class _TradeScreenState extends State<TradeScreen>
       print('Error fetching ticker data: $e');
     }
   }
+  
+  void initQuantity() {
+    if(marketType == "stocks") {
+      String symbol = widget.assetName.split(' ').first;
 
+      if(symbol == "NIFTY") {
+        quantityController.text = "75";
+      } else if(symbol == "BANKNIFTY") {
+        quantityController.text = "35";
+      }
+    }
+  }
 }

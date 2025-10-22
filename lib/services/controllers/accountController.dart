@@ -61,8 +61,7 @@ class AccountController {
 
       // Check if a document exists
       if (snapshot.docs.isNotEmpty) {
-        AccountModel? accountData = AccountModel.fromJson(
-            snapshot.docs.first.data() as Map<String, dynamic>);
+        AccountModel? accountData = AccountModel.fromJson(snapshot.docs.first.data() as Map<String, dynamic>);
         state.setAccountData(accountId: accountData.accountId, totalBalance: accountData.totalBalance, accountType: accountData.accountType);
 
         return true;

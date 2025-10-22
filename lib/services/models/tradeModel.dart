@@ -7,6 +7,7 @@ class TradeModel {
   String? userId;
   String? marketSegment;
   String? assetName;
+  String? identifier;
   String? status;
   String? quantity;
   String? leverage;
@@ -31,6 +32,7 @@ class TradeModel {
     this.userId,
     this.marketSegment,
     this.assetName,
+    this.identifier,
     this.status,
     this.quantity,
     this.leverage,
@@ -54,6 +56,7 @@ class TradeModel {
       key: json["tradeId"],
       tradeId: json["tradeId"],
       assetName: json["assetName"],
+      identifier: json["identifier"],
       quantity: json["quantity"],
       entryPrice: json["entryPrice"],
       exitPrice: json["exitPrice"],
@@ -72,6 +75,7 @@ class TradeModel {
     "userId": userId,
     "marketSegment": marketSegment,
     "assetName": assetName,
+    "identifier": identifier,
     "status": status,
     "quantity": quantity,
     "leverage": leverage,

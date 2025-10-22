@@ -5,7 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class AppState extends ChangeNotifier {
   late ThemeData themeData = darkTheme;
   String theme = 'sys';
-  String _marketType = 'crypto';
+  String _marketType = '';
   int _pageIndex = 0;
   bool _isOnline = true;
   final Connectivity _connectivity = Connectivity();
@@ -49,7 +49,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  set setMarketType(String segment) {
+  void setMarketType(String segment) {
     _marketType = segment;
     notifyListeners();
   }

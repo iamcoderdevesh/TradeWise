@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:tradewise/screens/watchlist.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
 class MarketScreen extends StatefulWidget {
@@ -12,6 +14,7 @@ class MarketScreen extends StatefulWidget {
 class _MarketScreenState extends State<MarketScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String _marketType = '';
 
   @override
   void initState() {
@@ -27,6 +30,8 @@ class _MarketScreenState extends State<MarketScreen>
 
   @override
   Widget build(BuildContext context) {
+    _marketType = Provider.of<AppState>(context, listen: false).marketType;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -44,14 +49,14 @@ class _MarketScreenState extends State<MarketScreen>
             controller: _tabController,
             labelStyle:
                 const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-            tabs: const [
-              Tab(
+            tabs: [
+              const Tab(
                 text: 'All',
               ),
               Tab(
-                text: 'Spot',
+                text: _marketType == "stocks" ? 'Options' : 'Spot',
               ),
-              Tab(
+              const Tab(
                 text: 'Futures',
               ),
             ],

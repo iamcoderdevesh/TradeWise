@@ -8,6 +8,7 @@ import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/tradeController.dart';
 import 'package:tradewise/services/models/OrderModel.dart';
 import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/authState.dart';
 import 'package:tradewise/state/tradeState.dart';
 
@@ -31,6 +32,7 @@ class OrderController {
     required String orderType,
     required String orderQuantity,
     required String ltp,
+    required String identifier,
     String stopLossPrice = '',
     String targetPrice = '',
     String tradeId = '',
@@ -83,6 +85,7 @@ class OrderController {
         final response = await tradeController.handleTrade(
           context: context,
           action: action,
+          identifier: identifier,
           assetName: assetName,
           entryPrice: orderPrice,
           ltp: ltp,
@@ -208,6 +211,7 @@ class OrderController {
           isProcessing = true;
           late AuthState authState = Provider.of<AuthState>(context, listen: false);
           late AccountState accountState = Provider.of<AccountState>(context, listen: false);
+          String marketType = Provider.of<AppState>(context, listen: false).marketType;
 
           String userId = authState.userId as String;
           String accountId = accountState.accountId as String;
@@ -222,7 +226,8 @@ class OrderController {
           if (snapshot.docs.isNotEmpty) {
             for (var doc in snapshot.docs) {
               final orderId = doc['orderId'];
-              final assetName = doc['assetName'];
+              final identifier = doc['identifier'];
+              final assetName = doc['identifier'];
               final orderPrice = doc['orderPrice'];
               final orderQuantity = doc['orderQuantity'];
               final marketSegment = doc['marketSegment'];
@@ -232,7 +237,7 @@ class OrderController {
               String stopLossPrice = doc['stopLossPrice'] ?? '';
               String targetPrice = doc['targetPrice'] ?? '';
 
-              final currentTickerData = await apiService.getTickerPrice(assetName, marketSegment: marketSegment);
+              final currentTickerData = await apiService.getTickerPrice(identifier: identifier, marketSegment: marketSegment, marketType: marketType);
               final currentPrice = currentTickerData['assetPrice'];
 
               bool buyLimitCond = false;
@@ -276,6 +281,7 @@ class OrderController {
                 final response = await tradeController.handleTrade(
                   context: context,
                   action: action,
+                  identifier: identifier,
                   assetName: assetName,
                   entryPrice: currentPrice,
                   ltp: currentPrice,
@@ -299,7 +305,7 @@ class OrderController {
                   });
 
                   // ignore: use_build_context_synchronously
-                  Provider.of<TradeState>(context, listen: false).initOpenPosition();
+                  Provider.of<TradeState>(context, listen: false).initOpenPosition(marketType);
                 }
               }
             }

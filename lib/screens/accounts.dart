@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
-import 'package:tradewise/screens/home.dart';
+import 'package:tradewise/screens/base.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
@@ -216,7 +216,7 @@ class _AccountScreenState extends State<AccountScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const HomeScreen(),
+                builder: (context) => const BaseScreen(),
               ),
             );
           });
@@ -231,8 +231,7 @@ class _AccountScreenState extends State<AccountScreen> {
     });
 
     final accountController = AccountController();
-    final response =
-        await accountController.deleteAccount(accountId: state.accountId ?? '');
+    final response = await accountController.deleteAccount(accountId: state.accountId ?? '');
 
     setState(() {
       onScreenLoader = false;
@@ -242,8 +241,8 @@ class _AccountScreenState extends State<AccountScreen> {
     String message = response["message"] as String;
 
     if (status) {
-      // ignore: use_build_context_synchronously
-      showSnackbar(context, message: message, type: SnackbarType.success);
+      state.setAccountData(accountId: '0', totalBalance: '0.00', accountType: '');
+      showSnackbar(context, message: message, type: SnackbarType.success); // ignore: use_build_context_synchronously
     }
   }
 }

@@ -19,8 +19,8 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
   bool isOnline = false;
   final List<String> trackedSymbols = [];
   late Future<List<Map<String, dynamic>>> _tickerList = Future.value([]);
-
   late String _searchQuery = '';
+  late String _marketType = '';
 
   @override
   void initState() {
@@ -54,7 +54,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
   Widget tickerList(BuildContext context) {
     isOnline = Provider.of<AppState>(context, listen: false).isOnline;
-    if (isOnline) _tickerList = ApiService.fetchCryptoData(trackedSymbols, isFuture: widget.isFuture);
+    _marketType = Provider.of<AppState>(context, listen: false).marketType;
+
+    if (isOnline) _tickerList = _marketType == "stocks" ? ApiService.getNseOptionChain(symbol: "NIFTY") : ApiService.fetchTickerData(trackedSymbols, isFuture: widget.isFuture);
 
     return Padding(
       padding: const EdgeInsets.only(top: 70, left: 20, right: 20),

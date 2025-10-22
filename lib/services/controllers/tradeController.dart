@@ -15,6 +15,7 @@ class TradeController {
   Future<Map<String, dynamic>> handleTrade({
     required BuildContext context,
     String assetName = '',
+    String identifier = '',
     String marketSegment = '',
     String status = '',
     String quantity = '',
@@ -37,7 +38,7 @@ class TradeController {
       if (tradeId.isEmpty) {
 
         final String tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: entryPrice, leverage: leverage);
-        final String totalFees = helper.calculateFees(segment: "crypto", orderType: orderType, margin: tradeMargin, leverage: leverage);
+        final String totalFees = helper.calculateFees(segment: accountState.marketType, orderType: orderType, margin: tradeMargin, leverage: leverage);
 
         TradeModel trade = TradeModel(
           key: null,
@@ -46,6 +47,7 @@ class TradeController {
           userId: userId,
           marketSegment: marketSegment,
           assetName: assetName,
+          identifier: identifier,
           status: status,
           quantity: quantity,
           ltp: ltp,
@@ -76,13 +78,7 @@ class TradeController {
         String quantity = tradeData['quantity'] as String;
         String action = tradeData['action'] as String;
 
-        String grossPnl = helper
-            .calculatePnL(
-                action: action,
-                currentPrice: exitPrice,
-                buyPrice: entryPrice,
-                quantity: quantity)
-            .toString();
+        String grossPnl = helper.calculatePnL(action: action, currentPrice: exitPrice, buyPrice: entryPrice, quantity: quantity).toString();
         double netPnl = double.parse(grossPnl) - double.parse(totalFees);
 
         await _db.collection(_collection).doc(tradeId).update({
@@ -95,10 +91,7 @@ class TradeController {
           "updatedOn": Timestamp.now(),
         });
 
-        DocumentSnapshot accountData = await FirebaseFirestore.instance
-            .collection('accountDetails')
-            .doc(accountId)
-            .get();
+        DocumentSnapshot accountData = await FirebaseFirestore.instance.collection('accountDetails').doc(accountId).get();
 
         String accountTotalBalance = accountData['totalBalance'] as String;
         double updatedTotalBalance = double.parse(accountTotalBalance) + netPnl;
