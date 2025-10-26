@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> cacheApiData({required String key, required List<Map<String, dynamic>> data}) async {
+Future<void> cacheData({required String key, required dynamic data}) async {
   final prefs = await SharedPreferences.getInstance();
   prefs.setString(key, jsonEncode(data));
 }

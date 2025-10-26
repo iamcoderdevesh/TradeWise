@@ -5,6 +5,7 @@ import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/helpers/sharedPreferences.dart';
 import 'package:tradewise/screens/accounts.dart';
 import 'package:tradewise/screens/signin.dart';
+import 'package:tradewise/screens/token.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
@@ -64,9 +65,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   ProfileMenu(
-                    text: "Notifications",
-                    subText: "Choose notifications to recieve",
-                    press: () {},
+                    text: "Token",
+                    subText: "Set access token",
+                    press: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TokenScreen(),
+                        ),
+                      );
+                    },
                   ),
                   ProfileMenu(
                     text: "Help & Support",
@@ -256,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> setSegment({required bool switchState}) async {
     String marketType = switchState ? "crypto" : "stocks";
 
-    await cacheApiData(key: 'marketType', data: [{"marketType": marketType}]);
+    await cacheData(key: 'marketType', data: [{"marketType": marketType}]);
     Provider.of<AppState>(context, listen: false).setMarketType(marketType); // ignore: use_build_context_synchronously
     await accountController.setAccountBalance(context: context); // ignore: use_build_context_synchronously
 

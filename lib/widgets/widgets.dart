@@ -196,7 +196,7 @@ Widget tickerSection({
   Future<List<Map<String, dynamic>>> fetchData() async {
     if (isOnline && tickerList != null) {
       final data = await tickerList;
-      await cacheApiData(key: cachekey, data: data);
+      await cacheData(key: cachekey, data: data);
       return data;
     } else {
       return await getCachedData(key: cachekey);

@@ -316,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
     isOnline = Provider.of<AppState>(context, listen: false).isOnline;
     String marketType = Provider.of<AppState>(context, listen: false).marketType;
     if (isOnline) {
-      _tickerList = marketType == "stocks" ? ApiService.getIndexData() : ApiService.fetchTickerData(trackedSymbols);
+      _tickerList = marketType == "stocks" ? ApiService.getOptionChainData() : ApiService.fetchTickerData(trackedSymbols);
     }
 
     return Expanded(

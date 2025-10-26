@@ -5,6 +5,7 @@ import 'package:tradewise/screens/home.dart';
 import 'package:tradewise/screens/market.dart';
 import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/screens/profile.dart';
+import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/bottomNavBar.dart';
@@ -63,6 +64,10 @@ class _BaseScreenState extends State<BaseScreen> {
     if(cdata.isNotEmpty) {
       Provider.of<AppState>(context, listen: false).setMarketType(cdata[0]['marketType']); // ignore: use_build_context_synchronously
     }
+
+    // if(state.marketType == "stocks") {
+    //   await ApiService.setExpiryDates();
+    // }
 
     bool status = await accountController.setAccountBalance(context: context); // ignore: use_build_context_synchronously
     

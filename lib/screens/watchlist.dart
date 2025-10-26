@@ -56,7 +56,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     isOnline = Provider.of<AppState>(context, listen: false).isOnline;
     _marketType = Provider.of<AppState>(context, listen: false).marketType;
 
-    if (isOnline) _tickerList = _marketType == "stocks" ? ApiService.getNseOptionChain(symbol: "NIFTY") : ApiService.fetchTickerData(trackedSymbols, isFuture: widget.isFuture);
+    if (isOnline) _tickerList = _marketType == "stocks" ? ApiService.getOptionChainData() : ApiService.fetchTickerData(trackedSymbols, isFuture: widget.isFuture);
 
     return Padding(
       padding: const EdgeInsets.only(top: 70, left: 20, right: 20),

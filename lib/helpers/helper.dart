@@ -94,4 +94,15 @@ class Helper {
       return "Invalid timestamp";
     }
   }
+
+  String convertDate({required String inputDate, String inputFormat = 'dd-MMM-yyyy', String outputFormat = 'yyyy-MM-dd'}) {
+
+    DateFormat _inputFormat = DateFormat(inputFormat);
+    DateFormat _outputFormat = DateFormat(outputFormat);
+
+    DateTime parsedDate = _inputFormat.parse(inputDate);
+    String newDate = _outputFormat.format(parsedDate);
+
+    return newDate;
+  }
 }
