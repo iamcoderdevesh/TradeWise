@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:tradewise/constant/constant.dart';
+import 'package:tradewise/helpers/sharedPreferences.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/widgets.dart';
 
@@ -47,9 +49,12 @@ class Helper {
 
   String calculateFees({
     required String segment,
-    required String orderType,
-    required String margin,
-    required String leverage,
+    String orderType = 'market',
+    String margin = '0',
+    String leverage = '0',
+    String quantity = '0',
+    String buyPrice = '0',
+    String sellPrice = '0'
   }) {
     late double fees = 0.0;
     double marginValue = double.parse(margin);
@@ -64,6 +69,20 @@ class Helper {
       } else if (orderType.toLowerCase() == 'limit') {
         fees = (marginValue * 0.02) / 100;
       }
+    }
+    else if(segment.toLowerCase() == 'stocks') {
+
+      double buyValue = double.parse(buyPrice) * double.parse(quantity);
+      double sellValue = double.parse(sellPrice) * double.parse(quantity);
+
+      double brokerage = buyPrice != '0' && sellPrice != '0' ? 20.0 * 2 : 20.0;
+      double transactionCharge = marginValue * 0.0005;
+      double stt = sellPrice != '0' ? sellValue * 0.0005 : 0.00;
+      double sebi = marginValue * 0.000001;
+      double stampDuty = buyPrice != '0' ? buyValue * 0.00003 : 0.00;
+      double gst = 0.18 * (brokerage + transactionCharge);
+
+      fees = brokerage + transactionCharge + stt + sebi + stampDuty + gst;
     }
 
     return fees.toStringAsFixed(2).toString();
@@ -104,5 +123,14 @@ class Helper {
     String newDate = _outputFormat.format(parsedDate);
 
     return newDate;
+  }
+
+  Future<void> cacheApiCallCount({required String cacheKey}) async {
+
+    List<Map<String, dynamic>> data = await getCachedData(key: cacheKey);
+    int apiCallCount = int.parse(data.isNotEmpty ? data[0][cacheKey].toString() : "0");
+    apiCallCount++;
+    
+    await cacheData(key: cacheKey, data: [{cacheKey: apiCallCount}]);
   }
 }

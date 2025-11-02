@@ -5,7 +5,6 @@ import 'package:tradewise/screens/home.dart';
 import 'package:tradewise/screens/market.dart';
 import 'package:tradewise/screens/portfolio.dart';
 import 'package:tradewise/screens/profile.dart';
-import 'package:tradewise/services/api/api.dart';
 import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/bottomNavBar.dart';

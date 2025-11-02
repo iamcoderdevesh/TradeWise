@@ -26,8 +26,6 @@ class _TokenScreenState extends State<TokenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    tokenController.text = "eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiI4RkFDS0MiLCJqdGkiOiI2OGZkYzdlMDZmYzliMzVhNWEwNTE0YTgiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2MTQ2MjI0MCwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzYxNTE2MDAwfQ.P-tAYDWXLUmLojN4H0ycibIlzmSCi7U80Lk_vCdBOPk";
-    dateController.text = '2025-10-28';
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,

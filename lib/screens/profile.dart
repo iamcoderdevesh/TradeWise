@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/helpers/sharedPreferences.dart';
 import 'package:tradewise/screens/accounts.dart';
+import 'package:tradewise/screens/apiCount.dart';
 import 'package:tradewise/screens/signin.dart';
 import 'package:tradewise/screens/token.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
@@ -77,9 +78,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   ProfileMenu(
-                    text: "Help & Support",
-                    subText: "Get help with your account",
-                    press: () {},
+                    text: "Api Count",
+                    subText: "Get the api count",
+                    press: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ApiCountScreen(),
+                        ),
+                      );
+                    },
                   ),
                   ProfileMenu(
                     text: "About Us",
@@ -262,6 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> setSegment({required bool switchState}) async {
+
     String marketType = switchState ? "crypto" : "stocks";
 
     await cacheData(key: 'marketType', data: [{"marketType": marketType}]);

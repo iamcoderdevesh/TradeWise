@@ -1008,7 +1008,8 @@ class _TradeScreenState extends State<TradeScreen>
 
     setState(() {
       tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: price, leverage: leverage.round().toString());
-      fees = widget.isExit ? '0.00' : helper.calculateFees(segment: marketType, orderType: orderType, margin: tradeMargin, leverage: leverage.round().toString());
+      fees = widget.isExit && marketType == 'crypto' ? helper.calculateFees(segment: marketType, orderType: orderType, margin: tradeMargin, leverage: leverage.round().toString()) : '0.00';
+      fees = marketType == 'stocks' ? helper.calculateFees(segment: marketType, quantity: quantity, buyPrice: widget.isExit ? '0' : currentPrice, sellPrice: widget.isExit ? currentPrice : '0') : fees;
     });
   }
 

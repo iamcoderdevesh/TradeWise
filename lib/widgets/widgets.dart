@@ -182,29 +182,125 @@ Widget tickerItems({
   );
 }
 
+Widget cardItems({
+  required String assetName,
+  required Color bgColor,
+  required String currentPrice,
+  required String gains,
+}) {
+  late String price = Helper().formatNumber(value: currentPrice, formatNumber: 2);
+  late String percentChange = Helper().formatNumber(value: gains, formatNumber: 2, plusSign: true);
+
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 20, top: 5, right: 15),
+    child: Container(
+      width: 125,
+      height: 150,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+            color: Colors.black.withOpacity(.05),
+            style: BorderStyle.solid,
+            strokeAlign: BorderSide.strokeAlignInside),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.05),
+            blurRadius: 10,
+          )
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade700,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      assetName.substring(0, 1),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                assetName.replaceAll("USDT", ""),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: Text(
+              price,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: Row(
+              children: [
+                Text(
+                  '$percentChange%',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: getPnlColor(value: percentChange),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  double.parse(percentChange) > 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                  size: 26,
+                  color: getPnlColor(value: percentChange),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 Widget tickerSection({
   required BuildContext context,
   required Future<List<Map<String, dynamic>>>? tickerList,
-  required String cachekey,
   List<String>? tickerSymbols,
   String searchQuery = '',
   bool isFuture = false,
+  bool isHomeFeatured = false,
+  Axis scrollDirection = Axis.vertical,
 }) {
   late AppState state = Provider.of<AppState>(context, listen: false);
-  bool isOnline = state.isOnline;
-
-  Future<List<Map<String, dynamic>>> fetchData() async {
-    if (isOnline && tickerList != null) {
-      final data = await tickerList;
-      await cacheData(key: cachekey, data: data);
-      return data;
-    } else {
-      return await getCachedData(key: cachekey);
-    }
-  }
 
   return FutureBuilder<List<Map<String, dynamic>>>(
-    future: fetchData(),
+    future: tickerList,
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
         return Center(child: circularLoader());
@@ -226,24 +322,34 @@ Widget tickerSection({
       }
 
       if (tickerSymbols!.isNotEmpty && state.marketType == "crypto") {
-        filteredData = filteredData.where((item) => tickerSymbols.contains(item['symbol'])).toList();
+        filteredData = filteredData
+            .where((item) => tickerSymbols.contains(item['symbol']))
+            .toList();
       }
 
       return ListView.builder(
+        scrollDirection: scrollDirection,
         physics: const BouncingScrollPhysics(),
         itemCount: filteredData.length,
         itemBuilder: (context, index) {
           final data = filteredData[index];
-          return tickerItems(
-            context: context,
-            perChange: data['priceChangePercent'].toString(),
-            currentPrice: data['lastPrice'].toString(),
-            assetName: data['symbol'],
-            shortName: data['symbol'],
-            identifier: data['identifier'] ?? '',
-            marketSegment: isFuture ? "Futures" : "Spot",
-            formatNumber: state.marketType == "stocks" ? 2 : 4,
-          );
+          return isHomeFeatured
+              ? cardItems(
+                  assetName: data['symbol'],
+                  bgColor: const Color(0xE4E8FDFF),
+                  currentPrice: data['lastPrice'].toString(),
+                  gains: data['priceChangePercent'].toString(),
+                )
+              : tickerItems(
+                  context: context,
+                  perChange: data['priceChangePercent'].toString(),
+                  currentPrice: data['lastPrice'].toString(),
+                  assetName: data['symbol'],
+                  shortName: data['symbol'],
+                  identifier: data['identifier'] ?? '',
+                  marketSegment: isFuture ? "Futures" : "Spot",
+                  formatNumber: state.marketType == "stocks" ? 2 : 4,
+                );
         },
       );
     },

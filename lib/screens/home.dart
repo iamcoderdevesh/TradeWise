@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import 'package:tradewise/assets/svg.dart';
 import 'package:tradewise/state/accountState.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/authState.dart';
@@ -17,20 +15,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String cacheKey = 'homeList';
   bool isOnline = false;
-  final List<String> trackedSymbols = [
-    'BTCUSDT',
-    'ETHUSDT',
-    'TRXUSDT',
-    'XRPUSDT',
-  ];
+  String marketType = '';
+  late List<String> trackedSymbols = ['BTCUSDT', 'ETHUSDT', 'TRXUSDT', 'XRPUSDT'];
 
   // ignore: prefer_final_fields
   late Future<List<Map<String, dynamic>>> _tickerList = Future.value([]);
 
   @override
   void initState() {
+    marketType = Provider.of<AppState>(context, listen: false).marketType;
+    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
+
+    _tickerList = marketType == "stocks" ? ApiService.getIndexData(isOnline: isOnline) : ApiService.fetchTickerData(isOnline: isOnline);
     super.initState();
   }
 
@@ -210,121 +207,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget cardSection() {
     return SizedBox(
       height: 150,
-      child: ListView(
+      child: tickerSection(
+        context: context,
+        tickerList: _tickerList,
+        tickerSymbols: trackedSymbols,
+        isHomeFeatured: true,
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        children: [
-          cardItems('BTC', btcIcon, const Color(0xE4E8FDFF), '100000.42', "+1.72%"),
-          const SizedBox(width: 15),
-          cardItems('ETH', ethIcon, const Color(0xFFFDF4F5), '40000.65', "+2.06%"),
-          const SizedBox(width: 15),
-          cardItems('USDT', usdtIcon, const Color(0xFFFFF7F1), '1.07', "+0.24%")
-        ],
-      ),
-    );
-  }
-
-  Widget cardItems(
-      String type, String icon, Color bgColor, String price, String gains) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20, top: 5),
-      child: Container(
-        width: 125,
-        height: 150,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: Colors.black.withOpacity(.05),
-              style: BorderStyle.solid,
-              strokeAlign: BorderSide.strokeAlignInside),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(.05),
-              blurRadius: 10,
-            )
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: Center(
-                    child: SizedBox(
-                      width: 26,
-                      height: 26,
-                      child: SvgPicture.string(icon),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  type,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: Text(
-                price,
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: Row(
-                children: [
-                  Text(
-                    gains,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xE215CC8A),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(
-                    Icons.arrow_drop_up,
-                    size: 26,
-                    color: Color(0xE215CC8A),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
   Widget trendingSection(context) {
-    isOnline = Provider.of<AppState>(context, listen: false).isOnline;
-    String marketType = Provider.of<AppState>(context, listen: false).marketType;
-    if (isOnline) {
-      _tickerList = marketType == "stocks" ? ApiService.getOptionChainData() : ApiService.fetchTickerData(trackedSymbols);
-    }
-
     return Expanded(
       child: tickerSection(
         context: context,
         tickerList: _tickerList,
         tickerSymbols: trackedSymbols,
-        cachekey: cacheKey,
       ),
     );
   }

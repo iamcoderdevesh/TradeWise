@@ -33,12 +33,13 @@ class TradeController {
 
       String userId = state.userId as String;
       String accountId = accountState.accountId as String;
+      String marketType = accountState.marketType;
 
       // Create a new trade
       if (tradeId.isEmpty) {
 
         final String tradeMargin = helper.calculateTradeMargin(quantity: quantity, price: entryPrice, leverage: leverage);
-        final String totalFees = helper.calculateFees(segment: accountState.marketType, orderType: orderType, margin: tradeMargin, leverage: leverage);
+        final String totalFees = marketType == "crypto" ? helper.calculateFees(segment: marketType, orderType: orderType, margin: tradeMargin, leverage: leverage) : "0.00";
 
         TradeModel trade = TradeModel(
           key: null,
@@ -70,13 +71,14 @@ class TradeController {
       }
       //Update trade
       else {
-        DocumentSnapshot tradeData =
-            await _db.collection(_collection).doc(tradeId).get();
+        DocumentSnapshot tradeData = await _db.collection(_collection).doc(tradeId).get();
 
         String totalFees = tradeData['totalFees'] as String;
         String entryPrice = tradeData['entryPrice'] as String;
         String quantity = tradeData['quantity'] as String;
         String action = tradeData['action'] as String;
+
+        totalFees = marketType == 'stocks' ? helper.calculateFees(segment: marketType, quantity: quantity, buyPrice: entryPrice, sellPrice: exitPrice) : totalFees;
 
         String grossPnl = helper.calculatePnL(action: action, currentPrice: exitPrice, buyPrice: entryPrice, quantity: quantity).toString();
         double netPnl = double.parse(grossPnl) - double.parse(totalFees);

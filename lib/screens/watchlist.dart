@@ -56,17 +56,16 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     isOnline = Provider.of<AppState>(context, listen: false).isOnline;
     _marketType = Provider.of<AppState>(context, listen: false).marketType;
 
-    if (isOnline) _tickerList = _marketType == "stocks" ? ApiService.getOptionChainData() : ApiService.fetchTickerData(trackedSymbols, isFuture: widget.isFuture);
+    _tickerList = _marketType == "stocks" ? ApiService.getOptionChainData(isOnline: isOnline) : ApiService.fetchTickerData(isFuture: widget.isFuture, isOnline: isOnline);
 
     return Padding(
       padding: const EdgeInsets.only(top: 70, left: 20, right: 20),
       child: tickerSection(
         context: context,
         tickerList: _tickerList,
-        isFuture: widget.isFuture,
         searchQuery: _searchQuery,
         tickerSymbols: trackedSymbols,
-        cachekey: widget.isFuture ? "futureTickerList" : "spotTickerList",
+        isFuture: widget.isFuture,
       ),
     );
   }
