@@ -139,7 +139,7 @@ Widget tickerItems({
                   Text(
                     assetName,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -188,70 +188,72 @@ Widget cardItems({
   required String currentPrice,
   required String gains,
 }) {
-  late String price = Helper().formatNumber(value: currentPrice, formatNumber: 2);
-  late String percentChange = Helper().formatNumber(value: gains, formatNumber: 2, plusSign: true);
+  final String price = Helper().formatNumber(value: currentPrice, formatNumber: 2);
+  final String percentChange = Helper().formatNumber(value: gains, formatNumber: 2, plusSign: true);
 
   return Padding(
     padding: const EdgeInsets.only(bottom: 20, top: 5, right: 15),
     child: Container(
       width: 125,
-      height: 150,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: Colors.black.withOpacity(.05),
-            style: BorderStyle.solid,
-            strokeAlign: BorderSide.strokeAlignInside),
+          color: Colors.black.withOpacity(.05),
+          style: BorderStyle.solid,
+          strokeAlign: BorderSide.strokeAlignInside,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(.05),
             blurRadius: 10,
-          )
+          ),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ✅ Fix overflow here
           Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
+              Container(
                 width: 32,
                 height: 32,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade700,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      assetName.substring(0, 1),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade700,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    assetName.substring(0, 1),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                assetName.replaceAll("USDT", ""),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+              // Wrap text to prevent overflow
+              Expanded(
+                child: Text(
+                  assetName.replaceAll("USDT", ""),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
                 ),
               ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 10),
+            padding: const EdgeInsets.only(left: 10, top: 6),
             child: Text(
               price,
               style: const TextStyle(
@@ -262,7 +264,7 @@ Widget cardItems({
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 10),
+            padding: const EdgeInsets.only(left: 10, top: 4),
             child: Row(
               children: [
                 Text(
@@ -273,10 +275,12 @@ Widget cardItems({
                     color: getPnlColor(value: percentChange),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Icon(
-                  double.parse(percentChange) > 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  size: 26,
+                  double.tryParse(percentChange) != null && double.parse(percentChange) > 0
+                      ? Icons.arrow_drop_up
+                      : Icons.arrow_drop_down,
+                  size: 22,
                   color: getPnlColor(value: percentChange),
                 ),
               ],
@@ -287,7 +291,6 @@ Widget cardItems({
     ),
   );
 }
-
 Widget tickerSection({
   required BuildContext context,
   required Future<List<Map<String, dynamic>>>? tickerList,

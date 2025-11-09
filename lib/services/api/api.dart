@@ -146,45 +146,38 @@ class ApiService {
     };
 
     if(isOnline) {
-      var optionContractsResponse0 = await http.get(Uri.parse(optionContractUrl), headers: headers);
-      var optionChainResponse0 = await http.get(Uri.parse('$optionDataUrl&expiry_date=$expiryDate'), headers: headers);
+      var response = await http.get(Uri.parse('$optionDataUrl&expiry_date=$expiryDate'), headers: headers);
 
-      if (optionContractsResponse0.statusCode == 200 && optionChainResponse0.statusCode == 200) {
-        var optionContractsResponse = json.decode(optionContractsResponse0.body);
-        var optionChainResponse = json.decode(optionChainResponse0.body);
+      if (response.statusCode == 200) {
+        var optionChainResponse = json.decode(response.body);
 
-        List<dynamic> optionContractsList = optionContractsResponse['data'] ?? [];
-        List<dynamic> optionChainList = optionChainResponse['data'] ?? [];
+        final filteredData = <Map<String, dynamic>>[];
+        for (var item in optionChainResponse['data']) {
+          final expiryDate = DateTime.parse(item['expiry']);
+          final expiryFormatted = "${expiryDate.day.toString().padLeft(2, '0')} ${Helper().getMonthName(expiryDate.month).toUpperCase()}";
 
-        // Create a map of instrument_key -> ltp for quick lookup
-        Map<String, dynamic> ltpMap = {};
+          final strikePrice = item['strike_price'].toStringAsFixed(0);
 
-        for (var chainItem in optionChainList) {
-          var callOption = chainItem['call_options'];
-          var putOption = chainItem['put_options'];
+          // Call Option
+          final call = item['call_options'];
+          filteredData.add({
+            "symbol": "NIFTY $strikePrice CE $expiryFormatted",
+            "identifier": call['instrument_key'],
+            "strikePrice": strikePrice,
+            "priceChangePercent": "0.00",
+            "lastPrice": call['market_data']['ltp'].toString(),
+          });
 
-          if (callOption != null && callOption['instrument_key'] != null) {
-            ltpMap[callOption['instrument_key']] = callOption['market_data']?['ltp'] ?? 0.0;
-          }
-
-          if (putOption != null && putOption['instrument_key'] != null) {
-            ltpMap[putOption['instrument_key']] = putOption['market_data']?['ltp'] ?? 0.0;
-          }
+          // Put Option
+          final put = item['put_options'];
+          filteredData.add({
+            "symbol": "NIFTY $strikePrice PE $expiryFormatted",
+            "identifier": put['instrument_key'],
+            "strikePrice": strikePrice,
+            "priceChangePercent": "0.00",
+            "lastPrice": put['market_data']['ltp'].toString(),
+          });
         }
-
-        // Filter contracts and merge LTP
-        List<Map<String, dynamic>> filteredData = optionContractsList.where((item) => item['expiry'].toString().contains(expiryDate)).map<Map<String, dynamic>>((item) {
-          String instrumentKey = item['instrument_key'].toString();
-          double ltp = ltpMap[instrumentKey] ?? 0.0;
-
-          return {
-            "symbol": item['trading_symbol'].toString().replaceFirst(" 25", ""),
-            "identifier": instrumentKey,
-            "strikePrice": item['strike_price'].toString(),
-            "priceChangePercent": '0.00',
-            "lastPrice": ltp.toString(),
-          };
-        }).toList();
 
         filteredData.sort((a, b) => double.parse(b['strikePrice'].toString()).compareTo(double.parse(a['strikePrice'].toString())));
 
