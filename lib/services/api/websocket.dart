@@ -28,6 +28,7 @@ class WebSocketService {
           final json = jsonDecode(data);
           if (json != null && json['c'] != null) {
             final price = double.tryParse(json['c']) ?? 0.0;
+            // print(symbol + ' :- ' + price.toString());
             onTickerUpdate(symbol, price);
           }
         },

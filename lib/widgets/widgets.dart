@@ -291,6 +291,7 @@ Widget cardItems({
     ),
   );
 }
+
 Widget tickerSection({
   required BuildContext context,
   required Future<List<Map<String, dynamic>>>? tickerList,
@@ -425,6 +426,7 @@ Widget textFormField({
       inputFormatters: inputFormatters,
       textInputAction: TextInputAction.next,
       obscureText: obscureText,
+      cursorColor: Colors.blue,
       decoration: InputDecoration(
         hintText: hintText,
         labelText: labelText,

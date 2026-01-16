@@ -25,9 +25,14 @@ class ApiService {
           data = data.where((item) => item['symbol'].toString().contains('USDT')).toList();
           data.sort((a, b) => double.parse(b['lastPrice'].toString()).compareTo(double.parse(a['lastPrice'].toString()))); // Sort by price in descending order
 
-          List<Map<String, dynamic>> filteredData = List<Map<String, dynamic>>.from(data);
-          await cacheData(key: cacheKey, data: filteredData);
+          List<Map<String, dynamic>> filteredData = data.map<Map<String, dynamic>>((item) {
+            return {
+              ...item,
+              'identifier': item['symbol'],
+            };
+          }).toList();
 
+          await cacheData(key: cacheKey, data: filteredData);
           await Helper().cacheApiCallCount(cacheKey: cryptoApiCall);
           
           return filteredData;
@@ -89,8 +94,7 @@ class ApiService {
             'assetPriceChange': assetPriceChange,
           };
         } else {
-          throw Exception(
-              'Failed to load crypto data:- ${response.statusCode}');
+          throw Exception('Failed to load crypto data:- ${response.statusCode}');
         }
       }
     } catch (e) {

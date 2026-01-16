@@ -28,7 +28,6 @@ class TradeState extends AppState {
   TradeState() {
     _openedPnL = 0.00;
     _closedPnL = 0.00;
-    if (marketType == 'crypto') _webSocketService = WebSocketService(onTickerUpdate: _handleTickerUpdate);
   }
 
   /// api code starts.
@@ -128,8 +127,7 @@ class TradeState extends AppState {
         'action': pos.action,
         'status': "CLOSED",
         'marketSegment': pos.marketSegment,
-        'pnl': helper.formatNumber(
-            value: pos.netPnl.toString(), formatNumber: 2, plusSign: true)
+        'pnl': helper.formatNumber(value: pos.netPnl.toString(), formatNumber: 2, plusSign: true)
       });
 
       totalPnL += double.parse(pos.netPnl);
@@ -156,6 +154,7 @@ class TradeState extends AppState {
   Future<List<Map<String, dynamic>>> initSocketOpenPosition() async {
     _openedPnL = 0.00;
     if (!isOnline) return _openTrades;
+    if (_marketType == 'crypto') _webSocketService = WebSocketService(onTickerUpdate: _handleTickerUpdate);
 
     final trades = await tradeController.getTrades(status: "OPEN");
 
@@ -168,6 +167,7 @@ class TradeState extends AppState {
         'quantity': pos.quantity,
         'entryPrice': pos.entryPrice,
         'action': pos.action,
+        'identifier': pos.identifier,
         'status': "OPEN",
         'marketSegment': pos.marketSegment,
         'userId': pos.userId,
@@ -214,6 +214,7 @@ class TradeState extends AppState {
         _openedPnL += pnl;
 
         _openTrades[i]['ltp'] = currentPrice;
+        _openTrades[i]['identifier'] = trade['identifier'];
         _openTrades[i]['pnl'] = helper.formatNumber(
           value: pnl.toString(),
           formatNumber: 2,

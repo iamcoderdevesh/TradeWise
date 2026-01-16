@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tradewise/helpers/helper.dart';
 import 'package:tradewise/services/models/tradeModel.dart';
 import 'package:tradewise/state/accountState.dart';
+import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/state/authState.dart';
 
 class TradeController {
@@ -28,12 +29,13 @@ class TradeController {
     String orderType = '',
   }) async {
     try {
+      late AppState appState = Provider.of<AppState>(context, listen: false);
       late AuthState state = Provider.of<AuthState>(context, listen: false);
       late AccountState accountState = Provider.of<AccountState>(context, listen: false);
 
       String userId = state.userId as String;
       String accountId = accountState.accountId as String;
-      String marketType = accountState.marketType;
+      String marketType = appState.marketType;
 
       // Create a new trade
       if (tradeId.isEmpty) {
@@ -63,8 +65,7 @@ class TradeController {
           updatedOn: Timestamp.now(),
         );
 
-        DocumentReference docRef =
-            await _db.collection(_collection).add(trade.toJson());
+        DocumentReference docRef = await _db.collection(_collection).add(trade.toJson());
         await docRef.update({"key": docRef.id, "tradeId": docRef.id});
 
         return {"status": true, "tradeId": docRef.id};

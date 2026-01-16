@@ -9,6 +9,7 @@ import 'package:tradewise/services/controllers/orderController.dart';
 import 'package:tradewise/state/appState.dart';
 import 'package:tradewise/widgets/bottomNavBar.dart';
 import 'package:tradewise/services/controllers/accountController.dart';
+import 'package:tradewise/widgets/widgets.dart';
 
 class BaseScreen extends StatefulWidget {
   const BaseScreen({super.key});
@@ -20,6 +21,7 @@ class BaseScreen extends StatefulWidget {
 class _BaseScreenState extends State<BaseScreen> {
   
   bool isOnline = false;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -32,7 +34,7 @@ class _BaseScreenState extends State<BaseScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       bottomNavigationBar: const BottomNavBar(),
-      body: _body(context),
+      body: isLoading ? Center(child: circularLoader()) : _body(context),
     );
   }
 
@@ -69,7 +71,9 @@ class _BaseScreenState extends State<BaseScreen> {
     // }
 
     bool status = await accountController.setAccountBalance(context: context); // ignore: use_build_context_synchronously
-    
     if (status && isOnline) await orderController.handlePendingOrders(context: context); // ignore: use_build_context_synchronously
+    setState(() {
+      isLoading = false;
+    });
   }
 }
