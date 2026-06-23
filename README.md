@@ -1,5 +1,11 @@
 # TradeWise 📈💹
 
+<p align="center">
+  <a href="https://github.com/iamcoderdevesh/TradeWise/releases/tag/Pre-release">
+    <img src="https://img.shields.io/badge/Download-Latest%20Release-success?style=for-the-badge&logo=github" alt="Download TradeWise">
+  </a>
+</p>
+
 TradeWise is a modern Flutter-based trading platform that enables users to trade in **Stocks**, **Options**, and **Cryptocurrencies** through a seamless and intuitive mobile experience.
 
 Built with Flutter for cross-platform performance, TradeWise focuses on delivering real-time market insights, smooth trading execution, and a clean user interface for both beginner and experienced traders.
@@ -45,7 +51,7 @@ lib/
 │── theme/             # App themes, colors, and styling
 │── widgets/           # Reusable custom widgets
 │── main.dart          # Application entry point
-```
+````
 
 ---
 
@@ -93,6 +99,14 @@ Run the app:
 ```bash
 flutter run
 ```
+
+---
+
+## 📥 Download
+
+Get the latest pre-release version here:
+
+[![Download TradeWise](https://img.shields.io/badge/Download-Pre--Release-blue?style=for-the-badge\&logo=github)](https://github.com/iamcoderdevesh/TradeWise/releases/tag/Pre-release)
 
 ---
 
@@ -155,3 +169,5 @@ This project is licensed under the MIT License.
 ## 👨‍💻 Author
 
 Developed with ❤️ using Flutter.
+
+---
