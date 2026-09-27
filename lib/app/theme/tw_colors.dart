@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 /// TradeWise light/dark color tokens.
 ///
-/// These are provisional foundation values only. The final TradeWise visual
-/// identity will be refined during the Welcome implementation after analyzing
-/// the supplied Welcome references. The [primary] color is a restrained
-/// placeholder and must NOT be treated as the final brand color.
+/// Primary blue is a provisional placeholder only — final visual identity
+/// will be refined after analyzing Welcome references. Background values
+/// are tuned toward the Welcome reference screenshots (near-white light,
+/// navy-charcoal dark) as initial approximations.
 abstract final class TWColors {
   // Light scheme.
-  static const Color lightBackgroundPrimary = Color(0xFFF7F8FA);
-  static const Color lightBackgroundSecondary = Color(0xFFFFFFFF);
+  static const Color lightBackgroundPrimary = Color(0xFFFFFFFF);
+  static const Color lightBackgroundSecondary = Color(0xFFF7F8FA);
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightSurfaceElevated = Color(0xFFF1F3F6);
   static const Color lightTextPrimary = Color(0xFF111827);
@@ -20,16 +20,17 @@ abstract final class TWColors {
   static const Color lightNegative = Color(0xFFDC2626);
   static const Color lightNeutral = Color(0xFF64748B);
   static const Color lightWarning = Color(0xFFB45309);
+  static const Color lightDivider = Color(0xFFE5E7EB);
 
   /// Provisional primary. See class docs.
   static const Color lightPrimary = Color(0xFF2563EB);
   static const Color lightPrimaryVariant = Color(0xFF1D4ED8);
 
   // Dark scheme.
-  static const Color darkBackgroundPrimary = Color(0xFF0B0F14);
+  static const Color darkBackgroundPrimary = Color(0xFF141B29);
   static const Color darkBackgroundSecondary = Color(0xFF11161D);
-  static const Color darkSurface = Color(0xFF151C24);
-  static const Color darkSurfaceElevated = Color(0xFF1E2833);
+  static const Color darkSurface = Color(0xFF1A2333);
+  static const Color darkSurfaceElevated = Color(0xFF232F42);
   static const Color darkTextPrimary = Color(0xFFF3F4F6);
   static const Color darkTextSecondary = Color(0xFFCBD5E1);
   static const Color darkTextTertiary = Color(0xFF94A3B8);
@@ -38,6 +39,7 @@ abstract final class TWColors {
   static const Color darkNegative = Color(0xFFF87171);
   static const Color darkNeutral = Color(0xFF94A3B8);
   static const Color darkWarning = Color(0xFFFBBF24);
+  static const Color darkDivider = Color(0xFF2A3342);
 
   /// Provisional primary (dark). See class docs.
   static const Color darkPrimary = Color(0xFF60A5FA);

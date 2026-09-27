@@ -89,6 +89,14 @@ abstract final class TWTypography {
         fontFeatures: const [FontFeature.tabularFigures()],
         color: textPrimary,
       ),
+      // Large action-row label (e.g. Welcome rows): 18sp regular.
+      displaySmall: TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 18,
+        fontWeight: FontWeight.w400,
+        height: 1.4,
+        color: textPrimary,
+      ),
     );
   }
 }

@@ -8,14 +8,14 @@ import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/theme_mode_provider.dart';
 
 void main() {
-  testWidgets('app boots on splash route with placeholder', (
+  testWidgets('app boots on the root route and renders Welcome', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const ProviderScope(child: TradeWiseApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Foundation ready'), findsOneWidget);
-    expect(find.text('TradeWise'), findsOneWidget);
+    // `/` renders WelcomeScreen until the Splash screen is implemented.
+    expect(find.text('Welcome to\nTradeWise'), findsOneWidget);
   });
 
   test('router resolves foundation route paths', () {
@@ -58,11 +58,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Foundation ready'), findsOneWidget);
+    // `/` temporarily renders WelcomeScreen (see app_router.dart).
+    expect(find.text('Welcome to\nTradeWise'), findsOneWidget);
 
     router.go(AppRoutes.welcome);
     await tester.pumpAndSettle();
-    expect(find.text('Foundation ready'), findsOneWidget);
+    expect(find.text('Welcome to\nTradeWise'), findsOneWidget);
 
     router.go(AppRoutes.login);
     await tester.pumpAndSettle();
@@ -83,7 +84,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Foundation ready'), findsOneWidget);
+    // `/` temporarily renders WelcomeScreen (see app_router.dart).
+    expect(find.text('Welcome to\nTradeWise'), findsOneWidget);
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(materialApp.themeMode, ThemeMode.dark);
     expect(tester.takeException(), isNull);

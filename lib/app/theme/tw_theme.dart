@@ -19,7 +19,12 @@ abstract final class TWTheme {
       onSurface: TWColors.lightTextPrimary,
       error: TWColors.lightNegative,
     );
-    return _build(colorScheme, textTheme, TWColors.lightBackgroundPrimary);
+    return _build(
+      colorScheme,
+      textTheme,
+      TWColors.lightBackgroundPrimary,
+      TWColors.lightDivider,
+    );
   }
 
   static ThemeData dark() {
@@ -35,18 +40,30 @@ abstract final class TWTheme {
       onSurface: TWColors.darkTextPrimary,
       error: TWColors.darkNegative,
     );
-    return _build(colorScheme, textTheme, TWColors.darkBackgroundPrimary);
+    return _build(
+      colorScheme,
+      textTheme,
+      TWColors.darkBackgroundPrimary,
+      TWColors.darkDivider,
+    );
   }
 
   static ThemeData _build(
     ColorScheme colorScheme,
     TextTheme textTheme,
     Color scaffoldBackground,
+    Color dividerColor,
   ) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: scaffoldBackground,
+      dividerColor: dividerColor,
+      dividerTheme: DividerThemeData(
+        color: dividerColor,
+        thickness: 1,
+        space: 1,
+      ),
       textTheme: textTheme,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(

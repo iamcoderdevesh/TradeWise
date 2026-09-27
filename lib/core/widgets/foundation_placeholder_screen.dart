@@ -4,7 +4,8 @@ import '../../app/theme/tw_spacing.dart';
 import 'tw_button.dart';
 
 /// Temporary foundation screen verifying ProviderScope → app → theme →
-/// router → rendering. Removed when Welcome is implemented.
+/// router → rendering. Only `/login` still uses it (`/` renders
+/// WelcomeScreen); removed once Login is implemented.
 class FoundationPlaceholderScreen extends StatelessWidget {
   const FoundationPlaceholderScreen({super.key});
 
