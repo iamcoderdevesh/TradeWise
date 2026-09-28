@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/tw_spacing.dart';
+import '../../app/theme/tw_spacing.dart';
 
-/// Temporary generic footer for the Welcome screen.
+/// Shared TradeWise footer/disclaimer block.
 ///
 /// Placeholder product copy only — NOT final legal language. No external
 /// links or routes; underlined spans are visual only and non-interactive.
-class WelcomeDisclaimer extends StatelessWidget {
-  const WelcomeDisclaimer({super.key});
+///
+/// Extracted from the Welcome screen so Welcome, Login, and Signup share one
+/// footer instead of Auth depending on the Welcome feature. Appearance and
+/// behaviour are unchanged from the Welcome-only version.
+class TradeWiseDisclaimer extends StatelessWidget {
+  const TradeWiseDisclaimer({super.key});
 
   @override
   Widget build(BuildContext context) {

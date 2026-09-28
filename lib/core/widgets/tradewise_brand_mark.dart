@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme/tw_typography.dart';
+import '../../app/theme/tw_typography.dart';
 
 /// Deliberately temporary TradeWise brand mark placeholder.
 ///
-/// A neutral "TW" monogram so the Welcome screen reads as TradeWise.
+/// A neutral "TW" monogram so brand-bearing screens read as TradeWise.
 /// NOT the final logo — replace during visual-identity work.
+///
+/// Shared by Welcome (hero size) and the auth screens (compact header size);
+/// extracted from the Welcome feature so Auth does not depend on it.
 class TradeWiseBrandMark extends StatelessWidget {
   const TradeWiseBrandMark({super.key, this.size = 56});
 

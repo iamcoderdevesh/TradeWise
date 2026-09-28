@@ -20,7 +20,12 @@ void main() {
 
   test('router resolves foundation route paths', () {
     final router = buildAppRouter();
-    const paths = [AppRoutes.splash, AppRoutes.welcome, AppRoutes.login];
+    const paths = [
+      AppRoutes.splash,
+      AppRoutes.welcome,
+      AppRoutes.login,
+      AppRoutes.signup,
+    ];
 
     for (final path in paths) {
       final match = router.configuration.findMatch(Uri.parse(path));
@@ -45,9 +50,16 @@ void main() {
       ),
       AppRoutes.login,
     );
+    expect(
+      router.namedLocation(
+        AppRoutes.signupName,
+        pathParameters: const <String, String>{},
+      ),
+      AppRoutes.signup,
+    );
   });
 
-  testWidgets('welcome and login routes resolve without errors', (
+  testWidgets('welcome, login, and signup routes resolve without errors', (
     WidgetTester tester,
   ) async {
     final router = buildAppRouter();
@@ -67,7 +79,11 @@ void main() {
 
     router.go(AppRoutes.login);
     await tester.pumpAndSettle();
-    expect(find.text('Foundation ready'), findsOneWidget);
+    expect(find.text('Login'), findsOneWidget);
+
+    router.go(AppRoutes.signup);
+    await tester.pumpAndSettle();
+    expect(find.text('Open your account'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

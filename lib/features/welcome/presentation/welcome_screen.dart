@@ -4,17 +4,17 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/app_routes.dart';
 import '../../../../app/theme/tw_radii.dart';
 import '../../../../app/theme/tw_spacing.dart';
-import 'widgets/tradewise_brand_mark.dart';
+import '../../../../core/widgets/tradewise_brand_mark.dart';
+import '../../../../core/widgets/tradewise_disclaimer.dart';
 import 'widgets/welcome_action_row.dart';
-import 'widgets/welcome_disclaimer.dart';
 
 /// First real TradeWise feature screen.
 ///
 /// Mirrors the layout/hierarchy of `references/kite/welcome/` with
-/// TradeWise placeholder branding and copy. Only "Log in" navigates (to
-/// [AppRoutes.login]); "Try demo" and "Open a free account" stay visible but
-/// report a temporary "not available yet" notice rather than faking a
-/// product flow that does not exist yet.
+/// TradeWise placeholder branding and copy. "Log in" navigates to
+/// [AppRoutes.login] and "Open a free account" to [AppRoutes.signup]; "Try
+/// demo" stays visible but reports a temporary "not available yet" notice
+/// rather than faking a product flow that does not exist yet.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -116,10 +116,8 @@ class WelcomeScreen extends StatelessWidget {
                         WelcomeActionRow(
                           label: 'Open a free account',
                           icon: Icons.person_outline,
-                          semanticsLabel:
-                              'Open a free account, not available yet',
-                          onTap: () =>
-                              _showNotAvailableYet(context, 'Account opening'),
+                          semanticsLabel: 'Open a free account',
+                          onTap: () => context.go(AppRoutes.signup),
                         ),
                         const Divider(height: 1),
                         WelcomeActionRow(
@@ -132,7 +130,7 @@ class WelcomeScreen extends StatelessWidget {
                         // Fixed spacer: keeps the reference's airy gap while the
                         // surrounding scroll view protects shorter viewports.
                         const SizedBox(height: _actionsToFooter),
-                        const WelcomeDisclaimer(),
+                        const TradeWiseDisclaimer(),
                         const SizedBox(height: TWSpacing.xxl),
                       ],
                     ),

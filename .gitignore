@@ -53,4 +53,5 @@ app.*.map.json
 ai/
 docs/
 references/
+validation/
 skills-lock.json

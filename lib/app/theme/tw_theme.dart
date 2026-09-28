@@ -83,6 +83,9 @@ abstract final class TWTheme {
           textStyle: textTheme.labelLarge,
         ),
       ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(TWRadii.medium),

@@ -5,8 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tradewise/app/theme/tw_theme.dart';
+import 'package:tradewise/core/widgets/tradewise_brand_mark.dart';
 import 'package:tradewise/features/welcome/presentation/welcome_screen.dart';
-import 'package:tradewise/features/welcome/presentation/widgets/tradewise_brand_mark.dart';
 
 /// Pumps [WelcomeScreen] inside the real app theme + router harness.
 Future<void> pumpWelcomeScreen(
@@ -27,6 +27,11 @@ Future<void> pumpWelcomeScreen(
             path: '/login',
             builder: (context, state) =>
                 const Scaffold(body: Text('Login placeholder')),
+          ),
+          GoRoute(
+            path: '/signup',
+            builder: (context, state) =>
+                const Scaffold(body: Text('Signup placeholder')),
           ),
         ],
       );
@@ -90,10 +95,10 @@ void main() {
   ) async {
     await pumpWelcomeScreen(tester);
 
-    await tester.tap(find.text('Open a free account'));
+    await tester.tap(find.text('Try demo'));
     await tester.pump();
 
-    const notice = 'Account opening is not available yet';
+    const notice = 'Demo mode is not available yet';
     expect(find.text(notice), findsOneWidget);
 
     // Finish the entrance animation, let the notice auto-dismiss, then finish
@@ -102,6 +107,18 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
     expect(find.text(notice), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Open a free account navigates to /signup', (
+    WidgetTester tester,
+  ) async {
+    await pumpWelcomeScreen(tester);
+
+    await tester.tap(find.text('Open a free account'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Signup placeholder'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
