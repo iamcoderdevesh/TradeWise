@@ -100,6 +100,38 @@ abstract final class TWTheme {
           borderRadius: BorderRadius.circular(TWRadii.large),
         ),
       ),
+      // Main application shell bottom navigation. Colour-only active state
+      // (no Material 3 indicator pill) so the selected destination reads the
+      // same way as the TradeWise references: primary-tinted icon + label.
+      // TradeWise destination names and Material icons are its own; nothing
+      // is copied from the reference product's navigation.
+      navigationBarTheme: NavigationBarThemeData(
+        height: 72,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: Colors.transparent,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith((Set<WidgetState> states) {
+          return IconThemeData(
+            size: 24,
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : textTheme.labelMedium?.color,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((
+          Set<WidgetState> states,
+        ) {
+          final base = textTheme.labelMedium;
+          return states.contains(WidgetState.selected)
+              ? base?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                )
+              : base;
+        }),
+      ),
     );
   }
 }

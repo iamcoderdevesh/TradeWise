@@ -90,23 +90,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Unavailable actions report a temporary notice', (
+  testWidgets('Try demo navigates to the watchlist shell (temporary dev entry)', (
     WidgetTester tester,
   ) async {
-    await pumpWelcomeScreen(tester);
+    final testRouter = GoRouter(
+      initialLocation: '/welcome',
+      routes: [
+        GoRoute(
+          path: '/welcome',
+          builder: (context, state) => const WelcomeScreen(),
+        ),
+        GoRoute(
+          path: '/watchlist',
+          builder: (context, state) =>
+              const Scaffold(body: Text('Watchlist placeholder')),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) =>
+              const Scaffold(body: Text('Login placeholder')),
+        ),
+        GoRoute(
+          path: '/signup',
+          builder: (context, state) =>
+              const Scaffold(body: Text('Signup placeholder')),
+        ),
+      ],
+    );
+    await pumpWelcomeScreen(tester, router: testRouter);
 
     await tester.tap(find.text('Try demo'));
-    await tester.pump();
-
-    const notice = 'Demo mode is not available yet';
-    expect(find.text(notice), findsOneWidget);
-
-    // Finish the entrance animation, let the notice auto-dismiss, then finish
-    // the exit animation so no timers stay pending after the test.
-    await tester.pump(const Duration(milliseconds: 750));
-    await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.text(notice), findsNothing);
+
+    expect(find.text('Watchlist placeholder'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

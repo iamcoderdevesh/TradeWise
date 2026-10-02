@@ -30,10 +30,13 @@ abstract final class TWTypography {
         height: 1.3,
         color: textPrimary,
       ),
+      // Instrument-row symbol. Medium (not semibold) weight: the watchlist
+      // references use a restrained medium weight for symbols so the numeric
+      // values stay the visual focus (Phase 3 visual review).
       titleMedium: TextStyle(
         fontFamily: fontFamily,
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
         height: 1.4,
         color: textPrimary,
       ),
@@ -83,8 +86,8 @@ abstract final class TWTypography {
       ),
       titleSmall: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
         height: 1.35,
         fontFeatures: const [FontFeature.tabularFigures()],
         color: textPrimary,

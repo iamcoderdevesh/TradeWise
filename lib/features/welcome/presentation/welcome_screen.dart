@@ -13,8 +13,8 @@ import 'widgets/welcome_action_row.dart';
 /// Mirrors the layout/hierarchy of `references/kite/welcome/` with
 /// TradeWise placeholder branding and copy. "Log in" navigates to
 /// [AppRoutes.login] and "Open a free account" to [AppRoutes.signup]; "Try
-/// demo" stays visible but reports a temporary "not available yet" notice
-/// rather than faking a product flow that does not exist yet.
+/// demo" is a temporary UI-only development entry point into the shell
+/// ([AppRoutes.watchlist]) until real authentication exists.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -30,12 +30,6 @@ class WelcomeScreen extends StatelessWidget {
   static const double _headingToActions = TWSpacing.xxxxl + TWSpacing.xxl;
   static const double _actionsToFooter =
       TWSpacing.xxxxl + TWSpacing.xxxl + TWSpacing.m;
-
-  static void _showNotAvailableYet(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$feature is not available yet')));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,13 +58,15 @@ class WelcomeScreen extends StatelessWidget {
                         Align(
                           alignment: Alignment.centerRight,
                           child: OutlinedButton(
-                            onPressed: () =>
-                                _showNotAvailableYet(context, 'Demo mode'),
+                            onPressed: () => context.go(AppRoutes.watchlist),
                             // Compact outline CTA sized for the reference's
                             // header placement. The 42dp height, 18dp
                             // horizontal padding and 1.2dp hairline stroke are
                             // specific to this control, so they stay literals
                             // instead of becoming global tokens.
+                            // TEMPORARY (Phase 3): direct entry into the shell
+                            // for UI development/testing until real
+                            // authentication exists. Not a demo/auth flow.
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(0, 42),
                               padding: const EdgeInsets.symmetric(
