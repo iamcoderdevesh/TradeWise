@@ -6,16 +6,28 @@ import 'package:tradewise/app/app.dart';
 import 'package:tradewise/app/router/app_router.dart';
 import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/theme_mode_provider.dart';
+import 'package:tradewise/core/widgets/tradewise_brand_mark.dart';
+import 'package:tradewise/features/splash/presentation/splash_screen.dart';
 
 void main() {
-  testWidgets('app boots on the root route and renders Welcome', (
+  testWidgets('app boots on the splash route then navigates to Welcome', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const ProviderScope(child: TradeWiseApp()));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    // `/` renders WelcomeScreen until the Splash screen is implemented.
+    // `/` is the application entry route and renders the Splash screen, not
+    // Welcome.
+    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(find.byType(TradeWiseBrandMark), findsOneWidget);
+    expect(find.text('Welcome to\nTradeWise'), findsNothing);
+
+    // After the deterministic 1500 ms dwell the app navigates to Welcome.
+    await tester.pump(SplashScreen.dwell);
+    await tester.pumpAndSettle();
+    expect(find.byType(SplashScreen), findsNothing);
     expect(find.text('Welcome to\nTradeWise'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   test('router resolves foundation route paths', () {
@@ -69,9 +81,9 @@ void main() {
         child: const TradeWiseApp(),
       ),
     );
-    await tester.pumpAndSettle();
-    // `/` temporarily renders WelcomeScreen (see app_router.dart).
-    expect(find.text('Welcome to\nTradeWise'), findsOneWidget);
+    await tester.pump();
+    // `/` boots into the Splash screen (see app_router.dart).
+    expect(find.byType(SplashScreen), findsOneWidget);
 
     router.go(AppRoutes.welcome);
     await tester.pumpAndSettle();
@@ -98,10 +110,10 @@ void main() {
         child: const TradeWiseApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    // `/` temporarily renders WelcomeScreen (see app_router.dart).
-    expect(find.text('Welcome to\nTradeWise'), findsOneWidget);
+    // `/` boots into the Splash screen; the theme is dark.
+    expect(find.byType(SplashScreen), findsOneWidget);
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(materialApp.themeMode, ThemeMode.dark);
     expect(tester.takeException(), isNull);

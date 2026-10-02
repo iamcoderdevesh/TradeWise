@@ -4,18 +4,20 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
+import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/welcome/presentation/welcome_screen.dart';
 import 'app_routes.dart';
 
 /// Builds the application [GoRouter].
 ///
-/// `/welcome` resolves to the real [WelcomeScreen]. `/` renders
-/// [WelcomeScreen] too, so the app boots into the implemented screen while
-/// Splash does not exist yet. `/login` and `/signup` resolve to the implemented
-/// auth screens ([LoginScreen], [SignupScreen]).
+/// `/` is the application entry route and renders [SplashScreen], which after a
+/// deterministic 1500 ms dwell navigates to `/welcome`
+/// ([WelcomeScreen]). `/login` and `/signup` resolve to the implemented auth
+/// screens ([LoginScreen], [SignupScreen]).
 ///
 /// Extension point: a future auth redirect can be added via [redirect]
-/// without changing route declarations. Bottom navigation
+/// without changing route declarations (that is where a real session check
+/// will live later; today Splash always leads to Welcome). Bottom navigation
 /// (StatefulShellRoute) and trading routes are intentionally out of scope.
 GoRouter buildAppRouter() {
   return GoRouter(
@@ -27,10 +29,8 @@ GoRouter buildAppRouter() {
       GoRoute(
         path: AppRoutes.splash,
         name: AppRoutes.splashName,
-        // Temporary: Splash does not exist yet, so the boot route renders the
-        // implemented Welcome screen.
         builder: (BuildContext context, GoRouterState state) {
-          return const WelcomeScreen();
+          return const SplashScreen();
         },
       ),
       GoRoute(
