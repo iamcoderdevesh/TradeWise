@@ -22,6 +22,11 @@ abstract final class TWColors {
   static const Color lightWarning = Color(0xFFB45309);
   static const Color lightDivider = Color(0xFFE5E7EB);
 
+  /// Foreground (label) color on top of [lightNegative], e.g. the "Sell"
+  /// filled button label. White on the light-variant red is standard
+  /// (Material error-filled buttons use the same pairing).
+  static const Color lightOnNegative = Color(0xFFFFFFFF);
+
   /// Provisional primary. See class docs.
   static const Color lightPrimary = Color(0xFF2563EB);
   static const Color lightPrimaryVariant = Color(0xFF1D4ED8);
@@ -40,6 +45,11 @@ abstract final class TWColors {
   static const Color darkNeutral = Color(0xFF94A3B8);
   static const Color darkWarning = Color(0xFFFBBF24);
   static const Color darkDivider = Color(0xFF2A3342);
+
+  /// Foreground (label) color on top of [darkNegative], e.g. the "Sell"
+  /// filled button label. Near-black on the light-variant red keeps WCAG AA
+  /// contrast in the dark theme (white on that red would fail).
+  static const Color darkOnNegative = Color(0xFF0B0F14);
 
   /// Provisional primary (dark). See class docs.
   static const Color darkPrimary = Color(0xFF60A5FA);

@@ -57,11 +57,12 @@ void main() {
     expect(find.text('VEDL'), findsOneWidget);
   });
 
-  testWidgets('row tap shows temporary notice', (tester) async {
+  testWidgets('row tap opens the instrument bottom sheet', (tester) async {
     await pumpWatchlist(tester, instruments: kWatchlistPreviewSingle);
     await tester.tap(find.text('GOLDBEES'));
-    await tester.pump();
-    expect(find.byType(SnackBar), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('BUY'), findsOneWidget);
+    expect(find.text('SELL'), findsOneWidget);
   });
 
   testWidgets('holding metadata renders when present', (tester) async {

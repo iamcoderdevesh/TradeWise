@@ -151,3 +151,33 @@ const List<IndexQuote> kIndexStripPreview = <IndexQuote>[
     changePercent: 0.18,
   ),
 ];
+
+/// One bid/offer market-depth row's display data for the instrument bottom
+/// sheet.
+///
+/// UI preview only: a depth ladder is static placeholder data (ADR-005).
+/// Nothing is fetched, computed or subscribed to, and the values must never be
+/// presented as live market data.
+class MarketDepthRow {
+  const MarketDepthRow({
+    required this.price,
+    required this.orders,
+    required this.quantity,
+  });
+
+  final double price;
+  final int orders;
+  final int quantity;
+}
+
+/// 5-level bid/offer depth preview (`watchlist__bottomsheet__*`).
+///
+/// The reference's depth rows are all-zero placeholder values; TradeWise
+/// reproduces the visual ladder only, with clearly mock values.
+const List<MarketDepthRow> kInstrumentDepthPreview = <MarketDepthRow>[
+  MarketDepthRow(price: 0, orders: 0, quantity: 0),
+  MarketDepthRow(price: 0, orders: 0, quantity: 0),
+  MarketDepthRow(price: 0, orders: 0, quantity: 0),
+  MarketDepthRow(price: 0, orders: 0, quantity: 0),
+  MarketDepthRow(price: 0, orders: 0, quantity: 0),
+];

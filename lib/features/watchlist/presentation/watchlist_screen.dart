@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/index_strip.dart';
+import 'package:tradewise/features/watchlist/presentation/widgets/instrument_bottom_sheet.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_empty_state.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_instrument_tile.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_preview_data.dart';
@@ -70,7 +71,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                 child: const Text('+ New group'),
               ),
             ),
-            Expanded(child: _buildBody()),
+            Expanded(child: _buildBody(context)),
           ],
         ),
       ),
@@ -82,7 +83,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     if (widget.instruments.isEmpty) {
       return const SingleChildScrollView(
         padding: EdgeInsets.only(bottom: TWSpacing.xxl),
@@ -96,8 +97,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
         final WatchlistInstrument instrument = widget.instruments[index];
         return WatchlistInstrumentTile(
           instrument: instrument,
-          onTap: () =>
-              _notice('${instrument.symbol} details are not available yet'),
+          // Phase 3C: row tap opens the Instrument Bottom Sheet as a modal
+          // layer above the Watchlist (no navigation).
+          onTap: () => showInstrumentBottomSheet(context, instrument),
         );
       },
     );
