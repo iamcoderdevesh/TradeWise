@@ -41,9 +41,21 @@ Future<void> showInstrumentBottomSheet(
       maxChildSize: _sheetMaxSize,
       expand: false,
       builder: (BuildContext context, ScrollController scrollController) =>
-          InstrumentBottomSheet(
-            instrument: instrument,
-            scrollController: scrollController,
+          // Scoped messenger + local Scaffold so temporary notices surface
+          // *inside* the sheet. Without the inner Scaffold, the notice lands
+          // on the Watchlist Scaffold behind the modal barrier (invisible
+          // until the sheet is dismissed). Without the scoped messenger, the
+          // root messenger would fan the SnackBar out to every registered
+          // Scaffold (nested-Scaffold duplicate). Transparent so the modal's
+          // own surface + rounded top keep painting the sheet background.
+          ScaffoldMessenger(
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: InstrumentBottomSheet(
+                instrument: instrument,
+                scrollController: scrollController,
+              ),
+            ),
           ),
     ),
     backgroundColor: Theme.of(context).colorScheme.surface,
@@ -185,9 +197,6 @@ class _SheetHeader extends StatelessWidget {
           ? TWColors.darkTextPrimary
           : TWColors.lightTextPrimary;
     }
-    final Color secondaryColor = isDark
-        ? TWColors.darkTextSecondary
-        : TWColors.lightTextSecondary;
     final Color mutedColor = isDark
         ? TWColors.darkTextTertiary
         : TWColors.lightTextTertiary;
@@ -362,9 +371,15 @@ class _SecondaryActions extends StatelessWidget {
             ],
           ),
           const Divider(height: 10),
+          // The alert/notes/GTT row keeps the reference's single-line layout on
+          // normal widths: every link shares the width equally so the row can
+          // never exceed the viewport, and the labels shrink (ellipsis) rather
+          // than overflowing on narrow phones. `Flexible` (not `Expanded`)
+          // keeps each TextButton's 48dp minimum intact while letting the Row
+          // apportion space.
           Row(
             children: <Widget>[
-              Expanded(
+              Flexible(
                 child: _ActionLink(
                   icon: Icons.notifications_none,
                   label: 'Set alert',
@@ -372,17 +387,21 @@ class _SecondaryActions extends StatelessWidget {
                   onTap: () => onNotice('Set alert is not available yet'),
                 ),
               ),
-              _ActionLink(
-                icon: Icons.note_add,
-                label: 'Add notes',
-                color: actionColor,
-                onTap: () => onNotice('Add notes is not available yet'),
+              Flexible(
+                child: _ActionLink(
+                  icon: Icons.note_add,
+                  label: 'Add notes',
+                  color: actionColor,
+                  onTap: () => onNotice('Add notes is not available yet'),
+                ),
               ),
-              _ActionLink(
-                icon: Icons.timer,
-                label: 'Create GTT',
-                color: actionColor,
-                onTap: () => onNotice('Create GTT is not available yet'),
+              Flexible(
+                child: _ActionLink(
+                  icon: Icons.timer,
+                  label: 'Create GTT',
+                  color: actionColor,
+                  onTap: () => onNotice('Create GTT is not available yet'),
+                ),
               ),
             ],
           ),
@@ -475,25 +494,28 @@ class _MarketDepthSection extends StatelessWidget {
       fontWeight: FontWeight.w600,
     );
 
-    Widget headerCell(String label) => Expanded(
+    Widget headerCell(String label, TextAlign align) => Expanded(
       child: Text(
         label,
         style: headerStyle,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
+        textAlign: align,
       ),
     );
 
-    Widget valueCell(String value, Color color) => Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(right: TWSpacing.xs),
-        child: Text(
-          value,
-          style: numberStyle?.copyWith(color: color),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.right,
-        ),
+    // Each column keeps one alignment for headers, values and totals so the
+    // ladder lines up: price under Bid/Offer starts at the leading edge,
+    // Orders centres, Qty (and its total) ends at the trailing edge. A single
+    // shared right-aligned cell previously pushed bid/offer prices away from
+    // their headers.
+    Widget valueCell(String value, Color color, TextAlign align) => Expanded(
+      child: Text(
+        value,
+        style: numberStyle?.copyWith(color: color),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: align,
       ),
     );
 
@@ -507,52 +529,75 @@ class _MarketDepthSection extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          // Column headers: bid side, gap, offer side.
+          // Column headers: bid side, gap, offer side. Alignment matches the
+          // value cells below: price starts, Orders centres, Qty ends.
           Row(
             children: <Widget>[
-              headerCell('Bid'),
-              headerCell('Orders'),
-              headerCell('Qty'),
+              headerCell('Bid', TextAlign.start),
+              headerCell('Orders', TextAlign.center),
+              headerCell('Qty', TextAlign.end),
               const SizedBox(width: TWSpacing.s),
-              headerCell('Offer'),
-              headerCell('Orders'),
-              headerCell('Qty'),
+              headerCell('Offer', TextAlign.start),
+              headerCell('Orders', TextAlign.center),
+              headerCell('Qty', TextAlign.end),
             ],
           ),
           const SizedBox(height: TWSpacing.xs),
           for (final MarketDepthRow row in depth)
             Row(
               children: <Widget>[
-                valueCell(formatWatchlistPrice(row.price), bidColor),
-                valueCell('${row.orders}', numberColor),
-                valueCell('${row.quantity}', numberColor),
+                valueCell(
+                  formatWatchlistPrice(row.price),
+                  bidColor,
+                  TextAlign.start,
+                ),
+                valueCell('${row.orders}', numberColor, TextAlign.center),
+                valueCell('${row.quantity}', numberColor, TextAlign.end),
                 const SizedBox(width: TWSpacing.s),
-                valueCell(formatWatchlistPrice(row.price), offerColor),
-                valueCell('${row.orders}', numberColor),
-                valueCell('${row.quantity}', numberColor),
+                valueCell(
+                  formatWatchlistPrice(row.price),
+                  offerColor,
+                  TextAlign.start,
+                ),
+                valueCell('${row.orders}', numberColor, TextAlign.center),
+                valueCell('${row.quantity}', numberColor, TextAlign.end),
               ],
             ),
           Row(
             children: <Widget>[
-              Expanded(child: Text('Total', style: totalStyle, maxLines: 1)),
-              Expanded(child: const SizedBox()),
+              Expanded(
+                child: Text(
+                  'Total',
+                  style: totalStyle,
+                  maxLines: 1,
+                  textAlign: TextAlign.start,
+                ),
+              ),
+              const Expanded(child: SizedBox()),
               Expanded(
                 child: Text(
                   '$_totalQuantity',
                   style: totalStyle,
                   maxLines: 1,
-                  textAlign: TextAlign.right,
+                  textAlign: TextAlign.end,
                 ),
               ),
               const SizedBox(width: TWSpacing.s),
-              Expanded(child: Text('Total', style: totalStyle, maxLines: 1)),
-              Expanded(child: const SizedBox()),
+              Expanded(
+                child: Text(
+                  'Total',
+                  style: totalStyle,
+                  maxLines: 1,
+                  textAlign: TextAlign.start,
+                ),
+              ),
+              const Expanded(child: SizedBox()),
               Expanded(
                 child: Text(
                   '$_totalQuantity',
                   style: totalStyle,
                   maxLines: 1,
-                  textAlign: TextAlign.right,
+                  textAlign: TextAlign.end,
                 ),
               ),
             ],

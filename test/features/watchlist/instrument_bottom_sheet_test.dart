@@ -244,6 +244,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('temporary notice surfaces inside the open sheet', (
+    WidgetTester tester,
+  ) async {
+    await pumpWatchlist(tester);
+    await openSheet(tester, 'TMPV');
+
+    await tester.tap(find.text('BUY'));
+    await tester.pump();
+
+    // The notice must live in the sheet's own Scaffold (inside the
+    // DraggableScrollableSheet), not on the Watchlist Scaffold behind the
+    // modal barrier — otherwise it stays invisible until the sheet closes.
+    expect(
+      find.descendant(
+        of: find.byType(DraggableScrollableSheet),
+        matching: find.byType(SnackBar),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Buy is not available yet'), findsOneWidget);
+    // The sheet stays open with its actions available.
+    expect(find.text('BUY'), findsOneWidget);
+    expect(find.text('SELL'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('market-depth columns share one alignment per column', (
+    WidgetTester tester,
+  ) async {
+    await pumpWatchlist(tester);
+    await openSheet(tester, 'TMPV');
+
+    TextAlign alignOf(String label) =>
+        tester.widget<Text>(find.text(label).first).textAlign ??
+        TextAlign.start;
+
+    // Headers: price starts, Orders centres, Qty ends on both sides.
+    expect(alignOf('Bid'), TextAlign.start);
+    expect(alignOf('Offer'), TextAlign.start);
+    expect(find.text('Orders'), findsNWidgets(2));
+    for (final Element e in find.text('Orders').evaluate()) {
+      expect((e.widget as Text).textAlign, TextAlign.center);
+    }
+    for (final Element e in find.text('Qty').evaluate()) {
+      expect((e.widget as Text).textAlign, TextAlign.end);
+    }
+
+    // All ten bid/offer price cells ('0.00') line up under Bid/Offer.
+    expect(find.text('0.00'), findsNWidgets(10));
+    for (final Element e in find.text('0.00').evaluate()) {
+      expect((e.widget as Text).textAlign, TextAlign.start);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('header stays pinned while the body scrolls', (
     WidgetTester tester,
   ) async {
