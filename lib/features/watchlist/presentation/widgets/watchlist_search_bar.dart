@@ -34,7 +34,10 @@ class WatchlistSearchBar extends StatelessWidget {
         : TWColors.lightTextTertiary;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TWSpacing.l, vertical: TWSpacing.l),
+      padding: const EdgeInsets.symmetric(
+        horizontal: TWSpacing.l,
+        vertical: TWSpacing.l,
+      ),
       child: Card(
         margin: EdgeInsets.zero,
         elevation: 2,

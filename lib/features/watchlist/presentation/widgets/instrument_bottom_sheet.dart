@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/features/order/presentation/order_enums.dart';
+import 'package:tradewise/features/order/presentation/order_launch_args.dart';
 import 'package:tradewise/features/watchlist/presentation/watchlist_number_format.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_preview_data.dart';
 
@@ -137,7 +141,10 @@ class _InstrumentBottomSheetState extends State<InstrumentBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     const SizedBox(height: TWSpacing.l),
-                    _TradeActions(onNotice: (String m) => _notice(context, m)),
+                    _TradeActions(
+                      instrument: widget.instrument,
+                      onNotice: (String m) => _notice(context, m),
+                    ),
                     const SizedBox(height: TWSpacing.l),
                     const Divider(height: 1),
                     const SizedBox(height: TWSpacing.l),
@@ -275,12 +282,22 @@ class _SheetHeader extends StatelessWidget {
 ///
 /// BUY uses the theme primary; SELL uses the semantic negative colour paired
 /// with the new [TWColors.lightOnNegative]/[TWColors.darkOnNegative] so the
-/// label stays readable in both themes. No order is placed: taps report the
-/// project's temporary notice (ADR-010).
+/// label stays readable in both themes. Taps open the order ticket for this
+/// instrument with the tapped side (the sheet's own context is dismissed
+/// first so the ticket pushes from the Watchlist route).
 class _TradeActions extends StatelessWidget {
-  const _TradeActions({required this.onNotice});
+  const _TradeActions({required this.instrument, required this.onNotice});
 
+  final WatchlistInstrument instrument;
   final ValueChanged<String> onNotice;
+
+  void _openOrder(BuildContext context, OrderSide side) {
+    Navigator.of(context).pop();
+    GoRouter.of(context).push(
+      AppRoutes.order,
+      extra: OrderLaunchArgs(instrument: instrument, side: side),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -300,7 +317,7 @@ class _TradeActions extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: FilledButton(
-              onPressed: () => onNotice('Buy is not available yet'),
+              onPressed: () => _openOrder(context, OrderSide.buy),
               style: tradeButtonStyle,
               child: const Text('BUY'),
             ),
@@ -308,7 +325,7 @@ class _TradeActions extends StatelessWidget {
           const SizedBox(width: TWSpacing.m),
           Expanded(
             child: FilledButton(
-              onPressed: () => onNotice('Sell is not available yet'),
+              onPressed: () => _openOrder(context, OrderSide.sell),
               style: FilledButton.styleFrom(
                 minimumSize: const Size(48, 52),
                 shape: RoundedRectangleBorder(

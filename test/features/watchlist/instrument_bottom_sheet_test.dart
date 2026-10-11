@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tradewise/app/router/app_router.dart';
+import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_theme.dart';
+import 'package:tradewise/features/order/presentation/order_placement_screen.dart';
 import 'package:tradewise/features/watchlist/presentation/watchlist_screen.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/instrument_bottom_sheet.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_preview_data.dart';
@@ -17,6 +21,27 @@ Future<void> pumpWatchlist(
       darkTheme: TWTheme.dark(),
       themeMode: themeMode,
       home: Scaffold(body: WatchlistScreen(instruments: instruments)),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// Pumps the Watchlist through the real router so BUY/SELL can push the
+/// order ticket (`pumpWatchlist` has no router for navigation assertions).
+Future<void> pumpWatchlistRouted(
+  WidgetTester tester, {
+  ThemeMode themeMode = ThemeMode.light,
+}) async {
+  final router = buildAppRouter(initialLocation: AppRoutes.watchlist);
+  addTearDown(router.dispose);
+  await tester.pumpWidget(
+    ProviderScope(
+      child: MaterialApp.router(
+        theme: TWTheme.light(),
+        darkTheme: TWTheme.dark(),
+        themeMode: themeMode,
+        routerConfig: router,
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -71,25 +96,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('BUY reports a temporary notice', (WidgetTester tester) async {
-    await pumpWatchlist(tester);
+  testWidgets('BUY navigates to the buy order ticket', (
+    WidgetTester tester,
+  ) async {
+    await pumpWatchlistRouted(tester);
     await openSheet(tester, 'TMPV');
 
     await tester.tap(find.text('BUY'));
-    await tester.pump();
-    expect(find.byType(SnackBar), findsOneWidget);
-    expect(find.textContaining('Buy is not available yet'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OrderPlacementScreen), findsOneWidget);
+    expect(find.text('TMPV'), findsOneWidget);
+    expect(find.text('SWIPE TO BUY'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('SELL reports a temporary notice', (WidgetTester tester) async {
-    await pumpWatchlist(tester);
+  testWidgets('SELL navigates to the sell order ticket', (
+    WidgetTester tester,
+  ) async {
+    await pumpWatchlistRouted(tester);
     await openSheet(tester, 'TMPV');
 
     await tester.tap(find.text('SELL'));
-    await tester.pump();
-    expect(find.byType(SnackBar), findsOneWidget);
-    expect(find.textContaining('Sell is not available yet'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OrderPlacementScreen), findsOneWidget);
+    expect(find.text('TMPV'), findsOneWidget);
+    expect(find.text('SWIPE TO SELL'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -250,7 +283,7 @@ void main() {
     await pumpWatchlist(tester);
     await openSheet(tester, 'TMPV');
 
-    await tester.tap(find.text('BUY'));
+    await tester.tap(find.text('View chart'));
     await tester.pump();
 
     // The notice must live in the sheet's own Scaffold (inside the
@@ -263,7 +296,10 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.textContaining('Buy is not available yet'), findsOneWidget);
+    expect(
+      find.textContaining('View chart is not available yet'),
+      findsOneWidget,
+    );
     // The sheet stays open with its actions available.
     expect(find.text('BUY'), findsOneWidget);
     expect(find.text('SELL'), findsOneWidget);

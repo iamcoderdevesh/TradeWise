@@ -134,7 +134,6 @@ class _ExchangeLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     if (instrument.holdingQuantity == null) {
       return Text(
         instrument.exchange,

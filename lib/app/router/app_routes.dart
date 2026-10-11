@@ -13,6 +13,10 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String signup = '/signup';
 
+  // Order placement ticket. A top-level route (outside the shell) so it
+  // pushes full-screen over the Watchlist with a standard back affordance.
+  static const String order = '/order';
+
   // Main application shell destinations.
   static const String home = '/home';
   static const String watchlist = '/watchlist';
@@ -24,6 +28,8 @@ abstract final class AppRoutes {
   static const String welcomeName = 'welcome';
   static const String loginName = 'login';
   static const String signupName = 'signup';
+
+  static const String orderName = 'order';
 
   static const String homeName = 'home';
   static const String watchlistName = 'watchlist';

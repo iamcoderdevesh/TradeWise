@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
+import '../../features/order/presentation/order_launch_args.dart';
+import '../../features/order/presentation/order_placement_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/watchlist/presentation/watchlist_screen.dart';
 import '../../features/welcome/presentation/welcome_screen.dart';
@@ -55,6 +57,21 @@ GoRouter buildAppRouter({String initialLocation = AppRoutes.splash}) {
         name: AppRoutes.signupName,
         builder: (BuildContext context, GoRouterState state) {
           return const SignupScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.order,
+        name: AppRoutes.orderName,
+        builder: (BuildContext context, GoRouterState state) {
+          final Object? extra = state.extra;
+          // A deep link or malformed push can reach `/order` with no usable
+          // arguments. Rather than crashing, fall back to the Watchlist so a
+          // reachable order ticket is never rendered with a missing or wrong
+          // instrument/side.
+          if (extra is! OrderLaunchArgs) {
+            return const WatchlistScreen();
+          }
+          return OrderPlacementScreen(args: extra);
         },
       ),
       // Main application shell. Splash, Welcome, Login and Signup stay outside

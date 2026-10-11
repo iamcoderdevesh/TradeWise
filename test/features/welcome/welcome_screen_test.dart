@@ -90,41 +90,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Try demo navigates to the watchlist shell (temporary dev entry)', (
-    WidgetTester tester,
-  ) async {
-    final testRouter = GoRouter(
-      initialLocation: '/welcome',
-      routes: [
-        GoRoute(
-          path: '/welcome',
-          builder: (context, state) => const WelcomeScreen(),
-        ),
-        GoRoute(
-          path: '/watchlist',
-          builder: (context, state) =>
-              const Scaffold(body: Text('Watchlist placeholder')),
-        ),
-        GoRoute(
-          path: '/login',
-          builder: (context, state) =>
-              const Scaffold(body: Text('Login placeholder')),
-        ),
-        GoRoute(
-          path: '/signup',
-          builder: (context, state) =>
-              const Scaffold(body: Text('Signup placeholder')),
-        ),
-      ],
-    );
-    await pumpWelcomeScreen(tester, router: testRouter);
+  testWidgets(
+    'Try demo navigates to the watchlist shell (temporary dev entry)',
+    (WidgetTester tester) async {
+      final testRouter = GoRouter(
+        initialLocation: '/welcome',
+        routes: [
+          GoRoute(
+            path: '/welcome',
+            builder: (context, state) => const WelcomeScreen(),
+          ),
+          GoRoute(
+            path: '/watchlist',
+            builder: (context, state) =>
+                const Scaffold(body: Text('Watchlist placeholder')),
+          ),
+          GoRoute(
+            path: '/login',
+            builder: (context, state) =>
+                const Scaffold(body: Text('Login placeholder')),
+          ),
+          GoRoute(
+            path: '/signup',
+            builder: (context, state) =>
+                const Scaffold(body: Text('Signup placeholder')),
+          ),
+        ],
+      );
+      await pumpWelcomeScreen(tester, router: testRouter);
 
-    await tester.tap(find.text('Try demo'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Try demo'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Watchlist placeholder'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('Watchlist placeholder'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('Open a free account navigates to /signup', (
     WidgetTester tester,
