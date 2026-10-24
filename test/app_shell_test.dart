@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tradewise/app/router/app_router.dart';
 import 'package:tradewise/app/theme/tw_theme.dart';
+import 'package:tradewise/features/portfolio/presentation/portfolio_screen.dart';
 
 Future<void> pumpShell(
   WidgetTester tester, {
@@ -47,7 +48,9 @@ void main() {
     expect(find.text('Temporary placeholder'), findsOneWidget);
     await tester.tap(find.text('Portfolio'));
     await tester.pumpAndSettle();
-    expect(find.text('Temporary placeholder'), findsOneWidget);
+    // Portfolio is a real screen now; the Orders placeholder is gone.
+    expect(find.byType(PortfolioScreen), findsOneWidget);
+    expect(find.text('Temporary placeholder'), findsNothing);
   });
 
   testWidgets('direct route selects correct tab', (tester) async {
@@ -55,6 +58,15 @@ void main() {
     expect(find.text('Orders'), findsWidgets);
     final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
     expect(bar.selectedIndex, 2);
+  });
+
+  testWidgets('direct portfolio route selects the Portfolio tab', (
+    tester,
+  ) async {
+    await pumpShell(tester, initialLocation: '/portfolio');
+    expect(find.byType(PortfolioScreen), findsOneWidget);
+    final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(bar.selectedIndex, 3);
   });
 
   testWidgets('shell renders in dark theme without overflow', (tester) async {

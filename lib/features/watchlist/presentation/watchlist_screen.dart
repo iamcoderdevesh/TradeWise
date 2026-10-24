@@ -76,6 +76,10 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        // Unique tag: this FAB shares the shell route subtree with the
+        // Portfolio FAB, so the default tag would collide once both
+        // branches are built (see portfolio_screen.dart).
+        heroTag: 'watchlist-charts-fab',
         onPressed: () => _notice('Charts are not available yet'),
         tooltip: 'Charts',
         child: const Icon(Icons.show_chart),

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/features/portfolio/presentation/portfolio_providers.dart';
 import 'package:tradewise/features/watchlist/presentation/watchlist_number_format.dart';
 
 import 'order_enums.dart';
@@ -13,7 +17,7 @@ import 'widgets/order_quantity_section.dart';
 import 'widgets/price_type_section.dart';
 import 'widgets/swipe_to_confirm.dart';
 
-/// Buy/Sell order ticket (UI-only).
+/// Buy/Sell order ticket (paper-trade simulation, Phase 5).
 ///
 /// One shared screen driven by [OrderLaunchArgs.side]: buy accents resolve to
 /// the theme primary, sell to the semantic negative pair. Market orders use
@@ -23,18 +27,24 @@ import 'widgets/swipe_to_confirm.dart';
 /// against the effective price with whole-share floor rounding (see
 /// `order_math.dart`).
 ///
-/// No order is submitted: completing the swipe surfaces the project's
-/// temporary notice (ADR-010), and no fees, margin or funds are computed.
-class OrderPlacementScreen extends StatefulWidget {
+/// Completing the swipe applies one simulated order to the shared
+/// [portfolioProvider] (no fees, margin or funds are computed):
+///  * BUY always fills and lands on the matching Portfolio tab — Longterm
+///    on Holdings, Intraday on Positions — which is also where the ticket
+///    navigates to;
+///  * SELL reduces or closes a matching open entry, and is rejected with a
+///    notice when the portfolio holds no (or not enough) quantity to sell.
+class OrderPlacementScreen extends ConsumerStatefulWidget {
   const OrderPlacementScreen({super.key, required this.args});
 
   final OrderLaunchArgs args;
 
   @override
-  State<OrderPlacementScreen> createState() => _OrderPlacementScreenState();
+  ConsumerState<OrderPlacementScreen> createState() =>
+      _OrderPlacementScreenState();
 }
 
-class _OrderPlacementScreenState extends State<OrderPlacementScreen> {
+class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   OrderType _orderType = OrderType.market;
   OrderInputMode _inputMode = OrderInputMode.quantity;
   OrderProduct _product = OrderProduct.longterm;
@@ -95,9 +105,8 @@ class _OrderPlacementScreenState extends State<OrderPlacementScreen> {
     return parseOrderQuantity(_quantityController.text) ?? 0;
   }
 
-  /// Whether the ticket holds a draft worth previewing. The swipe still only
-  /// reports the temporary notice (nothing is submitted in this phase); the
-  /// guard keeps the control honest against empty/zero input.
+  /// Whether the ticket holds a draft the simulation can apply. The guard
+  /// keeps the swipe control honest against empty/zero input.
   bool get _isValid {
     if (_quantity < 1) {
       return false;
@@ -191,13 +200,29 @@ class _OrderPlacementScreenState extends State<OrderPlacementScreen> {
   }
 
   void _onSwipeComplete() {
+    final PaperOrderResult result = ref
+        .read(portfolioProvider.notifier)
+        .applyOrder(
+          side: widget.args.side,
+          product: _product,
+          symbol: widget.args.instrument.symbol,
+          exchange: widget.args.instrument.exchange,
+          quantity: _quantity,
+          price: _effectivePrice ?? 0,
+          lastTradedPrice: _ltp,
+        );
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Paper order preview is not available yet'),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(result.message)));
+
+    // A filled BUY lands on the tab it filled (Longterm → Holdings,
+    // Intraday → Positions). SELL stays on the ticket so a rejected sell
+    // can be corrected; the notice above explains the outcome either way.
+    final bool isBuy = widget.args.side == OrderSide.buy;
+    if (result.filled && isBuy && GoRouter.maybeOf(context) != null) {
+      context.go(AppRoutes.portfolio);
+    }
   }
 
   @override

@@ -12,6 +12,9 @@ import 'package:tradewise/features/order/presentation/order_placement_screen.dar
 import 'package:tradewise/features/order/presentation/widgets/swipe_to_confirm.dart';
 import 'package:tradewise/features/order/presentation/widgets/order_quantity_section.dart';
 import 'package:tradewise/features/order/presentation/widgets/price_type_section.dart';
+import 'package:tradewise/features/portfolio/data/portfolio_entry.dart';
+import 'package:tradewise/features/portfolio/presentation/portfolio_providers.dart';
+import 'package:tradewise/features/portfolio/presentation/portfolio_screen.dart';
 import 'package:tradewise/features/watchlist/presentation/watchlist_screen.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_preview_data.dart';
 
@@ -23,16 +26,29 @@ const WatchlistInstrument _instrument = WatchlistInstrument(
   changePercent: -1.28,
 );
 
+/// An instrument with no seeded portfolio row, for sell-rejection paths.
+const WatchlistInstrument _unheldInstrument = WatchlistInstrument(
+  symbol: 'TAPARIA',
+  exchange: 'BSE',
+  price: 15.46,
+  change: 0,
+  changePercent: 0,
+);
+
 /// Pumps the real router at the order ticket with typed launch arguments.
-Future<void> pumpOrder(
+Future<ProviderContainer> pumpOrder(
   WidgetTester tester, {
   OrderSide side = OrderSide.buy,
   ThemeMode themeMode = ThemeMode.light,
+  WatchlistInstrument instrument = _instrument,
 }) async {
   final router = buildAppRouter(initialLocation: AppRoutes.watchlist);
   addTearDown(router.dispose);
+  final container = ProviderContainer();
+  addTearDown(container.dispose);
   await tester.pumpWidget(
-    ProviderScope(
+    UncontrolledProviderScope(
+      container: container,
       child: MaterialApp.router(
         theme: TWTheme.light(),
         darkTheme: TWTheme.dark(),
@@ -44,29 +60,49 @@ Future<void> pumpOrder(
   await tester.pumpAndSettle();
   router.push(
     AppRoutes.order,
-    extra: OrderLaunchArgs(instrument: _instrument, side: side),
+    extra: OrderLaunchArgs(instrument: instrument, side: side),
   );
   await tester.pumpAndSettle();
+  return container;
 }
 
 /// Pumps the order screen directly (no router) for focused state tests.
-Future<void> pumpOrderDirect(
+Future<ProviderContainer> pumpOrderDirect(
   WidgetTester tester, {
   OrderSide side = OrderSide.buy,
   ThemeMode themeMode = ThemeMode.light,
+  WatchlistInstrument instrument = _instrument,
 }) async {
+  final container = ProviderContainer();
+  addTearDown(container.dispose);
   await tester.pumpWidget(
-    MaterialApp(
-      theme: TWTheme.light(),
-      darkTheme: TWTheme.dark(),
-      themeMode: themeMode,
-      home: Scaffold(
-        body: OrderPlacementScreen(
-          args: OrderLaunchArgs(instrument: _instrument, side: side),
+    UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        theme: TWTheme.light(),
+        darkTheme: TWTheme.dark(),
+        themeMode: themeMode,
+        home: Scaffold(
+          body: OrderPlacementScreen(
+            args: OrderLaunchArgs(instrument: instrument, side: side),
+          ),
         ),
       ),
     ),
   );
+  await tester.pumpAndSettle();
+  return container;
+}
+
+/// Completes the swipe and lets the spring-back + SnackBar settle.
+Future<void> fullSwipe(WidgetTester tester) async {
+  final Finder swipe = find.byType(SwipeToConfirm);
+  // Drag the full track width so the gesture always clears the 80%
+  // completion threshold regardless of the test viewport size.
+  final double width = tester.getSize(swipe).width;
+  await tester.drag(swipe, Offset(width, 0));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
   await tester.pumpAndSettle();
 }
 
@@ -604,7 +640,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tap on the swipe control never previews', (
+  testWidgets('tap on the swipe control never fills', (
     WidgetTester tester,
   ) async {
     await pumpOrderDirect(tester);
@@ -616,10 +652,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('full swipe previews once and springs back', (
+  testWidgets('full swipe fills a paper BUY once and springs back', (
     WidgetTester tester,
   ) async {
-    await pumpOrderDirect(tester);
+    final ProviderContainer container = await pumpOrderDirect(tester);
 
     final Finder swipe = find.byType(SwipeToConfirm);
     // Drag the full track width so the gesture always clears the 80%
@@ -630,8 +666,16 @@ void main() {
 
     expect(find.byType(SnackBar), findsOneWidget);
     expect(
-      find.text('Paper order preview is not available yet'),
+      find.text('Paper order filled: 1 × IDFCFIRSTB added to Holdings'),
       findsOneWidget,
+    );
+    // The default longterm draft merged into the seeded holding.
+    final PortfolioState state = container.read(portfolioProvider);
+    expect(
+      state.holdings
+          .firstWhere((PortfolioEntry e) => e.symbol == 'IDFCFIRSTB')
+          .quantity,
+      11,
     );
     // Let the spring-back timer settle the thumb at rest, then let the
     // SnackBar time out so it cannot cover the track for the second drag.
@@ -641,16 +685,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(SnackBar), findsNothing);
 
-    // Reset: a second swipe previews again exactly once.
+    // Reset: a second swipe fills again exactly once (11 + 1).
     await tester.drag(swipe, Offset(width, 0));
     await tester.pump();
     expect(find.byType(SnackBar), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pumpAndSettle();
+    expect(
+      container
+          .read(portfolioProvider)
+          .holdings
+          .firstWhere((PortfolioEntry e) => e.symbol == 'IDFCFIRSTB')
+          .quantity,
+      12,
+    );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('short swipe does not preview', (WidgetTester tester) async {
+  testWidgets('short swipe does not fill', (WidgetTester tester) async {
     await pumpOrderDirect(tester);
 
     await tester.drag(find.byType(SwipeToConfirm), const Offset(20, 0));
@@ -663,7 +715,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('semantic activation previews without a drag', (
+  testWidgets('semantic activation fills without a drag', (
     WidgetTester tester,
   ) async {
     final SemanticsHandle handle = tester.ensureSemantics();
@@ -683,7 +735,7 @@ void main() {
 
       expect(find.byType(SnackBar), findsOneWidget);
       expect(
-        find.text('Paper order preview is not available yet'),
+        find.text('Paper order filled: 1 × IDFCFIRSTB added to Holdings'),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -814,5 +866,130 @@ void main() {
     expect(find.text('Avail.'), findsOneWidget);
     expect(find.text('SWIPE TO BUY'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  group('paper-trade portfolio integration', () {
+    testWidgets('BUY fill navigates to Portfolio Holdings tab', (
+      WidgetTester tester,
+    ) async {
+      final ProviderContainer container = await pumpOrder(tester);
+      await fullSwipe(tester);
+
+      // Filled BUY lands on Portfolio with the Holdings tab active.
+      expect(find.byType(PortfolioScreen), findsOneWidget);
+      expect(find.text('Holdings'), findsOneWidget);
+      expect(
+        container
+            .read(portfolioProvider)
+            .holdings
+            .firstWhere((PortfolioEntry e) => e.symbol == 'IDFCFIRSTB')
+            .quantity,
+        11,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('intraday BUY fill navigates to the Positions tab', (
+      WidgetTester tester,
+    ) async {
+      final ProviderContainer container = await pumpOrder(tester);
+
+      await tester.tap(find.text('Intraday'));
+      await tester.pumpAndSettle();
+      await fullSwipe(tester);
+
+      expect(find.byType(PortfolioScreen), findsOneWidget);
+      final PortfolioState state = container.read(portfolioProvider);
+      expect(state.selectedTab, PortfolioTab.positions);
+      // No seeded holding for IDFCFIRSTB under intraday; the BUY appended
+      // a new position entry.
+      expect(
+        state.positions
+            .firstWhere((PortfolioEntry e) => e.symbol == 'IDFCFIRSTB')
+            .quantity,
+        1,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('SELL fill reduces the holding in place', (
+      WidgetTester tester,
+    ) async {
+      final ProviderContainer container = await pumpOrderDirect(
+        tester,
+        side: OrderSide.sell,
+      );
+      await fullSwipe(tester);
+
+      // SELL stays on the order screen; only the portfolio state changes.
+      expect(find.byType(PortfolioScreen), findsNothing);
+      expect(
+        find.text('Paper order filled: sold 1 × IDFCFIRSTB'),
+        findsOneWidget,
+      );
+      final PortfolioEntry updated = container
+          .read(portfolioProvider)
+          .holdings
+          .firstWhere((PortfolioEntry e) => e.symbol == 'IDFCFIRSTB');
+      expect(updated.quantity, 9);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('SELL of an unheld symbol is rejected with a notice', (
+      WidgetTester tester,
+    ) async {
+      final ProviderContainer container = await pumpOrderDirect(
+        tester,
+        side: OrderSide.sell,
+        instrument: _unheldInstrument,
+      );
+      await fullSwipe(tester);
+
+      expect(
+        find.text('Sell order rejected: no holding for TAPARIA'),
+        findsOneWidget,
+      );
+      // State untouched.
+      expect(
+        container
+            .read(portfolioProvider)
+            .holdings
+            .any((PortfolioEntry e) => e.symbol == 'TAPARIA'),
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('SELL of the full holding closes the entry', (
+      WidgetTester tester,
+    ) async {
+      final ProviderContainer container = await pumpOrderDirect(
+        tester,
+        side: OrderSide.sell,
+      );
+
+      // Sell the whole seeded position: 10 @ avg 64.70, LTP 80.39.
+      final Finder quantityField = find.descendant(
+        of: find.byType(OrderQuantitySection),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(quantityField, '10');
+      await tester.pump();
+      await fullSwipe(tester);
+
+      expect(
+        find.text('Paper order filled: sold 10 × IDFCFIRSTB'),
+        findsOneWidget,
+      );
+      final PortfolioEntry updated = container
+          .read(portfolioProvider)
+          .holdings
+          .firstWhere((PortfolioEntry e) => e.symbol == 'IDFCFIRSTB');
+      expect(updated.quantity, 0);
+      expect(updated.isClosed, isTrue);
+      // (80.39 − 64.70) × 10 = 156.90 realised.
+      expect(updated.realizedPnl, closeTo(156.90, 0.0001));
+      expect(tester.takeException(), isNull);
+    });
   });
 }
