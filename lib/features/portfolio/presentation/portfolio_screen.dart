@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/features/portfolio/data/portfolio_entry.dart';
 import 'package:tradewise/features/portfolio/presentation/portfolio_providers.dart';
 import 'package:tradewise/features/portfolio/presentation/widgets/portfolio_entry_list.dart';
+import 'package:tradewise/features/portfolio/presentation/widgets/portfolio_instrument_bottom_sheet.dart';
 import 'package:tradewise/features/portfolio/presentation/widgets/portfolio_tabs.dart';
 import 'package:tradewise/features/portfolio/presentation/widgets/portfolio_toolbar.dart';
 import 'package:tradewise/features/portfolio/presentation/widgets/portfolio_total_pnl_card.dart';
@@ -205,18 +207,22 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
                           PortfolioEntryList(
                             state: state,
                             tab: PortfolioTab.holdings,
-                            onEntryTap: () => _showNotice(
-                              context,
-                              'Instrument details are not available yet',
-                            ),
+                            onEntryTap: (PortfolioEntry entry) =>
+                                _showInstrumentBottomSheet(
+                                  context,
+                                  entry,
+                                  PortfolioTab.holdings,
+                                ),
                           ),
                           PortfolioEntryList(
                             state: state,
                             tab: PortfolioTab.positions,
-                            onEntryTap: () => _showNotice(
-                              context,
-                              'Instrument details are not available yet',
-                            ),
+                            onEntryTap: (PortfolioEntry entry) =>
+                                _showInstrumentBottomSheet(
+                                  context,
+                                  entry,
+                                  PortfolioTab.positions,
+                                ),
                           ),
                         ],
                       ),
@@ -239,6 +245,20 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
         child: const Icon(Icons.trending_up),
       ),
     );
+  }
+
+  /// Opens the Portfolio instrument bottom sheet for [entry] on [tab].
+  ///
+  /// The sheet is a modal layer above the Portfolio; dismissing it returns to
+  /// the Portfolio exactly as it was. Tapping ADD or EXIT pushes the shared
+  /// Order Placement screen (BUY / SELL respectively) — portfolio state only
+  /// changes after a successful swipe confirmation on that screen.
+  void _showInstrumentBottomSheet(
+    BuildContext context,
+    PortfolioEntry entry,
+    PortfolioTab tab,
+  ) {
+    showPortfolioInstrumentBottomSheet(context, entry, tab);
   }
 
   void _showNotice(BuildContext context, String message) {

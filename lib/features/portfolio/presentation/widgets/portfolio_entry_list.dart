@@ -23,9 +23,10 @@ class PortfolioEntryList extends StatelessWidget {
   /// value lets a swipeable tab bar show each tab's content independently.
   final PortfolioTab? tab;
 
-  /// Row tap hook; when null the rows are non-interactive (details do not
-  /// exist yet in this phase).
-  final VoidCallback? onEntryTap;
+  /// Row tap hook; passes the tapped [PortfolioEntry] so the screen can open
+  /// the instrument bottom sheet for that instrument. When null the rows are
+  /// non-interactive (details do not exist yet in this phase).
+  final ValueChanged<PortfolioEntry>? onEntryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +59,7 @@ class PortfolioEntryList extends StatelessWidget {
           badgeLabel: activeTab == PortfolioTab.holdings
               ? 'HOLDING'
               : 'INTRADAY',
-          onTap: onEntryTap ?? () {},
+          onTap: () => onEntryTap?.call(entry),
         );
       },
     );

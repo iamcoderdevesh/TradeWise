@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:tradewise/app/router/app_routes.dart';
-import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
 import 'package:tradewise/features/order/presentation/order_enums.dart';
 import 'package:tradewise/features/order/presentation/order_launch_args.dart';
-import 'package:tradewise/features/watchlist/presentation/watchlist_number_format.dart';
+import 'package:tradewise/core/widgets/instrument_bottom_sheet_shared.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_preview_data.dart';
 
 /// Sheet snap geometry as fractions of the available (safe-area-aware) height.
@@ -17,9 +15,9 @@ import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_prev
 /// the user can drag down to 0.5 or expand up to 0.92 toward the top of the
 /// viewport. Values stay local: they describe this sheet's own drag range,
 /// not a reusable design-system dimension.
-const double _sheetInitialSize = 0.7;
+const double _sheetInitialSize = 0.75;
 const double _sheetMinSize = 0.5;
-const double _sheetMaxSize = 0.92;
+const double _sheetMaxSize = 0.8;
 
 /// Shows the [InstrumentBottomSheet] for [instrument] as a modal layer above
 /// the current screen (the Watchlist).
@@ -130,7 +128,13 @@ class _InstrumentBottomSheetState extends State<InstrumentBottomSheet> {
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _SheetHeader(instrument: widget.instrument),
+        InstrumentSheetHeader(
+          symbol: widget.instrument.symbol,
+          exchange: widget.instrument.exchange,
+          price: widget.instrument.price,
+          change: widget.instrument.change,
+          changePercent: widget.instrument.changePercent,
+        ),
         const Divider(height: 20),
         Expanded(
           child: CustomScrollView(
@@ -141,22 +145,34 @@ class _InstrumentBottomSheetState extends State<InstrumentBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     const SizedBox(height: TWSpacing.l),
-                    _TradeActions(
-                      instrument: widget.instrument,
-                      onNotice: (String m) => _notice(context, m),
+                    InstrumentSheetTradeActions(
+                      primaryLabel: 'BUY',
+                      negativeLabel: 'SELL',
+                      onPrimaryPressed: () =>
+                          _openOrder(context, OrderSide.buy),
+                      onNegativePressed: () =>
+                          _openOrder(context, OrderSide.sell),
                     ),
                     const SizedBox(height: TWSpacing.l),
                     const Divider(height: 1),
                     const SizedBox(height: TWSpacing.l),
-                    _SecondaryActions(
+                    InstrumentSheetSecondaryActions(
+                      onNotice: (String m) => _notice(context, m),
+                      showAddNotes: true,
+                    ),
+                    InstrumentSheetMarketDepth(
+                      depth: kInstrumentDepthPreview
+                          .map(
+                            (e) => InstrumentDepthRow(
+                              price: e.price,
+                              orders: e.orders,
+                              quantity: e.quantity,
+                            ),
+                          )
+                          .toList(),
                       onNotice: (String m) => _notice(context, m),
                     ),
-                    const SizedBox(height: TWSpacing.l),
-                    _MarketDepthSection(
-                      depth: widget.depth,
-                      onNotice: (String m) => _notice(context, m),
-                    ),
-                    _ShowDepthAction(
+                    InstrumentSheetShowDepth(
                       onNotice: (String m) => _notice(context, m),
                     ),
                     const SizedBox(height: TWSpacing.xxl),
@@ -178,474 +194,12 @@ class _InstrumentBottomSheetState extends State<InstrumentBottomSheet> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
   }
-}
-
-/// Instrument identity: symbol over `exchange  price  change (+/-%)`.
-///
-/// The price carries the semantic positive/negative colour (flat/zero uses
-/// primary text); the change pair stays tertiary muted, matching the Watchlist
-/// hierarchy. Numbers use tabular figures.
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.instrument});
-
-  final WatchlistInstrument instrument;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final textTheme = Theme.of(context).textTheme;
-    final Color priceColor;
-    if (instrument.change > 0) {
-      priceColor = isDark ? TWColors.darkPositive : TWColors.lightPositive;
-    } else if (instrument.change < 0) {
-      priceColor = isDark ? TWColors.darkNegative : TWColors.lightNegative;
-    } else {
-      priceColor = isDark
-          ? TWColors.darkTextPrimary
-          : TWColors.lightTextPrimary;
-    }
-    final Color mutedColor = isDark
-        ? TWColors.darkTextTertiary
-        : TWColors.lightTextTertiary;
-    final String changeText =
-        '${formatWatchlistSigned(instrument.change)} '
-        '(${formatWatchlistPercent(instrument.changePercent)})';
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        TWSpacing.l,
-        TWSpacing.l,
-        TWSpacing.l,
-        0,
-      ),
-      child: Semantics(
-        header: true,
-        label:
-            '${instrument.symbol}, ${instrument.exchange}, '
-            'price ${formatWatchlistPrice(instrument.price)}, '
-            'change $changeText',
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              instrument.symbol,
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: TWSpacing.xs),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  instrument.exchange,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: mutedColor,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  maxLines: 1,
-                ),
-                const SizedBox(width: TWSpacing.m),
-                Text(
-                  formatWatchlistPrice(instrument.price),
-                  style: textTheme.bodySmall?.copyWith(color: priceColor),
-                  maxLines: 1,
-                ),
-                const SizedBox(width: TWSpacing.m),
-                Flexible(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: TWSpacing.xs),
-                    child: Text(
-                      changeText,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: mutedColor,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Side-by-side BUY / SELL filled buttons.
-///
-/// BUY uses the theme primary; SELL uses the semantic negative colour paired
-/// with the new [TWColors.lightOnNegative]/[TWColors.darkOnNegative] so the
-/// label stays readable in both themes. Taps open the order ticket for this
-/// instrument with the tapped side (the sheet's own context is dismissed
-/// first so the ticket pushes from the Watchlist route).
-class _TradeActions extends StatelessWidget {
-  const _TradeActions({required this.instrument, required this.onNotice});
-
-  final WatchlistInstrument instrument;
-  final ValueChanged<String> onNotice;
 
   void _openOrder(BuildContext context, OrderSide side) {
     Navigator.of(context).pop();
     GoRouter.of(context).push(
       AppRoutes.order,
-      extra: OrderLaunchArgs(instrument: instrument, side: side),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final ButtonStyle tradeButtonStyle = FilledButton.styleFrom(
-      minimumSize: const Size(48, 52),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(TWRadii.medium),
-      ),
-      textStyle: Theme.of(context).textTheme.labelLarge,
-    );
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(TWSpacing.l, 0, TWSpacing.l, 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: FilledButton(
-              onPressed: () => _openOrder(context, OrderSide.buy),
-              style: tradeButtonStyle,
-              child: const Text('BUY'),
-            ),
-          ),
-          const SizedBox(width: TWSpacing.m),
-          Expanded(
-            child: FilledButton(
-              onPressed: () => _openOrder(context, OrderSide.sell),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(48, 52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TWRadii.medium),
-                ),
-                textStyle: Theme.of(context).textTheme.labelLarge,
-                backgroundColor: isDark
-                    ? TWColors.darkNegative
-                    : TWColors.lightNegative,
-                foregroundColor: isDark
-                    ? TWColors.darkOnNegative
-                    : TWColors.lightOnNegative,
-              ),
-              child: const Text('SELL'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Two rows of secondary actions: `View chart | Option chain` and the
-/// wrapping `Set alert | Add notes | Create GTT` set.
-///
-/// Visual hierarchy only (reference `watchlist__bottomsheet__*`); each tap
-/// reports the temporary notice instead of navigating or creating anything.
-/// TradeWise uses its own Material outline glyphs, not reference artwork.
-class _SecondaryActions extends StatelessWidget {
-  const _SecondaryActions({required this.onNotice});
-
-  final ValueChanged<String> onNotice;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color actionColor = Theme.of(context).colorScheme.primary;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(TWSpacing.s, 0, TWSpacing.s, 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _ActionLink(
-                  icon: Icons.bar_chart,
-                  label: 'View chart',
-                  color: actionColor,
-                  onTap: () => onNotice('View chart is not available yet'),
-                ),
-              ),
-              _ActionLink(
-                icon: Icons.toll,
-                label: 'Option chain',
-                color: actionColor,
-                onTap: () => onNotice('Option chain is not available yet'),
-              ),
-            ],
-          ),
-          const Divider(height: 10),
-          // The alert/notes/GTT row keeps the reference's single-line layout on
-          // normal widths: every link shares the width equally so the row can
-          // never exceed the viewport, and the labels shrink (ellipsis) rather
-          // than overflowing on narrow phones. `Flexible` (not `Expanded`)
-          // keeps each TextButton's 48dp minimum intact while letting the Row
-          // apportion space.
-          Row(
-            children: <Widget>[
-              Flexible(
-                child: _ActionLink(
-                  icon: Icons.notifications_none,
-                  label: 'Set alert',
-                  color: actionColor,
-                  onTap: () => onNotice('Set alert is not available yet'),
-                ),
-              ),
-              Flexible(
-                child: _ActionLink(
-                  icon: Icons.note_add,
-                  label: 'Add notes',
-                  color: actionColor,
-                  onTap: () => onNotice('Add notes is not available yet'),
-                ),
-              ),
-              Flexible(
-                child: _ActionLink(
-                  icon: Icons.timer,
-                  label: 'Create GTT',
-                  color: actionColor,
-                  onTap: () => onNotice('Create GTT is not available yet'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One secondary action: outlined icon + primary label with a 48dp target.
-class _ActionLink extends StatelessWidget {
-  const _ActionLink({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextStyle? style = Theme.of(context).textTheme.bodyMedium
-        ?.copyWith(color: color, fontWeight: FontWeight.w500);
-
-    // A real button (not Semantics + InkWell) so the label is exposed as a
-    // labelled button node in the semantics tree, exactly like BUY/SELL.
-    // `TextButton.icon` lays out icon+label in a Row, so the label is a
-    // plain (already shrink-wrapped) Text — no Flexible, which would write
-    // FlexParentData through the icon-button's non-Flex slot.
-    return TextButton.icon(
-      onPressed: onTap,
-      style: TextButton.styleFrom(
-        minimumSize: const Size(48, 48),
-        foregroundColor: color,
-        padding: const EdgeInsets.symmetric(
-          horizontal: TWSpacing.s,
-          vertical: TWSpacing.xs,
-        ),
-        alignment: Alignment.centerLeft,
-      ),
-      icon: Icon(icon, size: 18, color: color),
-      label: Text(
-        label,
-        style: style,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-}
-
-/// Static bid/offer market-depth ladder (preview only).
-///
-/// The column structure mirrors the reference's `Bid Orders Qty | Offer Orders
-/// Qty` grid: three equal columns per side with a small gap between the sides.
-/// Bid prices use the primary colour, offer prices the semantic negative, and
-/// every value comes from [MarketDepthRow] preview rows (ADR-005). No
-/// market-data source is involved.
-class _MarketDepthSection extends StatelessWidget {
-  const _MarketDepthSection({required this.depth, required this.onNotice});
-
-  final List<MarketDepthRow> depth;
-  final ValueChanged<String> onNotice;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final textTheme = Theme.of(context).textTheme;
-    final Color bidColor = Theme.of(context).colorScheme.primary;
-    final Color offerColor = isDark
-        ? TWColors.darkNegative
-        : TWColors.lightNegative;
-    final Color numberColor = isDark
-        ? TWColors.darkTextSecondary
-        : TWColors.lightTextSecondary;
-    final TextStyle? headerStyle = textTheme.bodySmall?.copyWith(
-      color: isDark ? TWColors.darkTextTertiary : TWColors.lightTextTertiary,
-      fontWeight: FontWeight.w500,
-    );
-    final TextStyle? numberStyle = textTheme.bodyMedium?.copyWith(
-      color: numberColor,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
-    final TextStyle? totalStyle = textTheme.bodyMedium?.copyWith(
-      color: numberColor,
-      fontWeight: FontWeight.w600,
-    );
-
-    Widget headerCell(String label, TextAlign align) => Expanded(
-      child: Text(
-        label,
-        style: headerStyle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: align,
-      ),
-    );
-
-    // Each column keeps one alignment for headers, values and totals so the
-    // ladder lines up: price under Bid/Offer starts at the leading edge,
-    // Orders centres, Qty (and its total) ends at the trailing edge. A single
-    // shared right-aligned cell previously pushed bid/offer prices away from
-    // their headers.
-    Widget valueCell(String value, Color color, TextAlign align) => Expanded(
-      child: Text(
-        value,
-        style: numberStyle?.copyWith(color: color),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: align,
-      ),
-    );
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        TWSpacing.l,
-        0,
-        TWSpacing.l,
-        TWSpacing.s,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          // Column headers: bid side, gap, offer side. Alignment matches the
-          // value cells below: price starts, Orders centres, Qty ends.
-          Row(
-            children: <Widget>[
-              headerCell('Bid', TextAlign.start),
-              headerCell('Orders', TextAlign.center),
-              headerCell('Qty', TextAlign.end),
-              const SizedBox(width: TWSpacing.s),
-              headerCell('Offer', TextAlign.start),
-              headerCell('Orders', TextAlign.center),
-              headerCell('Qty', TextAlign.end),
-            ],
-          ),
-          const SizedBox(height: TWSpacing.xs),
-          for (final MarketDepthRow row in depth)
-            Row(
-              children: <Widget>[
-                valueCell(
-                  formatWatchlistPrice(row.price),
-                  bidColor,
-                  TextAlign.start,
-                ),
-                valueCell('${row.orders}', numberColor, TextAlign.center),
-                valueCell('${row.quantity}', numberColor, TextAlign.end),
-                const SizedBox(width: TWSpacing.s),
-                valueCell(
-                  formatWatchlistPrice(row.price),
-                  offerColor,
-                  TextAlign.start,
-                ),
-                valueCell('${row.orders}', numberColor, TextAlign.center),
-                valueCell('${row.quantity}', numberColor, TextAlign.end),
-              ],
-            ),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Total',
-                  style: totalStyle,
-                  maxLines: 1,
-                  textAlign: TextAlign.start,
-                ),
-              ),
-              const Expanded(child: SizedBox()),
-              Expanded(
-                child: Text(
-                  '$_totalQuantity',
-                  style: totalStyle,
-                  maxLines: 1,
-                  textAlign: TextAlign.end,
-                ),
-              ),
-              const SizedBox(width: TWSpacing.s),
-              Expanded(
-                child: Text(
-                  'Total',
-                  style: totalStyle,
-                  maxLines: 1,
-                  textAlign: TextAlign.start,
-                ),
-              ),
-              const Expanded(child: SizedBox()),
-              Expanded(
-                child: Text(
-                  '$_totalQuantity',
-                  style: totalStyle,
-                  maxLines: 1,
-                  textAlign: TextAlign.end,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Sums the preview rows. Presentational arithmetic on mock values only —
-  /// not real market data.
-  int get _totalQuantity =>
-      depth.fold(0, (int sum, MarketDepthRow row) => sum + row.quantity);
-}
-
-/// Bottom-most "Show 20 depth" action.
-///
-/// Visual placement only; the expanded 20-level depth is a later phase, so the
-/// tap reports the temporary notice instead of opening anything.
-class _ShowDepthAction extends StatelessWidget {
-  const _ShowDepthAction({required this.onNotice});
-
-  final ValueChanged<String> onNotice;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: TextButton(
-        onPressed: () => onNotice('20-level market depth is not available yet'),
-        child: const Text('Show 20 depth'),
-      ),
+      extra: OrderLaunchArgs(instrument: widget.instrument, side: side),
     );
   }
 }

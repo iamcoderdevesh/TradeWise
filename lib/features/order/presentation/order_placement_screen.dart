@@ -47,7 +47,7 @@ class OrderPlacementScreen extends ConsumerStatefulWidget {
 class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   OrderType _orderType = OrderType.market;
   OrderInputMode _inputMode = OrderInputMode.quantity;
-  OrderProduct _product = OrderProduct.longterm;
+  late OrderProduct _product;
 
   late final TextEditingController _quantityController;
   late final TextEditingController _amountController;
@@ -57,8 +57,10 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   @override
   void initState() {
     super.initState();
-    _quantityController = TextEditingController(text: '1')
-      ..addListener(_onFormChanged);
+    _product = widget.args.initialProduct ?? OrderProduct.longterm;
+    _quantityController = TextEditingController(
+      text: widget.args.initialQuantity?.toString() ?? '1',
+    )..addListener(_onFormChanged);
     _amountController = TextEditingController()..addListener(_onFormChanged);
     _priceController = TextEditingController(
       text: _formatMoneyInput(widget.args.instrument.price),
