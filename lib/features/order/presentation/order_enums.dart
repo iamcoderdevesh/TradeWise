@@ -19,3 +19,19 @@ enum OrderInputMode { quantity, amount }
 
 /// Product selector. Local UI state only; carries no margin semantics.
 enum OrderProduct { intraday, longterm }
+
+/// Exchange product code for this product type, following the standard
+/// Indian trading convention: MIS for intraday (Margin Intraday Square-off)
+/// and CNC for longterm (Cash and Carry).
+///
+/// The UI displays this alongside the order type (e.g. "MIS MARKET").
+extension OrderProductExtension on OrderProduct {
+  String get productCode {
+    switch (this) {
+      case OrderProduct.intraday:
+        return 'MIS';
+      case OrderProduct.longterm:
+        return 'CNC';
+    }
+  }
+}

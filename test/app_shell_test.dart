@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tradewise/app/router/app_router.dart';
 import 'package:tradewise/app/theme/tw_theme.dart';
+import 'package:tradewise/features/orders/presentation/orders_screen.dart';
 import 'package:tradewise/features/portfolio/presentation/portfolio_screen.dart';
 
 Future<void> pumpShell(
@@ -45,7 +46,7 @@ void main() {
     await tester.tap(find.text('Orders'));
     await tester.pumpAndSettle();
     expect(find.text('Orders'), findsWidgets);
-    expect(find.text('Temporary placeholder'), findsOneWidget);
+    expect(find.byType(OrdersScreen), findsOneWidget);
     await tester.tap(find.text('Portfolio'));
     await tester.pumpAndSettle();
     // Portfolio is a real screen now; the Orders placeholder is gone.

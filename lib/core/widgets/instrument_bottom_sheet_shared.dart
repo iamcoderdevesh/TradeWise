@@ -299,18 +299,20 @@ class InstrumentSheetSecondaryActions extends StatelessWidget {
                   onTap: () => onNotice('View chart is not available yet'),
                 ),
               ),
-              InstrumentSheetActionLink(
-                icon: Icons.toll,
-                label: 'Option chain',
-                color: actionColor,
-                onTap: () => onNotice('Option chain is not available yet'),
+              Expanded(
+                child: InstrumentSheetActionLink(
+                  icon: Icons.toll,
+                  label: 'Option chain',
+                  color: actionColor,
+                  onTap: () => onNotice('Option chain is not available yet'),
+                ),
               ),
             ],
           ),
           const Divider(height: 10),
           Row(
             children: <Widget>[
-              Flexible(
+              Expanded(
                 child: InstrumentSheetActionLink(
                   icon: Icons.notifications_none,
                   label: 'Set alert',
@@ -319,7 +321,7 @@ class InstrumentSheetSecondaryActions extends StatelessWidget {
                 ),
               ),
               if (showAddNotes)
-                Flexible(
+                Expanded(
                   child: InstrumentSheetActionLink(
                     icon: Icons.note_add,
                     label: 'Add notes',
@@ -327,7 +329,7 @@ class InstrumentSheetSecondaryActions extends StatelessWidget {
                     onTap: () => onNotice('Add notes is not available yet'),
                   ),
                 ),
-              Flexible(
+              Expanded(
                 child: InstrumentSheetActionLink(
                   icon: Icons.timer,
                   label: 'Create GTT',
@@ -365,9 +367,15 @@ class InstrumentSheetActionLink extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+      child: TextButton(
+        onPressed: onTap,
+        style: TextButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          padding: EdgeInsets.zero,
+          tapTargetSize: MaterialTapTargetSize.padded,
+          alignment: Alignment.centerLeft,
+          backgroundColor: color.withValues(alpha: 0.08),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),
           child: Align(
@@ -378,11 +386,13 @@ class InstrumentSheetActionLink extends StatelessWidget {
                 children: <Widget>[
                   Icon(icon, size: 20, color: color),
                   const SizedBox(width: TWSpacing.m),
-                  Text(
-                    label,
-                    style: style,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: style,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

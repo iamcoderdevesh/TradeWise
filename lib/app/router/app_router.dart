@@ -6,6 +6,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/signup_screen.dart';
 import '../../features/order/presentation/order_launch_args.dart';
 import '../../features/order/presentation/order_placement_screen.dart';
+import '../../features/orders/presentation/orders_screen.dart';
 import '../../features/portfolio/presentation/portfolio_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/watchlist/presentation/watchlist_screen.dart';
@@ -101,7 +102,7 @@ GoRouter buildAppRouter({String initialLocation = AppRoutes.splash}) {
           _shellBranch(
             path: AppRoutes.orders,
             name: AppRoutes.ordersName,
-            child: const PlaceholderDestinationScreen(title: 'Orders'),
+            child: const OrdersScreen(),
           ),
           _shellBranch(
             path: AppRoutes.portfolio,

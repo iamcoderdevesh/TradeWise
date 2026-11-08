@@ -6,12 +6,16 @@ import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/features/orders/presentation/order_providers.dart';
 import 'package:tradewise/features/portfolio/presentation/portfolio_providers.dart';
 import 'package:tradewise/features/watchlist/presentation/watchlist_number_format.dart';
 
 import 'order_enums.dart';
 import 'order_launch_args.dart';
 import 'order_math.dart';
+
+import 'package:tradewise/features/orders/domain/order.dart';
+
 import 'widgets/order_product_selector.dart';
 import 'widgets/order_quantity_section.dart';
 import 'widgets/price_type_section.dart';
@@ -213,6 +217,32 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
           price: _effectivePrice ?? 0,
           lastTradedPrice: _ltp,
         );
+
+    // Record one genuine order-history entry per successful fill. Failed
+    // orders are never recorded here. The execution price used is the same
+    // authoritative price the portfolio simulation used (LTP for Market,
+    // entered price for Limit / Stop Loss), so the recorded price is never
+    // assumed to be the ticket's entered price for Market orders.
+    if (result.filled) {
+      ref
+          .read(orderHistoryProvider.notifier)
+          .addOrder(
+            Order(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              side: widget.args.side,
+              symbol: widget.args.instrument.symbol,
+              exchange: widget.args.instrument.exchange,
+              product: _product.name.toUpperCase(),
+              productCode: _product.productCode,
+              orderType: _orderType,
+              quantity: _quantity,
+              filledQuantity: _quantity,
+              price: _effectivePrice ?? 0,
+              executedAt: DateTime.now(),
+              status: OrderStatus.executed,
+            ),
+          );
+    }
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
