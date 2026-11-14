@@ -5,8 +5,8 @@ import '../../../app/router/app_routes.dart';
 import '../../../app/theme/tw_spacing.dart';
 import '../../../core/widgets/tradewise_disclaimer.dart';
 import '../../../core/widgets/tw_button.dart';
+import '../../../core/widgets/tw_input_field.dart';
 import 'widgets/auth_scaffold.dart';
-import 'widgets/auth_text_field.dart';
 
 /// Login screen — UI only.
 ///
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Text('Login', style: textTheme.displayLarge),
         ),
         const SizedBox(height: _titleToFirstField),
-        AuthTextField(
+        TwInputField(
           controller: _userIdController,
           label: 'Phone or User ID',
           textInputAction: TextInputAction.next,
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           suffixIcon: const ExcludeSemantics(child: Icon(Icons.person_outline)),
         ),
         const SizedBox(height: _fieldGap),
-        AuthTextField(
+        TwInputField(
           controller: _passwordController,
           label: 'Password',
           obscureText: _obscurePassword,

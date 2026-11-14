@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:tradewise/app/router/app_routes.dart';
 
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
@@ -94,7 +96,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ProfileMenuRow(
                   label: _menuItems[i].label,
                   icon: _menuItems[i].icon,
-                  onTap: () => _onMenuTap(_menuItems[i].label),
+                  onTap: () => _onMenuTap(_menuItems[i].label, context),
                 ),
                 if (i < _menuItems.length - 1) const Divider(height: 1),
               ],
@@ -105,7 +107,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _onMenuTap(String label) {
+  void _onMenuTap(String label, BuildContext context) {
     switch (label) {
       case 'Funds':
         _showNotice('Funds are not available yet');
@@ -123,7 +125,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _showNotice('Connected apps are not available yet');
         break;
       case 'Logout':
-        _showNotice('Logout are not available yet');
+        context.go(AppRoutes.login);
         break;
     }
   }

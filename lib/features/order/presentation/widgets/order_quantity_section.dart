@@ -7,6 +7,8 @@ import 'package:tradewise/features/order/presentation/order_enums.dart';
 
 import 'connected_field_box.dart';
 
+import 'package:tradewise/core/widgets/tw_input_field.dart';
+
 /// Quantity / Amount size input with the reference's single section label and
 /// connected swap segment.
 ///
@@ -73,8 +75,34 @@ class OrderQuantitySection extends StatelessWidget {
         const SizedBox(height: TWSpacing.m),
         ConnectedFieldBox(
           input: isAmount
-              ? _MoneyField(controller: amountController)
-              : _QuantityField(controller: quantityController),
+              ? TwInputField(
+                  embedded: true,
+                  controller: amountController,
+                  label: '',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*\.?\d{0,2}'),
+                    ),
+                  ],
+                  textInputAction: TextInputAction.next,
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w400),
+                )
+              : TwInputField(
+                  embedded: true,
+                  controller: quantityController,
+                  label: '',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  textInputAction: TextInputAction.next,
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w400),
+                ),
           segmentIcon: Icons.swap_horiz,
           segmentColor: segmentColor,
           segmentTooltip: isAmount
@@ -85,52 +113,6 @@ class OrderQuantitySection extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Whole-share quantity input: digits only, numeric keyboard.
-class _QuantityField extends StatelessWidget {
-  const _QuantityField({required this.controller});
-
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      inputFormatters: <TextInputFormatter>[
-        FilteringTextInputFormatter.digitsOnly,
-      ],
-      textInputAction: TextInputAction.next,
-      decoration: const InputDecoration(border: InputBorder.none),
-      style: Theme.of(context).textTheme.headlineSmall
-          ?.copyWith(fontWeight: FontWeight.w400),
-    );
-  }
-}
-
-/// Rupee amount input: decimal with at most two fraction digits, numeric
-/// keyboard with decimal support. No currency prefix — the section label and
-/// the estimate band provide the unit, as in the reference.
-class _MoneyField extends StatelessWidget {
-  const _MoneyField({required this.controller});
-
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: <TextInputFormatter>[
-        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-      ],
-      textInputAction: TextInputAction.next,
-      decoration: const InputDecoration(border: InputBorder.none),
-      style: Theme.of(context).textTheme.titleLarge
-          ?.copyWith(fontWeight: FontWeight.w400),
     );
   }
 }

@@ -374,7 +374,10 @@ class InstrumentSheetActionLink extends StatelessWidget {
           padding: EdgeInsets.zero,
           tapTargetSize: MaterialTapTargetSize.padded,
           alignment: Alignment.centerLeft,
-          backgroundColor: color.withValues(alpha: 0.08),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TWRadii.medium),
+          ),
+          // backgroundColor: color.withValues(alpha: 0.08),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),

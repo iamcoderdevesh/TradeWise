@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/tw_spacing.dart';
 
+import 'package:tradewise/core/widgets/tw_input_field.dart';
+
 /// Signup phone input: a fixed country-code segment, a hairline divider, and
 /// the number input, matching the reference's segmented phone field.
 ///
@@ -27,31 +29,29 @@ class AuthPhoneField extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return TextField(
+    return TwInputField(
       controller: controller,
+      label: label,
       // The reference opens a plain numeric keypad (digits plus separators).
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textInputAction: TextInputAction.done,
       onSubmitted: onSubmitted,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: TWSpacing.m),
-              child: Text(countryCode, style: textTheme.bodyLarge),
-            ),
-            Container(
-              width: 1,
-              height: _segmentHeight,
-              color: Theme.of(context).dividerColor,
-            ),
-          ],
-        ),
-        // The segment is content-sized, not an icon slot.
-        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+      prefixIcon: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: TWSpacing.m),
+            child: Text(countryCode, style: textTheme.bodyLarge),
+          ),
+          Container(
+            width: 1,
+            height: _segmentHeight,
+            color: Theme.of(context).dividerColor,
+          ),
+        ],
       ),
+      // The segment is content-sized, not an icon slot.
+      prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
     );
   }
 }
