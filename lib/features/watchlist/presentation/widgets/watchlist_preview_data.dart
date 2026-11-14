@@ -11,6 +11,8 @@
 /// widgets.
 library;
 
+import 'package:tradewise/core/models/index_quote.dart';
+
 /// One watchlist row's display data.
 ///
 /// Fields are limited to what the references and `docs/UI_SPECIFICATION.md`
@@ -115,24 +117,6 @@ const List<WatchlistInstrument> kWatchlistPreviewSingle = <WatchlistInstrument>[
     changePercent: -0.13,
   ),
 ];
-
-/// One market index's display data for [IndexStrip].
-///
-/// UI preview only: the strip is hard-coded display data, not live index data,
-/// and nothing here is fetched, subscribed to or computed.
-class IndexQuote {
-  const IndexQuote({
-    required this.name,
-    required this.value,
-    required this.change,
-    required this.changePercent,
-  });
-
-  final String name;
-  final double value;
-  final double change;
-  final double changePercent;
-}
 
 /// Index strip preview (`watchlist__with_data__*`): the reference shows two
 /// indices side by side, each with its uppercase name over a value and

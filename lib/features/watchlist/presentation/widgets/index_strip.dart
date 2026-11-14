@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/core/models/index_quote.dart';
 import 'package:tradewise/features/watchlist/presentation/watchlist_number_format.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_preview_data.dart';
 
