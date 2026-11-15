@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tradewise/app/router/app_router.dart';
+import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_theme.dart';
 import 'package:tradewise/features/profile/data/profile_preview_data.dart';
 import 'package:tradewise/features/profile/data/profile_repository.dart';
@@ -23,14 +24,16 @@ Future<ProviderContainer> pumpProfile(
     ],
   );
   addTearDown(container.dispose);
+  final router = buildAppRouter(initialLocation: AppRoutes.profile);
+  addTearDown(router.dispose);
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(
+      child: MaterialApp.router(
         theme: TWTheme.light(),
         darkTheme: TWTheme.dark(),
         themeMode: themeMode,
-        home: const ProfileScreen(),
+        routerConfig: router,
       ),
     ),
   );
@@ -53,7 +56,7 @@ void main() {
       expect(find.byType(ProfileMenuRow), findsNWidgets(6));
       expect(find.text('Funds'), findsOneWidget);
       expect(find.text('App Code'), findsOneWidget);
-      expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Profile'), findsAtLeastNWidgets(1));
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('Connected apps'), findsOneWidget);
       expect(find.text('Logout'), findsOneWidget);
@@ -71,7 +74,7 @@ void main() {
       expect(find.text('Account'), findsOneWidget);
       expect(find.text('Funds'), findsOneWidget);
       expect(find.text('App Code'), findsOneWidget);
-      expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Profile'), findsAtLeastNWidgets(1));
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('Connected apps'), findsOneWidget);
       expect(find.text('Logout'), findsOneWidget);
@@ -157,34 +160,74 @@ void main() {
 
       expect(find.byType(ProfileMenuRow), findsNWidgets(6));
       expect(find.byIcon(Icons.currency_rupee), findsOneWidget);
-      expect(find.text('Funds'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Text && widget.data == 'Funds',
+        ),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-      expect(find.text('App Code'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Text && widget.data == 'App Code',
+        ),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.person_outline), findsOneWidget);
-      expect(find.text('Profile'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is ProfileMenuRow && widget.label == 'Profile',
+        ),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.settings), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Text && widget.data == 'Settings',
+        ),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.corporate_fare), findsOneWidget);
-      expect(find.text('Connected apps'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Text && widget.data == 'Connected apps',
+        ),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.logout), findsOneWidget);
-      expect(find.text('Logout'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Text && widget.data == 'Logout',
+        ),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Funds row shows its notice', (tester) async {
+    testWidgets('Funds row navigates to the Funds screen', (tester) async {
       await pumpProfile(tester);
 
-      await tester.tap(find.text('Funds'));
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) => widget is ProfileMenuRow && widget.label == 'Funds',
+        ),
+      );
       await tester.pumpAndSettle();
 
-      expect(find.text('Funds are not available yet'), findsOneWidget);
+      // Funds navigates to the /fund route, which renders FundsScreen.
+      expect(find.text('Add Funds'), findsOneWidget);
+      expect(find.text('Available balance'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
     testWidgets('App Code row shows its notice', (tester) async {
       await pumpProfile(tester);
 
-      await tester.tap(find.text('App Code'));
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) => widget is ProfileMenuRow && widget.label == 'App Code',
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('App Code are not available yet'), findsOneWidget);
@@ -194,7 +237,11 @@ void main() {
     testWidgets('Profile row shows its notice', (tester) async {
       await pumpProfile(tester);
 
-      await tester.tap(find.text('Profile'));
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) => widget is ProfileMenuRow && widget.label == 'Profile',
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(
@@ -213,7 +260,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Settings'));
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) => widget is ProfileMenuRow && widget.label == 'Settings',
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Settings are not available yet'), findsOneWidget);
@@ -229,14 +280,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Connected apps'));
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is ProfileMenuRow && widget.label == 'Connected apps',
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Connected apps are not available yet'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Logout row shows its notice', (tester) async {
+    testWidgets('Logout row navigates to the Login screen', (tester) async {
       await pumpProfile(tester);
 
       await tester.drag(
@@ -245,10 +301,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Logout'));
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) => widget is ProfileMenuRow && widget.label == 'Logout',
+        ),
+      );
       await tester.pumpAndSettle();
 
-      expect(find.text('Logout are not available yet'), findsOneWidget);
+      // Logout navigates to /login route which renders the LoginScreen.
+      expect(find.text('Login'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

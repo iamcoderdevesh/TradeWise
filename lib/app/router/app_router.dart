@@ -9,6 +9,8 @@ import '../../features/order/presentation/order_placement_screen.dart';
 import '../../features/orders/presentation/orders_screen.dart';
 import '../../features/portfolio/presentation/portfolio_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/funds/presentation/funds_screen.dart';
+import '../../features/funds/presentation/add_funds_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/watchlist/presentation/watchlist_screen.dart';
 import '../../features/welcome/presentation/welcome_screen.dart';
@@ -75,6 +77,20 @@ GoRouter buildAppRouter({String initialLocation = AppRoutes.splash}) {
             return const WatchlistScreen();
           }
           return OrderPlacementScreen(args: extra);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.fund,
+        name: AppRoutes.fundName,
+        builder: (BuildContext context, GoRouterState state) {
+          return const FundsScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.addFund,
+        name: AppRoutes.addFundName,
+        builder: (BuildContext context, GoRouterState state) {
+          return const AddFundsScreen();
         },
       ),
       // Main application shell. Splash, Welcome, Login and Signup stay outside

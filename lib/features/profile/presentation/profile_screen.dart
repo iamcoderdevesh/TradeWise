@@ -110,7 +110,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _onMenuTap(String label, BuildContext context) {
     switch (label) {
       case 'Funds':
-        _showNotice('Funds are not available yet');
+        context.go(AppRoutes.fund);
         break;
       case 'App Code':
         _showNotice('App Code are not available yet');

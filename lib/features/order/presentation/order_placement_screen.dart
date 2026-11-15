@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,6 +6,7 @@ import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/features/funds/presentation/funds_providers.dart';
 import 'package:tradewise/features/orders/presentation/order_providers.dart';
 import 'package:tradewise/features/portfolio/presentation/portfolio_providers.dart';
 import 'package:tradewise/features/watchlist/presentation/watchlist_number_format.dart';
@@ -33,8 +34,8 @@ import 'widgets/swipe_to_confirm.dart';
 ///
 /// Completing the swipe applies one simulated order to the shared
 /// [portfolioProvider] (no fees, margin or funds are computed):
-///  * BUY always fills and lands on the matching Portfolio tab — Longterm
-///    on Holdings, Intraday on Positions — which is also where the ticket
+///  * BUY always fills and lands on the matching Portfolio tab â€” Longterm
+///    on Holdings, Intraday on Positions â€” which is also where the ticket
 ///    navigates to;
 ///  * SELL reduces or closes a matching open entry, and is rejected with a
 ///    notice when the portfolio holds no (or not enough) quantity to sell.
@@ -58,6 +59,8 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   late final TextEditingController _priceController;
   late final TextEditingController _stopLossController;
 
+  double _availableBalance = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +75,12 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
     _stopLossController = TextEditingController(
       text: _formatMoneyInput(widget.args.instrument.price),
     )..addListener(_onFormChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _availableBalance = ref.watch(fundsProvider).availableBalance;
   }
 
   @override
@@ -137,7 +146,7 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   }
 
   /// What the estimate is based on: the displayed LTP for Market, the entered
-  /// price for Limit / Stop Loss. Only local values — no fees, margin, funds.
+  /// price for Limit / Stop Loss. Only local values â€” no fees, margin, funds.
   String get _estimateBasis {
     switch (_orderType) {
       case OrderType.market:
@@ -168,7 +177,7 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   }
 
   /// Fills [controller] with the displayed LTP when its current text parses
-  /// to nothing usable — typed entries always win over the seed.
+  /// to nothing usable â€” typed entries always win over the seed.
   void _seedPrice(TextEditingController controller) {
     final double? current = parseOrderMoney(controller.text);
     if (current == null || current <= 0) {
@@ -248,8 +257,8 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(result.message)));
 
-    // A filled BUY lands on the tab it filled (Longterm → Holdings,
-    // Intraday → Positions). SELL stays on the ticket so a rejected sell
+    // A filled BUY lands on the tab it filled (Longterm â†’ Holdings,
+    // Intraday â†’ Positions). SELL stays on the ticket so a rejected sell
     // can be corrected; the notice above explains the outcome either way.
     final bool isBuy = widget.args.side == OrderSide.buy;
     if (result.filled && isBuy && GoRouter.maybeOf(context) != null) {
@@ -378,6 +387,7 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
               estimateBasis: _estimateBasis,
               accent: accent,
               color: bandColor,
+              availableBalance: _availableBalance,
             ),
             Padding(
               padding: const EdgeInsets.only(
@@ -399,7 +409,7 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   }
 }
 
-/// Read-only `● EXCHANGE ₹LTP` band flush under the app bar (reference:
+/// Read-only `â— EXCHANGE â‚¹LTP` band flush under the app bar (reference:
 /// a flat full-bleed strip with the selected exchange indicator).
 ///
 /// Single-exchange only: the instrument model carries one exchange and one
@@ -437,7 +447,7 @@ class _ExchangeStrip extends StatelessWidget {
           ),
           const SizedBox(width: TWSpacing.s),
           Text(
-            '₹${formatWatchlistPrice(price)}',
+            'â‚¹${formatWatchlistPrice(price)}',
             style: Theme.of(context).textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w400),
             maxLines: 1,
@@ -451,8 +461,8 @@ class _ExchangeStrip extends StatelessWidget {
 /// Full-width information band directly above the swipe control (reference:
 /// the footer band slot): the indicative estimate next to a static charges
 /// line and an available-balance preview, with a trailing refresh
-/// affordance. Every value is display-only — nothing is fetched, computed
-/// or submitted (ADR-005) — and the value row scales down rather than
+/// affordance. Every value is display-only â€” nothing is fetched, computed
+/// or submitted (ADR-005) â€” and the value row scales down rather than
 /// overflowing on narrow viewports.
 class _EstimateBand extends StatelessWidget {
   const _EstimateBand({
@@ -460,12 +470,14 @@ class _EstimateBand extends StatelessWidget {
     required this.estimateBasis,
     required this.accent,
     required this.color,
+    required this.availableBalance,
   });
 
   final double? estimate;
   final String estimateBasis;
   final Color accent;
   final Color color;
+  final double? availableBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -510,7 +522,7 @@ class _EstimateBand extends StatelessWidget {
                   ),
                   const SizedBox(width: TWSpacing.s),
                   Text(
-                    '₹${formatWatchlistPrice(estimate!)}',
+                    'â‚¹${formatWatchlistPrice(estimate!)}',
                     style: Theme.of(context).textTheme.bodyMedium
                         ?.copyWith(color: accent),
                     maxLines: 1,
@@ -519,7 +531,7 @@ class _EstimateBand extends StatelessWidget {
                   Text('+', style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(width: TWSpacing.s),
                   Text(
-                    '₹0.08',
+                    'â‚¹0.08',
                     style: Theme.of(context).textTheme.bodyMedium
                         ?.copyWith(color: accent),
                     maxLines: 1,
@@ -532,7 +544,7 @@ class _EstimateBand extends StatelessWidget {
                   ),
                   const SizedBox(width: TWSpacing.s),
                   Text(
-                    '₹1000.00',
+                    '₹${availableBalance?.toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.bodyMedium
                         ?.copyWith(color: accent),
                     maxLines: 1,

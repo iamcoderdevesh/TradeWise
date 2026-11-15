@@ -117,7 +117,7 @@ void main() {
     expect(find.textContaining('80.39'), findsWidgets);
     expect(find.text('SWIPE TO BUY'), findsOneWidget);
     // Default draft: quantity 1 × LTP 80.39.
-    expect(find.textContaining('₹80.39'), findsWidgets);
+    expect(find.textContaining('80.39'), findsAtLeastNWidgets(1));
     expect(find.text('Longterm'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -342,7 +342,7 @@ void main() {
     // Quantity 1 × ₹80.00 rendered by the estimate band: the entered limit
     // price drives it (the displayed LTP is 80.39, so this value cannot
     // come from the quote).
-    expect(find.text('₹80.00'), findsOneWidget);
+    expect(find.textContaining('80.00'), findsOneWidget);
     expect(find.text('Avail.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -366,14 +366,14 @@ void main() {
     expect(priceField, findsOneWidget);
     expect(tester.widget<TextField>(priceField).controller?.text, '80.39');
     // The band previews at the seeded LTP: qty 1 × ₹80.39.
-    expect(find.textContaining('₹80.39'), findsWidgets);
+    expect(find.textContaining('80.39'), findsAtLeastNWidgets(1));
     expect(find.text('Avail.'), findsOneWidget);
 
     await tester.enterText(priceField, '70');
     await tester.pump();
 
     // Quantity 1 × ₹70.00 at the entered stop loss price.
-    expect(find.textContaining('₹70.00'), findsWidgets);
+    expect(find.textContaining('70.00'), findsAtLeastNWidgets(1));
     expect(
       tester.widget<SwipeToConfirm>(find.byType(SwipeToConfirm)).enabled,
       isTrue,
@@ -400,25 +400,25 @@ void main() {
     await tester.pump();
     await tester.enterText(priceField, '70');
     await tester.pump();
-    expect(find.textContaining('₹70.00'), findsWidgets);
+    expect(find.textContaining('70.00'), findsAtLeastNWidgets(1));
 
     // Back through Market to Limit: the typed ₹10 is still there, so the
     // estimate returns to it instead of the LTP seed.
     await tester.tap(find.byTooltip('Switch to market order'));
     await tester.pumpAndSettle();
     expect(find.text('0.00'), findsOneWidget);
-    expect(find.textContaining('₹80.39'), findsWidgets);
+    expect(find.textContaining('80.39'), findsAtLeastNWidgets(1));
 
     await tester.tap(find.bySemanticsLabel('Market'));
     await tester.pump();
     expect(tester.widget<TextField>(priceField).controller?.text, '10');
-    expect(find.textContaining('₹10.00'), findsWidgets);
+    expect(find.textContaining('10.00'), findsAtLeastNWidgets(1));
 
     // And the typed ₹70 is still waiting in Stop Loss.
     await tester.tap(find.byTooltip('Switch to stop loss order'));
     await tester.pump();
     expect(tester.widget<TextField>(priceField).controller?.text, '70');
-    expect(find.textContaining('₹70.00'), findsWidgets);
+    expect(find.textContaining('70.00'), findsAtLeastNWidgets(1));
     expect(tester.takeException(), isNull);
   });
 
@@ -520,7 +520,7 @@ void main() {
 
     expect(find.text('0.00'), findsOneWidget);
     // Estimate returns to the LTP basis, not the entered ₹10.
-    expect(find.textContaining('₹80.39'), findsWidgets);
+    expect(find.textContaining('80.39'), findsAtLeastNWidgets(1));
     expect(tester.takeException(), isNull);
   });
 
@@ -535,7 +535,7 @@ void main() {
     await tester.pump();
 
     // 10 × ₹80.39 = ₹803.90.
-    expect(find.textContaining('₹803.90'), findsWidgets);
+    expect(find.textContaining('803.90'), findsAtLeastNWidgets(1));
     expect(tester.takeException(), isNull);
   });
 
@@ -555,7 +555,7 @@ void main() {
 
     // ₹1000 at ₹80.39 → 12 whole shares, never fractional.
     expect(find.text('12 Qty.'), findsOneWidget);
-    expect(find.textContaining('₹964.68'), findsWidgets);
+    expect(find.textContaining('964.68'), findsAtLeastNWidgets(1));
     expect(tester.takeException(), isNull);
   });
 

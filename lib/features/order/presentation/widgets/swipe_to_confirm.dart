@@ -23,11 +23,22 @@ class SwipeToConfirm extends StatefulWidget {
     required this.onAccent,
     required this.enabled,
     required this.onCompleted,
+    this.trackWidthFraction,
+    this.maxTrackWidth,
+    this.label,
   });
 
   final OrderSide side;
   final Color accent;
   final Color onAccent;
+
+  /// Optional label override. When null, the side-based label
+  /// ('SWIPE TO BUY' / 'SWIPE TO SELL') is used. When supplied (e.g.
+  /// 'Swipe to Add Funds'), it replaces the label text without changing
+  /// dimensions, animation, or completion behaviour.
+  final String? label;
+  final double? trackWidthFraction;
+  final double? maxTrackWidth;
 
   /// Guards empty/zero/invalid drafts; the control dims and ignores input.
   final bool enabled;
@@ -44,8 +55,8 @@ class SwipeToConfirm extends StatefulWidget {
   static const double horizontalInset = 4;
 
   /// Reference pill width ≈ 64% of the screen, capped for large widths.
-  static const double trackWidthFraction = 0.75;
-  static const double maxTrackWidth = 272;
+  // static const double trackWidthFraction = 0.75;
+  // static const double maxTrackWidth = 272;
 
   @override
   State<SwipeToConfirm> createState() => _SwipeToConfirmState();
@@ -58,8 +69,11 @@ class _SwipeToConfirmState extends State<SwipeToConfirm>
   double _dragFraction = 0;
   bool _completed = false;
 
+  double get _trackWidthFraction => widget.trackWidthFraction ?? 0.75;
+  double get _maxTrackWidth => widget.maxTrackWidth ?? 272;
   String get _label =>
-      widget.side == OrderSide.buy ? 'SWIPE TO BUY' : 'SWIPE TO SELL';
+      widget.label ??
+      (widget.side == OrderSide.buy ? 'SWIPE TO BUY' : 'SWIPE TO SELL');
 
   @override
   void initState() {
@@ -142,8 +156,10 @@ class _SwipeToConfirmState extends State<SwipeToConfirm>
           builder: (BuildContext context, BoxConstraints constraints) {
             // Reference pill ≈ 64% of the screen width, centered.
             final double trackWidth =
-                (constraints.maxWidth * SwipeToConfirm.trackWidthFraction)
-                    .clamp(0.0, SwipeToConfirm.maxTrackWidth);
+                (constraints.maxWidth * _trackWidthFraction).clamp(
+                  0.0,
+                  _maxTrackWidth,
+                );
             final double travel = _maxTravel(trackWidth).clamp(0, trackWidth);
             final double thumbX =
                 SwipeToConfirm.horizontalInset +

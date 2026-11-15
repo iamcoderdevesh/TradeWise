@@ -24,6 +24,11 @@ abstract final class AppRoutes {
   static const String portfolio = '/portfolio';
   static const String profile = '/profile';
 
+  // Funds screens (Phase 8, paper trading). Top-level routes outside the
+  // shell so they push full-screen with a standard back affordance.
+  static const String fund = '/fund';
+  static const String addFund = '/add-fund';
+
   static const String splashName = 'splash';
   static const String welcomeName = 'welcome';
   static const String loginName = 'login';
@@ -36,4 +41,7 @@ abstract final class AppRoutes {
   static const String ordersName = 'orders';
   static const String portfolioName = 'portfolio';
   static const String profileName = 'profile';
+
+  static const String fundName = 'funds';
+  static const String addFundName = 'add-fund';
 }
