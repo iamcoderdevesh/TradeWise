@@ -12,12 +12,18 @@ import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_prev
 /// the product (used by Portfolio Exit to match the holding/position product).
 /// Both are optional and only consulted by Portfolio-initiated launches;
 /// Watchlist-initiated launches omit them, preserving existing defaults.
+///
+/// [returnToPortfolioOnFill] controls whether the ticket navigates back to the
+/// Portfolio screen after a successful fill. Set to `true` only for the
+/// Portfolio EXIT flow (SELL with initialQuantity). Normal Watchlist orders
+/// and Portfolio ADD (BUY) leave this `false`, preserving existing behavior.
 class OrderLaunchArgs {
   const OrderLaunchArgs({
     required this.instrument,
     required this.side,
     this.initialQuantity,
     this.initialProduct,
+    this.returnToPortfolioOnFill = false,
   });
 
   final WatchlistInstrument instrument;
@@ -29,4 +35,8 @@ class OrderLaunchArgs {
   /// Default product pre-selected in the ticket (e.g. match holding product
   /// for Exit).
   final OrderProduct? initialProduct;
+
+  /// When true and the order fills, navigates back to the Portfolio screen.
+  /// Only set for Portfolio EXIT (SELL with initialQuantity).
+  final bool returnToPortfolioOnFill;
 }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/core/widgets/tw_notification.dart';
 import 'package:tradewise/features/order/presentation/order_enums.dart';
 import 'package:tradewise/features/order/presentation/order_launch_args.dart';
 import 'package:tradewise/core/widgets/instrument_bottom_sheet_shared.dart';
@@ -157,7 +158,8 @@ class _InstrumentBottomSheetState extends State<InstrumentBottomSheet> {
                     const Divider(height: 1),
                     const SizedBox(height: TWSpacing.l),
                     InstrumentSheetSecondaryActions(
-                      onNotice: (String m) => _notice(context, m),
+                      onNotice: (String m) =>
+                          TWNotifications.showAlert(context, m),
                       showAddNotes: true,
                     ),
                     InstrumentSheetMarketDepth(
@@ -170,10 +172,12 @@ class _InstrumentBottomSheetState extends State<InstrumentBottomSheet> {
                             ),
                           )
                           .toList(),
-                      onNotice: (String m) => _notice(context, m),
+                      onNotice: (String m) =>
+                          TWNotifications.showAlert(context, m),
                     ),
                     InstrumentSheetShowDepth(
-                      onNotice: (String m) => _notice(context, m),
+                      onNotice: (String m) =>
+                          TWNotifications.showAlert(context, m),
                     ),
                     const SizedBox(height: TWSpacing.xxl),
                   ],
@@ -184,15 +188,6 @@ class _InstrumentBottomSheetState extends State<InstrumentBottomSheet> {
         ),
       ],
     );
-  }
-
-  void _notice(BuildContext context, String message) {
-    // Hide any current notice first so each tap surfaces exactly one
-    // visible SnackBar; queued bars would otherwise leave duplicate
-    // offstage texts that exact-match finders match twice.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _openOrder(BuildContext context, OrderSide side) {

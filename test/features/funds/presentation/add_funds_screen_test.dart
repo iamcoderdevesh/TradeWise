@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tradewise/features/funds/data/mock_funds_repository.dart';
 import 'package:tradewise/features/funds/presentation/add_funds_screen.dart';
 import 'package:tradewise/features/funds/presentation/funds_providers.dart';
+import 'package:tradewise/features/order/presentation/widgets/swipe_to_confirm.dart';
 
 void main() {
   group('AddFundsScreen', () {
@@ -115,6 +116,106 @@ void main() {
 
       expect(find.text('Add Funds'), findsOneWidget);
       expect(find.text('Amount'), findsOneWidget);
+    });
+
+    testWidgets('empty amount shows validation feedback', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget(const AddFundsScreen()));
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '');
+      await tester.pump();
+
+      // Entering empty amount into the field; validation feedback is shown
+      // when the user attempts to submit via swipe completion.
+      expect(find.text('₹10000.00'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('empty amount shows validation feedback on submit', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget(const AddFundsScreen()));
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '');
+      await tester.pump();
+
+      // Attempt swipe completion — validation should block and show error.
+      final swipe = find.byType(SwipeToConfirm);
+      final double width = tester.getSize(swipe).width;
+      await tester.drag(swipe, Offset(width, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Amount cannot be empty'), findsOneWidget);
+      // Balance unchanged.
+      expect(find.text('₹10000.00'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('zero amount shows validation feedback on submit', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget(const AddFundsScreen()));
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '0');
+      await tester.pump();
+
+      final swipe = find.byType(SwipeToConfirm);
+      final double width = tester.getSize(swipe).width;
+      await tester.drag(swipe, Offset(width, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Amount must be greater than zero'), findsOneWidget);
+    });
+
+    testWidgets('input formatter rejects more than two decimal places', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget(const AddFundsScreen()));
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '100.123');
+      await tester.pump();
+
+      // Input formatter truncates to 2 decimal places.
+      expect(find.text('100.12'), findsOneWidget);
+    });
+
+    testWidgets('successful addition shows exactly one success notification', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget(const AddFundsScreen()));
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '5000');
+      await tester.pump();
+
+      // Complete the swipe — should add funds and show success notification.
+      final swipe = find.byType(SwipeToConfirm);
+      final double width = tester.getSize(swipe).width;
+      await tester.drag(swipe, Offset(width, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('₹5000.00 added'), findsOneWidget);
+    });
+
+    testWidgets('invalid amount prevents submission', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget(const AddFundsScreen()));
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '0');
+      await tester.pump();
+
+      // Attempt swipe completion — invalid amount should not change balance.
+      final swipe = find.byType(SwipeToConfirm);
+      final double width = tester.getSize(swipe).width;
+      await tester.drag(swipe, Offset(width, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('₹10000.00'), findsAtLeastNWidgets(1));
     });
   });
 }

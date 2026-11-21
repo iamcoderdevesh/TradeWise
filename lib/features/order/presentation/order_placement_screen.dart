@@ -6,6 +6,7 @@ import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/core/widgets/tw_notification.dart';
 import 'package:tradewise/features/funds/presentation/funds_providers.dart';
 import 'package:tradewise/features/orders/presentation/order_providers.dart';
 import 'package:tradewise/features/portfolio/presentation/portfolio_providers.dart';
@@ -253,15 +254,23 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
           );
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(result.message)));
+    // Report outcome via shared notification: success when filled, error when
+    // rejected. Duplicate bars are replaced by TWNotifications internally.
+    if (result.filled) {
+      TWNotifications.showSuccess(context, result.message);
+    } else {
+      TWNotifications.showError(context, result.message);
+    }
 
     // A filled BUY lands on the tab it filled (Longterm â†’ Holdings,
-    // Intraday â†’ Positions). SELL stays on the ticket so a rejected sell
-    // can be corrected; the notice above explains the outcome either way.
+    // Intraday â†’ Positions). A Portfolio EXIT (SELL with
+    // returnToPortfolioOnFill) also returns to Portfolio. SELL stays on the
+    // ticket otherwise so a rejected sell can be corrected; the notice above
+    // explains the outcome either way.
     final bool isBuy = widget.args.side == OrderSide.buy;
-    if (result.filled && isBuy && GoRouter.maybeOf(context) != null) {
+    if (result.filled &&
+        GoRouter.maybeOf(context) != null &&
+        (isBuy || widget.args.returnToPortfolioOnFill)) {
       context.go(AppRoutes.portfolio);
     }
   }
@@ -409,7 +418,7 @@ class _OrderPlacementScreenState extends ConsumerState<OrderPlacementScreen> {
   }
 }
 
-/// Read-only `â— EXCHANGE â‚¹LTP` band flush under the app bar (reference:
+/// Read-only `â— EXCHANGE ₹LTP` band flush under the app bar (reference:
 /// a flat full-bleed strip with the selected exchange indicator).
 ///
 /// Single-exchange only: the instrument model carries one exchange and one
@@ -447,7 +456,7 @@ class _ExchangeStrip extends StatelessWidget {
           ),
           const SizedBox(width: TWSpacing.s),
           Text(
-            'â‚¹${formatWatchlistPrice(price)}',
+            '₹${formatWatchlistPrice(price)}',
             style: Theme.of(context).textTheme.bodyMedium
                 ?.copyWith(fontWeight: FontWeight.w400),
             maxLines: 1,
@@ -522,7 +531,7 @@ class _EstimateBand extends StatelessWidget {
                   ),
                   const SizedBox(width: TWSpacing.s),
                   Text(
-                    'â‚¹${formatWatchlistPrice(estimate!)}',
+                    '₹${formatWatchlistPrice(estimate!)}',
                     style: Theme.of(context).textTheme.bodyMedium
                         ?.copyWith(color: accent),
                     maxLines: 1,
@@ -531,7 +540,7 @@ class _EstimateBand extends StatelessWidget {
                   Text('+', style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(width: TWSpacing.s),
                   Text(
-                    'â‚¹0.08',
+                    '₹0.08',
                     style: Theme.of(context).textTheme.bodyMedium
                         ?.copyWith(color: accent),
                     maxLines: 1,

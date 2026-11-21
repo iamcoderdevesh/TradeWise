@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/core/widgets/tw_notification.dart';
 import 'package:tradewise/features/portfolio/data/portfolio_entry.dart';
 import 'package:tradewise/features/portfolio/presentation/portfolio_providers.dart';
 import 'package:tradewise/features/portfolio/presentation/widgets/portfolio_entry_list.dart';
@@ -196,7 +197,7 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
                           _switchTabFromDrag(details),
                       child: PortfolioToolbar(
                         onNotice: (String message) =>
-                            _showNotice(context, message),
+                            TWNotifications.showAlert(context, message),
                       ),
                     ),
                     const Divider(height: 1),
@@ -240,8 +241,10 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
         // during any route transition with both branches built.
         heroTag: 'portfolio-analytics-fab',
         tooltip: 'Portfolio analytics',
-        onPressed: () =>
-            _showNotice(context, 'Portfolio analytics are not available yet'),
+        onPressed: () => TWNotifications.showAlert(
+          context,
+          'Portfolio analytics are not available yet',
+        ),
         child: const Icon(Icons.trending_up),
       ),
     );
@@ -259,13 +262,5 @@ class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
     PortfolioTab tab,
   ) {
     showPortfolioInstrumentBottomSheet(context, entry, tab);
-  }
-
-  void _showNotice(BuildContext context, String message) {
-    // Replace the visible notice instead of queueing behind it — matches
-    // the order ticket's pattern so rapid actions report immediately.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }

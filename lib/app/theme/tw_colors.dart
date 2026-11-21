@@ -31,6 +31,16 @@ abstract final class TWColors {
   static const Color lightPrimary = Color(0xFF2563EB);
   static const Color lightPrimaryVariant = Color(0xFF1D4ED8);
 
+  /// Semantic notification colors — success background reuses [lightPositive].
+  static const Color lightOnSuccess = Color(0xFFFFFFFF);
+
+  /// Semantic notification colors — warning foreground.
+  static const Color lightOnWarning = Color(0xFFFFFFFF);
+
+  /// Semantic notification colors — alert background and foreground.
+  static const Color lightAlert = Color(0xFF2563EB);
+  static const Color lightOnAlert = Color(0xFFFFFFFF);
+
   // Dark scheme.
   static const Color darkBackgroundPrimary = Color(0xFF141B29);
   static const Color darkBackgroundSecondary = Color(0xFF11161D);
@@ -54,4 +64,14 @@ abstract final class TWColors {
   /// Provisional primary (dark). See class docs.
   static const Color darkPrimary = Color(0xFF60A5FA);
   static const Color darkPrimaryVariant = Color(0xFF3B82F6);
+
+  /// Semantic notification colors — success background reuses [darkPositive].
+  static const Color darkOnSuccess = Color(0xFF0B0F14);
+
+  /// Semantic notification colors — warning foreground.
+  static const Color darkOnWarning = Color(0xFF0B0F14);
+
+  /// Semantic notification colors — alert background and foreground.
+  static const Color darkAlert = Color(0xFF60A5FA);
+  static const Color darkOnAlert = Color(0xFF0B0F14);
 }

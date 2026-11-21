@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
+import 'package:tradewise/core/widgets/tw_notification.dart';
 
 import 'package:tradewise/app/theme/tw_spacing.dart';
 import 'package:tradewise/features/orders/domain/order.dart';
@@ -31,6 +32,36 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   static const List<String> _tabs = <String>['Open', 'Executed'];
 
   int _selectedTab = 0;
+
+  /// Minimum horizontal distance (logical pixels) a swipe must travel to
+  /// count as an intentional tab switch.
+  static const double _swipeMinDistance = 50;
+
+  /// Position where the current horizontal swipe began on the list body.
+  Offset? _dragStartPosition;
+
+  /// Records where a horizontal swipe began on the list body.
+  void _onHorizontalDragStart(DragStartDetails details) {
+    _dragStartPosition = details.globalPosition;
+  }
+
+  /// Switches tabs based on the horizontal drag direction, respecting
+  /// first/last tab boundaries.
+  void _switchTabFromDrag(DragEndDetails details) {
+    if (_dragStartPosition == null) return;
+    final double dx = details.globalPosition.dx - _dragStartPosition!.dx;
+    _dragStartPosition = null;
+    if (dx.abs() < _swipeMinDistance) return;
+    setState(() {
+      if (dx > 0) {
+        // Swipe right → previous tab.
+        _selectedTab = (_selectedTab - 1).clamp(0, _tabs.length - 1);
+      } else {
+        // Swipe left → next tab.
+        _selectedTab = (_selectedTab + 1).clamp(0, _tabs.length - 1);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,14 +104,20 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                 ),
               ),
             ),
-            OrdersTabSelector(
-              tabs: _tabs,
-              selectedIndex: _selectedTab,
-              onTabSelected: (int index) =>
-                  setState(() => _selectedTab = index),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragStart: _onHorizontalDragStart,
+              onHorizontalDragEnd: (details) => _switchTabFromDrag(details),
+              child: OrdersTabSelector(
+                tabs: _tabs,
+                selectedIndex: _selectedTab,
+                onTabSelected: (int index) =>
+                    setState(() => _selectedTab = index),
+              ),
             ),
             OrdersToolbar(
-              onNotice: (String message) => _showNotice(context, message),
+              onNotice: (String message) =>
+                  TWNotifications.showAlert(context, message),
             ),
             const Divider(height: 1),
             Expanded(child: _buildBody(context, activeOrders)),
@@ -102,13 +139,5 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         return OrderTile(order: order);
       },
     );
-  }
-
-  void _showNotice(BuildContext context, String message) {
-    // Replace the visible notice instead of queueing behind it — matches
-    // the order ticket's pattern so rapid actions report immediately.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }

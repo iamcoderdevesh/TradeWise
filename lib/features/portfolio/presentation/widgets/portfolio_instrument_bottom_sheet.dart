@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/core/widgets/tw_notification.dart';
 import 'package:tradewise/core/widgets/instrument_bottom_sheet_shared.dart';
 import 'package:tradewise/features/order/presentation/order_enums.dart';
 import 'package:tradewise/features/order/presentation/order_launch_args.dart';
@@ -120,7 +121,8 @@ class _PortfolioInstrumentBottomSheetState
                     const Divider(height: 1),
                     const SizedBox(height: TWSpacing.l),
                     InstrumentSheetSecondaryActions(
-                      onNotice: (String m) => _notice(context, m),
+                      onNotice: (String m) =>
+                          TWNotifications.showAlert(context, m),
                       showAddNotes: true,
                     ),
                     InstrumentSheetMarketDepth(
@@ -133,10 +135,12 @@ class _PortfolioInstrumentBottomSheetState
                             ),
                           )
                           .toList(),
-                      onNotice: (String m) => _notice(context, m),
+                      onNotice: (String m) =>
+                          TWNotifications.showAlert(context, m),
                     ),
                     InstrumentSheetShowDepth(
-                      onNotice: (String m) => _notice(context, m),
+                      onNotice: (String m) =>
+                          TWNotifications.showAlert(context, m),
                     ),
                     const SizedBox(height: TWSpacing.xxl),
                   ],
@@ -178,13 +182,11 @@ class _PortfolioInstrumentBottomSheetState
         side: side,
         initialQuantity: initialQuantity,
         initialProduct: initialProduct,
+        // EXIT (SELL) returns to Portfolio after a successful fill. ADD (BUY)
+        // keeps existing behavior (navigates to Portfolio only via the shared
+        // isBuy path in OrderPlacementScreen).
+        returnToPortfolioOnFill: side == OrderSide.sell,
       ),
     );
-  }
-
-  void _notice(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }

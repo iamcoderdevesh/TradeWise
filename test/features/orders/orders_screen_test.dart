@@ -9,6 +9,7 @@ import 'package:tradewise/features/orders/presentation/order_providers.dart';
 import 'package:tradewise/features/orders/presentation/orders_screen.dart';
 import 'package:tradewise/features/orders/presentation/widgets/order_tile.dart';
 import 'package:tradewise/features/orders/presentation/widgets/orders_empty_state.dart';
+import 'package:tradewise/features/orders/presentation/widgets/orders_tab_selector.dart';
 
 /// Test notifier that seeds [orderHistoryProvider] with a fixed list.
 class _TestOrderNotifier extends OrderNotifier {
@@ -345,5 +346,77 @@ void main() {
         expect(container.read(orderHistoryProvider).isEmpty, isTrue);
       },
     );
+  });
+
+  group('Orders swipe navigation', () {
+    testWidgets('left swipe switches Open to Executed', (
+      WidgetTester tester,
+    ) async {
+      final List<Order> orders = <Order>[_executedOrder()];
+      await pumpOrders(tester, orders: orders);
+
+      expect(find.byType(OrderTile), findsNothing);
+      expect(find.byType(OrdersEmptyState), findsOneWidget);
+
+      // Drag left on the tab selector (matching Portfolio's approach).
+      await tester.drag(find.byType(OrdersTabSelector), const Offset(-150, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(OrderTile), findsOneWidget);
+      expect(find.text('IDFCFIRSTB'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('right swipe switches Executed to Open', (
+      WidgetTester tester,
+    ) async {
+      final List<Order> orders = <Order>[_executedOrder()];
+      await pumpOrders(tester, orders: orders);
+
+      // Start on Executed.
+      await tester.tap(find.text('Executed'));
+      await tester.pumpAndSettle();
+      expect(find.byType(OrderTile), findsOneWidget);
+
+      // Drag right on the tab selector to switch back to Open.
+      await tester.drag(find.byType(OrdersTabSelector), const Offset(150, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(OrderTile), findsNothing);
+      expect(find.byType(OrdersEmptyState), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('left swipe on last tab stays on last tab', (
+      WidgetTester tester,
+    ) async {
+      await pumpOrders(tester);
+
+      // Already on Open (index 0). Swipe left to Executed (index 1, last).
+      await tester.drag(find.byType(OrdersTabSelector), const Offset(-150, 0));
+      await tester.pumpAndSettle();
+
+      // Swipe left again — should stay on Executed (boundary).
+      await tester.drag(find.byType(OrdersTabSelector), const Offset(-150, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(OrderTile), findsNothing);
+      expect(find.byType(OrdersEmptyState), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('right swipe on first tab stays on first tab', (
+      WidgetTester tester,
+    ) async {
+      await pumpOrders(tester);
+
+      // On Open (first tab). Swipe right — should stay on Open (boundary).
+      await tester.drag(find.byType(OrdersTabSelector), const Offset(150, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(OrderTile), findsNothing);
+      expect(find.byType(OrdersEmptyState), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

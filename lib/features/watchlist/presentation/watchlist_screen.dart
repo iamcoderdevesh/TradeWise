@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
+import 'package:tradewise/core/widgets/tw_notification.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/index_strip.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/instrument_bottom_sheet.dart';
 import 'package:tradewise/features/watchlist/presentation/widgets/watchlist_empty_state.dart';
@@ -37,9 +38,71 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
   int _selectedTab = 0;
 
-  void _notice(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+  /// Search query typed by the user; empty means no filtering.
+  String _searchQuery = '';
+
+  /// Controller for the search field; owned by this screen so the
+  /// `TextEditingController` persists across rebuilds.
+  late final TextEditingController _searchController;
+
+  /// Instruments matching the current search query, filtered by symbol or
+  /// exchange (case-insensitive). When the query is empty, the original
+  /// watchlist is returned unchanged.
+  List<WatchlistInstrument> get _filteredInstruments {
+    if (_searchQuery.isEmpty) {
+      return widget.instruments;
+    }
+    final String query = _searchQuery.toLowerCase();
+    return widget.instruments.where((WatchlistInstrument instrument) {
+      return instrument.symbol.toLowerCase().contains(query) ||
+          instrument.exchange.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  /// Minimum horizontal distance (logical pixels) a swipe must travel to
+  /// count as an intentional tab switch.
+  static const double _swipeMinDistance = 50;
+
+  /// Position where the current horizontal swipe began on the list body.
+  Offset? _dragStartPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _searchQuery = value);
+  }
+
+  /// Records where a horizontal swipe began on the list body.
+  void _onHorizontalDragStart(DragStartDetails details) {
+    _dragStartPosition = details.globalPosition;
+  }
+
+  /// Switches tabs based on the horizontal drag direction, respecting
+  /// first/last tab boundaries.
+  void _switchTabFromDrag(DragEndDetails details) {
+    if (_dragStartPosition == null) return;
+    final double dx = details.globalPosition.dx - _dragStartPosition!.dx;
+    _dragStartPosition = null;
+    if (dx.abs() < _swipeMinDistance) return;
+    setState(() {
+      if (dx > 0) {
+        // Swipe right → previous tab.
+        _selectedTab = (_selectedTab - 1).clamp(0, _tabs.length - 1);
+      } else {
+        // Swipe left → next tab.
+        _selectedTab = (_selectedTab + 1).clamp(0, _tabs.length - 1);
+      }
+    });
   }
 
   @override
@@ -49,25 +112,39 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
         child: Column(
           children: <Widget>[
             IndexStrip(
-              onExpandTap: () => _notice('Index details are not available yet'),
+              onExpandTap: () => TWNotifications.showAlert(
+                context,
+                'Index details are not available yet',
+              ),
             ),
-            WatchlistSelector(
-              tabs: _tabs,
-              selectedIndex: _selectedTab,
-              onTabSelected: (int index) =>
-                  setState(() => _selectedTab = index),
-              onAddTap: () =>
-                  _notice('Watchlist management is not available yet'),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragStart: _onHorizontalDragStart,
+              onHorizontalDragEnd: (details) => _switchTabFromDrag(details),
+              child: WatchlistSelector(
+                tabs: _tabs,
+                selectedIndex: _selectedTab,
+                onTabSelected: (int index) =>
+                    setState(() => _selectedTab = index),
+                onAddTap: () => TWNotifications.showAlert(
+                  context,
+                  'Watchlist management is not available yet',
+                ),
+              ),
             ),
             WatchlistSearchBar(
               count: widget.instruments.length,
               capacity: _capacity,
-              onTap: () => _notice('Search is not available yet'),
+              controller: _searchController,
+              onChanged: _onSearchChanged,
             ),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () => _notice('Groups are not available yet'),
+                onPressed: () => TWNotifications.showAlert(
+                  context,
+                  'Groups are not available yet',
+                ),
                 child: const Text('+ New group'),
               ),
             ),
@@ -80,7 +157,8 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
         // Portfolio FAB, so the default tag would collide once both
         // branches are built (see portfolio_screen.dart).
         heroTag: 'watchlist-charts-fab',
-        onPressed: () => _notice('Charts are not available yet'),
+        onPressed: () =>
+            TWNotifications.showAlert(context, 'Charts are not available yet'),
         tooltip: 'Charts',
         child: const Icon(Icons.show_chart),
       ),
@@ -88,17 +166,18 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
-    if (widget.instruments.isEmpty) {
+    final List<WatchlistInstrument> displayInstruments = _filteredInstruments;
+    if (displayInstruments.isEmpty) {
       return const SingleChildScrollView(
         padding: EdgeInsets.only(bottom: TWSpacing.xxl),
         child: WatchlistEmptyState(),
       );
     }
     return ListView.separated(
-      itemCount: widget.instruments.length,
+      itemCount: displayInstruments.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (BuildContext context, int index) {
-        final WatchlistInstrument instrument = widget.instruments[index];
+        final WatchlistInstrument instrument = displayInstruments[index];
         return WatchlistInstrumentTile(
           instrument: instrument,
           // Phase 3C: row tap opens the Instrument Bottom Sheet as a modal

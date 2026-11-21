@@ -4,11 +4,15 @@ import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_radii.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
 
-/// Static "Search & add" card.
+/// Functional search card for the Watchlist screen.
 ///
-/// Visual structure only: a search affordance, a `n/250` counter slot and a
-/// decorative sort/filter glyph. Real search is a later phase; taps surface
-/// the project's temporary notice via [onTap].
+/// Displays a search input field with the `n/250` capacity counter and a
+/// decorative sort/filter glyph. As the user types, [onChanged] reports the
+/// current query so the parent can filter the instrument list.
+///
+/// The counter always reflects the total watchlist capacity
+/// (`count / capacity`), not the filtered result count, per the preservation
+/// requirement.
 ///
 /// Alignment note: [Card] applies a default 4dp margin, which inset the surface
 /// relative to the instrument rows. The margin is zeroed here so the card's
@@ -18,12 +22,14 @@ class WatchlistSearchBar extends StatelessWidget {
     super.key,
     required this.count,
     required this.capacity,
-    this.onTap,
+    required this.controller,
+    required this.onChanged,
   });
 
   final int count;
   final int capacity;
-  final VoidCallback? onTap;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -44,39 +50,43 @@ class WatchlistSearchBar extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(TWRadii.medium),
         ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(TWRadii.medium),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: TWSpacing.l,
-              vertical: TWSpacing.m,
-            ),
-            child: Row(
-              children: <Widget>[
-                Icon(Icons.search, size: 20, color: mutedColor),
-                const SizedBox(width: TWSpacing.s),
-                Expanded(
-                  child: Text(
-                    'Search & add',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TWSpacing.l,
+            vertical: TWSpacing.m,
+          ),
+          child: Row(
+            children: <Widget>[
+              Icon(Icons.search, size: 20, color: mutedColor),
+              const SizedBox(width: TWSpacing.s),
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search & add',
+                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
                       color: mutedColor,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    isCollapsed: true,
                   ),
-                ),
-                Text(
-                  '$count/$capacity',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: mutedColor,
+                    color: theme.textTheme.bodyMedium?.color,
                   ),
                   maxLines: 1,
+                  controller: controller,
+                  onChanged: onChanged,
+                  onTap: () {},
                 ),
-                const SizedBox(width: TWSpacing.m),
-                Icon(Icons.sort, size: 22, color: mutedColor),
-              ],
-            ),
+              ),
+              Text(
+                '$count/$capacity',
+                style: theme.textTheme.bodyMedium?.copyWith(color: mutedColor),
+                maxLines: 1,
+              ),
+              const SizedBox(width: TWSpacing.m),
+              Icon(Icons.sort, size: 22, color: mutedColor),
+            ],
           ),
         ),
       ),

@@ -9,6 +9,7 @@ import 'package:tradewise/app/router/app_routes.dart';
 import 'package:tradewise/app/theme/tw_colors.dart';
 import 'package:tradewise/app/theme/tw_spacing.dart';
 import 'package:tradewise/core/widgets/tw_input_field.dart';
+import 'package:tradewise/core/widgets/tw_notification.dart';
 import 'package:tradewise/features/funds/presentation/funds_providers.dart';
 import 'package:tradewise/features/order/presentation/order_enums.dart';
 import 'package:tradewise/features/order/presentation/widgets/swipe_to_confirm.dart';
@@ -23,6 +24,10 @@ class AddFundsScreen extends ConsumerStatefulWidget {
 class _AddFundsScreenState extends ConsumerState<AddFundsScreen> {
   late final TextEditingController _amountController;
 
+  /// Guards against duplicate submissions while a swipe completion is in
+  /// progress.
+  bool _isSubmitting = false;
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +38,34 @@ class _AddFundsScreenState extends ConsumerState<AddFundsScreen> {
   void dispose() {
     _amountController.dispose();
     super.dispose();
+  }
+
+  /// Validates the amount text and returns an error message if invalid, or
+  /// null when the amount is valid.
+  String? _validateAmount(String text) {
+    final String trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return 'Amount cannot be empty';
+    }
+    final double? value = double.tryParse(trimmed);
+    if (value == null) {
+      return 'Enter a valid amount';
+    }
+    if (!value.isFinite) {
+      return 'Enter a valid amount';
+    }
+    if (value <= 0) {
+      return 'Amount must be greater than zero';
+    }
+    // Guard against more than 2 decimal places (input formatter already
+    // restricts this, but validate defensively).
+    final int decimalPlaces = trimmed.contains('.')
+        ? trimmed.split('.').last.length
+        : 0;
+    if (decimalPlaces > 2) {
+      return 'Amount cannot exceed two decimal places';
+    }
+    return null;
   }
 
   double? _parseAmount(String text) {
@@ -48,18 +81,35 @@ class _AddFundsScreenState extends ConsumerState<AddFundsScreen> {
   }
 
   void _addFunds() {
-    final double? amount = _parseAmount(_amountController.text);
-    if (amount == null) {
+    if (_isSubmitting) return;
+    final String? error = _validateAmount(_amountController.text);
+    if (error != null) {
+      TWNotifications.showError(context, error);
       return;
     }
-    ref.read(fundsProvider.notifier).addFunds(amount);
-    _amountController.clear();
-    // Navigate back to Funds only if a router is available (guards against
-    // test environments without GoRouter, matching OrderPlacementScreen's
-    // defensive navigation pattern).
-    if (GoRouter.maybeOf(context) != null) {
-      context.go(AppRoutes.fund);
+    final double? amount = _parseAmount(_amountController.text);
+    if (amount == null) {
+      TWNotifications.showError(context, 'Enter a valid amount');
+      return;
     }
+    _isSubmitting = true;
+    final double beforeBalance = ref.read(fundsProvider).availableBalance;
+    ref.read(fundsProvider.notifier).addFunds(amount);
+    final double afterBalance = ref.read(fundsProvider).availableBalance;
+    if (afterBalance > beforeBalance) {
+      TWNotifications.showSuccess(
+        context,
+        '₹${amount.toStringAsFixed(2)} added',
+      );
+      _amountController.clear();
+      // Navigate back to Funds only if a router is available (guards against
+      // test environments without GoRouter, matching OrderPlacementScreen's
+      // defensive navigation pattern).
+      if (GoRouter.maybeOf(context) != null) {
+        context.go(AppRoutes.fund);
+      }
+    }
+    _isSubmitting = false;
   }
 
   @override
