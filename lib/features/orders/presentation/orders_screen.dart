@@ -120,7 +120,15 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   TWNotifications.showAlert(context, message),
             ),
             const Divider(height: 1),
-            Expanded(child: _buildBody(context, activeOrders)),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onHorizontalDragStart: _onHorizontalDragStart,
+                onHorizontalDragEnd: (details) =>
+                    _switchTabFromDrag(details),
+                child: _buildBody(context, activeOrders),
+              ),
+            ),
           ],
         ),
       ),

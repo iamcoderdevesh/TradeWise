@@ -264,5 +264,103 @@ void main() {
       expect(find.text('VEDL'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('left swipe on list body moves to next tab', (
+      WidgetTester tester,
+    ) async {
+      await pumpWatchlist(tester);
+
+      // Drag left on the vertical ListView body to switch tabs.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Watchlist 2'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('right swipe on list body moves to previous tab', (
+      WidgetTester tester,
+    ) async {
+      await pumpWatchlist(tester);
+
+      // Swipe left to Watchlist 2 first via the body.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Watchlist 2'), findsOneWidget);
+
+      // Swipe right on the body back to Watchlist 1.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Watchlist 1'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('left swipe on list body respects last tab boundary', (
+      WidgetTester tester,
+    ) async {
+      await pumpWatchlist(tester);
+
+      // Swipe left twice on the body to reach Watchlist 3 (last).
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Swipe left again — should stay on Watchlist 3.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Watchlist 3'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('right swipe on list body respects first tab boundary', (
+      WidgetTester tester,
+    ) async {
+      await pumpWatchlist(tester);
+
+      // Swipe right on the body on first tab — should stay on Watchlist 1.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Watchlist 1'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

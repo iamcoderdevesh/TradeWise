@@ -148,7 +148,14 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                 child: const Text('+ New group'),
               ),
             ),
-            Expanded(child: _buildBody(context)),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onHorizontalDragStart: _onHorizontalDragStart,
+                onHorizontalDragEnd: (details) => _switchTabFromDrag(details),
+                child: _buildBody(context),
+              ),
+            ),
           ],
         ),
       ),

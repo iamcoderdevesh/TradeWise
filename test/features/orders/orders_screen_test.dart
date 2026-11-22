@@ -418,5 +418,116 @@ void main() {
       expect(find.byType(OrdersEmptyState), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+    testWidgets('left swipe on list body switches Open to Executed', (
+      WidgetTester tester,
+    ) async {
+      final List<Order> orders = <Order>[
+        _executedOrder(id: 'open-1', status: OrderStatus.open),
+        _executedOrder(id: 'exec-1', status: OrderStatus.executed),
+      ];
+      await pumpOrders(tester, orders: orders);
+
+      // Open tab shows a ListView with the open order.
+      expect(find.byType(OrderTile), findsOneWidget);
+      expect(find.text('IDFCFIRSTB'), findsOneWidget);
+
+      // Drag left on the vertical ListView body to switch tabs.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Executed tab shows the executed order.
+      expect(find.byType(OrderTile), findsOneWidget);
+      expect(find.text('EXECUTED'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('right swipe on list body switches Executed to Open', (
+      WidgetTester tester,
+    ) async {
+      final List<Order> orders = <Order>[
+        _executedOrder(id: 'open-1', status: OrderStatus.open),
+        _executedOrder(id: 'exec-1', status: OrderStatus.executed),
+      ];
+      await pumpOrders(tester, orders: orders);
+
+      // Start on Executed.
+      await tester.tap(find.text('Executed'));
+      await tester.pumpAndSettle();
+      expect(find.byType(OrderTile), findsOneWidget);
+      expect(find.text('EXECUTED'), findsOneWidget);
+
+      // Drag right on the body back to Open.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Open tab shows the open order.
+      expect(find.byType(OrderTile), findsOneWidget);
+      expect(find.text('OPEN'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('left swipe on list body respects last tab boundary', (
+      WidgetTester tester,
+    ) async {
+      final List<Order> orders = <Order>[
+        _executedOrder(id: 'open-1', status: OrderStatus.open),
+        _executedOrder(id: 'exec-1', status: OrderStatus.executed),
+      ];
+      await pumpOrders(tester, orders: orders);
+
+      // Swipe left on the body to reach Executed (last tab).
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('EXECUTED'), findsOneWidget);
+
+      // Swipe left again — should stay on Executed (boundary).
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(-150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('EXECUTED'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('right swipe on list body respects first tab boundary', (
+      WidgetTester tester,
+    ) async {
+      final List<Order> orders = <Order>[
+        _executedOrder(id: 'open-1', status: OrderStatus.open),
+        _executedOrder(id: 'exec-1', status: OrderStatus.executed),
+      ];
+      await pumpOrders(tester, orders: orders);
+
+      // On Open (first tab). Swipe right on the body — should stay on Open.
+      await tester.drag(
+        find.byWidgetPredicate(
+          (Widget w) => w is ListView && w.scrollDirection == Axis.vertical,
+        ),
+        const Offset(150, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('OPEN'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }
