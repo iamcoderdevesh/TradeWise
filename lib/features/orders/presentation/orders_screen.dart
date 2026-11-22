@@ -124,8 +124,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onHorizontalDragStart: _onHorizontalDragStart,
-                onHorizontalDragEnd: (details) =>
-                    _switchTabFromDrag(details),
+                onHorizontalDragEnd: (details) => _switchTabFromDrag(details),
                 child: _buildBody(context, activeOrders),
               ),
             ),

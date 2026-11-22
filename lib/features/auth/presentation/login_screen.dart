@@ -62,12 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
       children: <Widget>[
         Semantics(
           header: true,
-          child: Text('Login', style: textTheme.displayLarge),
+          child: Text('Login', style: textTheme.headlineMedium),
         ),
         const SizedBox(height: _titleToFirstField),
         TwInputField(
           controller: _userIdController,
-          label: 'Phone or User ID',
+          label: 'Email or User ID',
+          keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           // Decorative reference glyph: hidden from assistive technology so the
           // field is announced by its label only.

@@ -63,7 +63,7 @@ class TwInputField extends StatelessWidget {
   final bool embedded;
 
   /// Field height measured from the Order Placement reference (~52dp).
-  static const double height = 65;
+  static const double height = 60;
 
   @override
   Widget build(BuildContext context) {

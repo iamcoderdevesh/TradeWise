@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:tradewise/app/theme/tw_theme.dart';
 import 'package:tradewise/core/widgets/tradewise_brand_mark.dart';
 import 'package:tradewise/features/auth/presentation/signup_screen.dart';
-import 'package:tradewise/features/auth/presentation/widgets/signup_illustration.dart';
 import 'package:tradewise/features/auth/presentation/widgets/signup_terms_note.dart';
 
 /// Pumps [SignupScreen] inside the real app theme + router harness.
@@ -20,6 +19,11 @@ Future<void> pumpSignupScreen(
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) =>
+            const Scaffold(body: Text('Login placeholder')),
       ),
       GoRoute(
         path: '/welcome',
@@ -43,12 +47,12 @@ Future<void> pumpSignupScreen(
   await tester.pumpAndSettle();
 }
 
-/// The phone input, located by its user-visible label rather than by index.
-TextField phoneField(WidgetTester tester) {
+/// The field located by its user-visible label.
+TextField fieldByLabel(WidgetTester tester, String label) {
   return tester.widget<TextField>(
     find.byWidgetPredicate(
       (Widget widget) =>
-          widget is TextField && widget.decoration?.labelText == 'Phone number',
+          widget is TextField && widget.decoration?.labelText == label,
     ),
   );
 }
@@ -70,17 +74,118 @@ void main() {
     await pumpSignupScreen(tester);
 
     expect(find.text('Open your account'), findsOneWidget);
-    expect(find.text('+91'), findsOneWidget);
-    expect(find.text('Phone number'), findsOneWidget);
+    expect(find.text('Name'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+    expect(find.text('Confirm Password'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('Already have an account? Log in'), findsOneWidget);
     expect(find.textContaining('terms and conditions'), findsOneWidget);
-    expect(find.byType(SignupIllustration), findsOneWidget);
-    expect(
-      find.bySemanticsLabel(RegExp('verification code message')),
-      findsOneWidget,
-    );
     expect(find.byType(TradeWiseBrandMark), findsOneWidget);
     expect(find.text('TRADEWISE'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Signup fields are in the correct order', (
+    WidgetTester tester,
+  ) async {
+    await pumpSignupScreen(tester);
+
+    // Locators for each field by label.
+    final nameLocator = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Name',
+    );
+    final emailLocator = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Email',
+    );
+    final passwordLocator = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Password',
+    );
+    final confirmPasswordLocator = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is TextField &&
+          widget.decoration?.labelText == 'Confirm Password',
+    );
+
+    expect(nameLocator, findsOneWidget);
+    expect(emailLocator, findsOneWidget);
+    expect(passwordLocator, findsOneWidget);
+    expect(confirmPasswordLocator, findsOneWidget);
+
+    // Verify vertical order: Name < Email < Password < Confirm Password
+    expect(
+      tester.getTopLeft(nameLocator).dy,
+      lessThan(tester.getTopLeft(emailLocator).dy),
+    );
+    expect(
+      tester.getTopLeft(emailLocator).dy,
+      lessThan(tester.getTopLeft(passwordLocator).dy),
+    );
+    expect(
+      tester.getTopLeft(passwordLocator).dy,
+      lessThan(tester.getTopLeft(confirmPasswordLocator).dy),
+    );
+  });
+
+  testWidgets('Signup illustration is no longer displayed', (
+    WidgetTester tester,
+  ) async {
+    await pumpSignupScreen(tester);
+
+    expect(find.text('Phone number'), findsNothing);
+    expect(find.text('+91'), findsNothing);
+  });
+
+  testWidgets('Password visibility toggle works', (WidgetTester tester) async {
+    await pumpSignupScreen(tester);
+
+    final passwordField = fieldByLabel(tester, 'Password');
+    expect(passwordField.obscureText, isTrue);
+
+    await tester.tap(find.byTooltip('Show password').first);
+    await tester.pumpAndSettle();
+    expect(fieldByLabel(tester, 'Password').obscureText, isFalse);
+    expect(find.byTooltip('Hide password').first, findsOneWidget);
+
+    await tester.tap(find.byTooltip('Hide password').first);
+    await tester.pumpAndSettle();
+    expect(fieldByLabel(tester, 'Password').obscureText, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Confirm password visibility toggle works', (
+    WidgetTester tester,
+  ) async {
+    await pumpSignupScreen(tester);
+
+    final confirmField = fieldByLabel(tester, 'Confirm Password');
+    expect(confirmField.obscureText, isTrue);
+
+    await tester.tap(find.byTooltip('Show password').last);
+    await tester.pumpAndSettle();
+    expect(fieldByLabel(tester, 'Confirm Password').obscureText, isFalse);
+    expect(find.byTooltip('Hide password').last, findsOneWidget);
+
+    await tester.tap(find.byTooltip('Hide password').last);
+    await tester.pumpAndSettle();
+    expect(fieldByLabel(tester, 'Confirm Password').obscureText, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Login link navigates to Login', (WidgetTester tester) async {
+    await pumpSignupScreen(tester);
+
+    // The link sits below the fold in the default viewport; scroll it into view.
+    await tester.ensureVisible(find.text('Already have an account? Log in'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Already have an account? Log in'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Login placeholder'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -101,23 +206,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Phone field uses the reference numeric keypad', (
-    WidgetTester tester,
-  ) async {
-    await pumpSignupScreen(tester);
-
-    final keyboardType = phoneField(tester).keyboardType;
-    expect(keyboardType, isNotNull);
-    // Digits plus separators, matching the reference keypad.
-    expect(
-      keyboardType.index,
-      TextInputType.numberWithOptions(decimal: true).index,
-    );
-    // The country code is display-only.
-    expect(phoneField(tester).controller?.text, isEmpty);
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets('Back returns to Welcome', (WidgetTester tester) async {
     await pumpSignupScreen(tester);
 
@@ -132,6 +220,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await pumpSignupScreen(tester);
+
+    // The CTA sits below the fold in the default viewport; scroll it into view.
+    await tester.ensureVisible(find.text('Continue'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Continue'));
     await drainNotice(tester, 'Account creation is not available yet');

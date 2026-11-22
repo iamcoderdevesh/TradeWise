@@ -65,7 +65,7 @@ void main() {
     await pumpLoginScreen(tester);
 
     expect(find.text('Login'), findsOneWidget);
-    expect(find.text('Phone or User ID'), findsOneWidget);
+    expect(find.text('Email or User ID'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Log in'), findsOneWidget);
     expect(find.text('Forgot user ID or password?'), findsOneWidget);
@@ -158,6 +158,54 @@ void main() {
       expect(size.width, greaterThanOrEqualTo(48));
     }
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Login field accepts email input', (WidgetTester tester) async {
+    await pumpLoginScreen(tester);
+
+    final emailField = tester.widget<TextField>(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is TextField &&
+            widget.decoration?.labelText == 'Email or User ID',
+      ),
+    );
+
+    await tester.enterText(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is TextField &&
+            widget.decoration?.labelText == 'Email or User ID',
+      ),
+      'user@example.com',
+    );
+    await tester.pumpAndSettle();
+    expect(emailField.controller?.text, 'user@example.com');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Login field accepts User ID input', (WidgetTester tester) async {
+    await pumpLoginScreen(tester);
+
+    await tester.enterText(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is TextField &&
+            widget.decoration?.labelText == 'Email or User ID',
+      ),
+      'user123',
+    );
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is TextField &&
+            widget.decoration?.labelText == 'Email or User ID',
+      ),
+    );
+    expect(field.controller?.text, 'user123');
     expect(tester.takeException(), isNull);
   });
 
